@@ -36,12 +36,24 @@ class OrdenesRepository {
   /// Recuperamos todas las ordenes y sus piezas paginadas
   Future<List<Map<String, dynamic>>> getAllOrdenesAndPiezas(int page) async {
 
-    result = await http.get('get_ordenes_and_piezas', params: '/1/');
+    result = await http.get('get_ordenes_and_piezas', params: '/$page/');
     if(!result['abort']) {
       if(result['body'].isNotEmpty) {
         return List<Map<String, dynamic>>.from(result['body']);
       }
     }
     return [];
+  }
+
+  /// Recuperamos todas las ordenes y sus piezas paginadas
+  Future<Map<String, dynamic>> getAOrdenAndPieza(int idOrd, String nameFile) async {
+
+    result = await http.get('get_orden_and_pieza', params: '/$idOrd&$nameFile/');
+    if(!result['abort']) {
+      if(result['body'].isNotEmpty) {
+        return Map<String, dynamic>.from(result['body']);
+      }
+    }
+    return {};
   }
 }

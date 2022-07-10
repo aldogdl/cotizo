@@ -20,9 +20,7 @@ class GetTipoBurbuja extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
 
-    if(!Mget.isInit) {
-      Mget.init(context, context.read<GestDataProvider>());
-    }
+    Mget.init(context, context.read<GestDataProvider>());
 
     switch (msg.tipo) {
       case ChatTip.msg:
@@ -46,7 +44,7 @@ class GetTipoBurbuja extends StatelessWidget {
           isInteractive: true,
           labelOk: 'COTIZAR AHORA',
           labelNot: 'NO, SALIR',
-          onResponse: (Map<String, dynamic> res) => Mget.prov.responseInteractive(context, res, msg.key)
+          onResponse: (Map<String, dynamic> res) => Mget.prov!.responseInteractive(context, res, msg.key)
         );
       case ChatKey.errAwaitFotos:
         return BurbujaDialog(
@@ -54,7 +52,7 @@ class GetTipoBurbuja extends StatelessWidget {
           isInteractive: true,
           labelOk: 'NO DESEO AGREGAR MÁS',
           labelNot: 'onlyYes',
-          onResponse: (Map<String, dynamic> res) => Mget.prov.responseInteractive(context, res, msg.key)
+          onResponse: (Map<String, dynamic> res) => Mget.prov!.responseInteractive(context, res, msg.key)
         );
       default:
         return const SizedBox();

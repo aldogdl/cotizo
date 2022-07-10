@@ -9,8 +9,8 @@ import '../vars/globals.dart';
 class Mget{
   
   static bool isInit = false;
-  static late final BuildContext ctx;
-  static late final GestDataProvider prov;
+  static BuildContext? ctx;
+  static GestDataProvider? prov;
   static final Globals globals = getIt<Globals>();
   static Size size = const Size(0,0);
   static SignInProvider? auth;

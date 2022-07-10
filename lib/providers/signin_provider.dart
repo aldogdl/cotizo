@@ -31,7 +31,9 @@ class SignInProvider  with ChangeNotifier {
   Future<void> login() async {
 
     try {
-      currentUser = await _gSign.signIn();
+      currentUser = await _gSign.signIn().catchError((e){
+        currentUser = null;
+      });
       if(currentUser != null) {
         if(currentUser!.email.contains('@')) {
           isLogin = await _gSign.isSignedIn();

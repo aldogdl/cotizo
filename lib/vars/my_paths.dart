@@ -16,7 +16,6 @@ class MyPath {
 
     final base = 'mrks_logos/$marca';
     if(env == 'dev') {
-      print(Uri.http(baseDev, 'autoparnet/public_html/$base').toString());
       return Uri.http(baseDev, 'autoparnet/public_html/$base').toString();
     }
     return Uri.https(baseProd, base).toString();
@@ -27,7 +26,6 @@ class MyPath {
 
     String url = _getPathUri(uri, params);
     if(env == 'dev') {
-      print(Uri.http(baseDev, url, querys).path);
       return Uri.http(baseDev, url, querys);
     }
     return Uri.https(baseProd, url, querys);
@@ -44,6 +42,7 @@ class MyPath {
       subBase = subBase.replaceFirst('/api/', '/');
     }
     final map = <String, String>{
+      'get_orden_and_pieza': 'get-orden-and-pieza',
       'get_ordenes_and_piezas': 'get-ordenes-and-piezas'
     };
     return '$subBase${map[uri]}$params';

@@ -1,0 +1,102 @@
+import 'package:cotizo/config/sngs_manager.dart';
+import 'package:cotizo/services/my_get.dart';
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
+
+import '../vars/globals.dart';
+import '../widgets/menu_main.dart';
+
+class AscaffoldMain extends StatelessWidget {
+
+  final Widget body;
+  final PreferredSizeWidget? bottom;
+  final Widget? floatingActionButton;
+
+  AscaffoldMain({
+    Key? key,
+    required this.body,
+    this.floatingActionButton,
+    this.bottom,
+  }) : super(key: key);
+
+  final _globals = getIt<Globals>();
+
+  @override
+  Widget build(BuildContext context) {
+
+    final size = MediaQuery.of(context).size;
+
+    return SafeArea(
+      child: WillPopScope(
+        onWillPop: () {
+
+          late final GoRouter nav;
+          if(Mget.ctx != null) {
+            try {
+              nav = GoRouter.of(Mget.ctx!);
+            } catch (e) {
+              nav = GoRouter.of(context);
+            }
+          }else{
+            nav = GoRouter.of(context);
+          }
+          if(nav.canPop()) {
+            return Future.value(true);
+          }
+          nav.go('/');
+          return Future.value(false);
+        },
+        child: Scaffold(
+          backgroundColor: _globals.bgMain,
+          appBar: AppBar(
+            backgroundColor: _globals.secMain,
+            elevation: 0,
+            title: Text(
+              'AutoparNet',
+              textScaleFactor: 1,
+              style: GoogleFonts.comfortaa(
+                color: _globals.txtOnsecMainDark,
+                fontSize: 21,
+                fontWeight: FontWeight.bold
+              )
+            ),
+            actions: [
+              IconButton(
+                onPressed: (){},
+                icon: const Icon(Icons.search)
+              ),
+              IconButton(
+                onPressed: () async => await _showMenuMain(context),
+                icon: const Icon(Icons.more_vert_rounded)
+              )
+            ],
+            bottom: bottom,
+          ),
+          body: SizedBox(
+            width: size.width, height: size.height,
+            child: body
+          ),
+          floatingActionButton: floatingActionButton
+        )
+      ),
+    );
+  }
+
+  
+  ///
+  Future<void> _showMenuMain(BuildContext context) async {
+
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: _globals.secMain,
+      constraints: BoxConstraints.expand(
+        width: MediaQuery.of(context).size.width,
+        height: MediaQuery.of(context).size.height * 0.9,
+      ),
+      builder: (_) => MenuMain()
+    );
+  }
+
+}

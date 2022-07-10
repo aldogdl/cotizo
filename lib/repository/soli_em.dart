@@ -15,6 +15,10 @@ class SoliEm {
   final _pem = PiezasRepository();
   final _aem = AutosRepository();
 
+  // Usado para determinar si una orden fue hidratada y no estaba
+  // incluida en la lista de cache. si es true, hay que agregarla.
+  bool addToList = false;
+
   ///
   Future<void> initBoxes() async {
 
@@ -33,26 +37,34 @@ class SoliEm {
     List<OrdenEntity> ords = [];
 
     for (var i = 0; i < data.length; i++) {
-
-      var ord = OrdenEntity();
-      final has = currents.where((element) => element.id == data[i]['id']);
-      if(has.isEmpty) {
-        // Cuenta con piezas?
-        if(data[i].containsKey('piezas') && data[i]['piezas'].isNotEmpty) {
-          ord = await hidratarPiezasFS(List<Map<String, dynamic>>.from(data[i]['piezas']), ord);
-        }
-        // Proceguimos con el auto
-        if(ord.auto == 0) {
-          ord = await hidratarAutoFS(data[i], ord);
-        }
-        ord.fromServer(data[i]);
-        ords.add(ord);
-      }else{
-        ords.add(has.first);
-      }
+      final ord = await hidratarOrdenFull(data[i], currents);
+      ords.add(ord);
     }
 
     return ords;
+  }
+
+  ///
+  Future<OrdenEntity> hidratarOrdenFull(Map<String, dynamic> orden, List<OrdenEntity> currents) async {
+
+    var ord = OrdenEntity();
+    final has = currents.where((element) => element.id == orden['id']);
+    if(has.isEmpty) {
+      // Cuenta con piezas?
+      if(orden.containsKey('piezas') && orden['piezas'].isNotEmpty) {
+        ord = await hidratarPiezasFS(List<Map<String, dynamic>>.from(orden['piezas']), ord);
+      }
+      // Proceguimos con el auto
+      if(ord.auto == 0) {
+        ord = await hidratarAutoFS(orden, ord);
+      }
+      ord.fromServer(orden);
+      addToList = true;
+      return ord;
+    }else{
+      addToList = false;
+      return has.first;
+    }
   }
 
   /// Hidratamos los datos retornados desde el servidor

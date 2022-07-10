@@ -129,15 +129,15 @@ class _MyInfinityListState extends State<MyInfinityList> {
       final result = await _solEm.oem.getAllOrdenesAndPiezas(_ords.numberPage);
       _solEm.oem.cleanResult();
       if(result.isNotEmpty) {
-        response = await _solEm.setOrdenFromServer(result, _ords.items);
-        _ords.items.addAll(response);
+        response = await _solEm.setOrdenFromServer(result, _ords.items());
+        _ords.setItems(response);
         _ords.setIndexResult(response.first.id, response.last.id);
       }
     }else{
       if(_ords.indexFirsPerPage == _ords.indexLastPerPage) {
-        response.add(_ords.items.first);
+        response.add(_ords.items().first);
       }else{
-        response = _ords.items.getRange(_ords.indexFirsPerPage, _ords.indexLastPerPage).toList();
+        response = _ords.items().getRange(_ords.indexFirsPerPage, _ords.indexLastPerPage).toList();
       }
     }
     

@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
 import '../entity/share_data_orden.dart';
-import '../providers/signin_provider.dart';
 import '../services/my_get.dart';
 import '../vars/my_paths.dart';
 import '../widgets/show_dialogs.dart';
@@ -258,9 +256,9 @@ class TileOrdenPieza extends StatelessWidget {
   void _visor(List<String> imgs) async {
 
     await showDialog(
-      context: Mget.ctx,
+      context: Mget.ctx!,
       builder: (_) => ShowDialogs.visorFotosDialog(
-        Mget.ctx, ViewFotos(fotosList: imgs)
+        Mget.ctx!, ViewFotos(fotosList: imgs)
       )
     );
   }
@@ -272,14 +270,14 @@ class TileOrdenPieza extends StatelessWidget {
       context.go('/gest-data');
     }else{
       ShowDialogs.alert(
-        Mget.ctx, 'noLogin',
+        Mget.ctx!, 'noLogin',
         hasActions: true,
         labelNot: 'NO',
         labelOk: 'AUTENTICARME'
       ).then((bool? acc) {
         acc = (acc == null) ? false : acc;
         if(acc) {
-           Mget.ctx.push('/login');
+          Mget.ctx!.push('/login');
         }
       });
     }

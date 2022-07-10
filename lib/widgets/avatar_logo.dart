@@ -17,10 +17,14 @@ class AvatarLogo extends StatelessWidget {
     return CircleAvatar(
       backgroundColor: Colors.grey,
       radius: 25,
-      child: ClipOval(
-        child: CachedNetworkImage(
-          imageUrl: MyPath.getUriLogoMrk(logo),
-          fit: BoxFit.cover,
+      child: CircleAvatar(
+        backgroundColor: Colors.white,
+        radius: 23,
+        child: ClipOval(
+          child: CachedNetworkImage(
+            imageUrl: MyPath.getUriLogoMrk(logo),
+            fit: BoxFit.cover,
+          ),
         ),
       ),
     );

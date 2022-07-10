@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 
 import '../entity/share_data_orden.dart';
 import '../services/my_get.dart';
-import '../vars/my_paths.dart';
 import 'avatar_logo.dart';
 import 'my_infinity_list.dart';
 import '../entity/orden_entity.dart';
@@ -21,9 +19,9 @@ class TileOrdenMrks extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
 
+    Mget.init(context, null);
     if(!Mget.isInit) {
       Mget.isInit = true;
-      Mget.init(context, null);
       Mget.size = MediaQuery.of(context).size;
     }
     
@@ -32,7 +30,7 @@ class TileOrdenMrks extends StatelessWidget {
       builder: (_, __) {
 
         return InkWell(
-          onTap: () => _verPiezas(Mget.ctx),
+          onTap: () => _verPiezas(Mget.ctx!),
           child: Container(
             width: Mget.size.width,
             padding: const EdgeInsets.symmetric(horizontal: 3),

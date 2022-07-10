@@ -9,15 +9,19 @@ class OrdenesProvider with ChangeNotifier {
   int indexLastPerPage = 0;
 
   List<OrdenEntity> _items = [];
-  List<OrdenEntity> get items => _items;
-  set items(List<OrdenEntity> its) {
+  List<OrdenEntity> items() => _items;
+  setItems(List<OrdenEntity> its) {
     _items = its;
+    //notifyListeners();
+  }
+  set addItem(OrdenEntity itm) {
+    _items.add(itm);
     //notifyListeners();
   }
 
   /// Guardamos los datos del primer y ultimo index recuperados para la lista
   setIndexResult(int idOrdenInit, int idOrdenFin) {
-    indexFirsPerPage = items.indexWhere((element) => element.id == idOrdenInit);
-    indexLastPerPage = items.indexWhere((element) => element.id == idOrdenFin);
+    indexFirsPerPage = items().indexWhere((element) => element.id == idOrdenInit);
+    indexLastPerPage = items().indexWhere((element) => element.id == idOrdenFin);
   }
 }

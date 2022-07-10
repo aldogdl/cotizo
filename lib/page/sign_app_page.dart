@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
-
-import 'package:cotizo/config/sngs_manager.dart';
-import 'package:go_router/go_router.dart';
+import 'package:flutter/services.dart' show PlatformException;
 import 'package:provider/provider.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import 'package:go_router/go_router.dart';
+
+import '../config/sngs_manager.dart';
 import '../providers/signin_provider.dart';
 import '../vars/globals.dart';
 
@@ -31,6 +32,7 @@ class _SignAppPageState extends State<SignAppPage> {
   @override
   void dispose() {
     _ctrPage.dispose();
+    _isLoading.dispose();
     super.dispose();
   }
 
@@ -81,16 +83,15 @@ class _SignAppPageState extends State<SignAppPage> {
                   style: ButtonStyle(
                     backgroundColor: MaterialStateProperty.all(const Color.fromARGB(255, 15, 109, 185))
                   ),
-                  onPressed: () async {
-                    _isLoading.value = 'auth';
-                    _signIn.login().then((_) {
-                      if(_signIn.currentUser != null) {
-                        context.pop();
-                      }
-                    });
-                  },
+                  onPressed: () async => await _hacerLogin(),
                   icon: const Icon(Icons.account_circle),
-                  label: const Text('LOGIN CUANTA DE GOOGLE')
+                  label: const Text(
+                    'LOGIN CUANTA DE GOOGLE',
+                    textScaleFactor: 1,
+                    style: TextStyle(
+                      fontSize: 17
+                    ),
+                  )
                 ),
               )
             ],
@@ -219,12 +220,19 @@ class _SignAppPageState extends State<SignAppPage> {
             style: ButtonStyle(
               backgroundColor: MaterialStateProperty.all(Colors.grey)
             ),
-            onPressed: () async => context.pop(),
+            onPressed: () {
+              if(_globals.goBackTo.isNotEmpty) {
+                context.go(_globals.goBackTo);
+              }else{
+                context.pop();
+              }
+            },
             child: const Text(
               'Continuar sin Autenticación',
               textScaleFactor: 1,
               style: TextStyle(
-                fontSize: 17
+                fontSize: 17,
+                color: Colors.black
               ),
             )
           )
@@ -270,6 +278,29 @@ class _SignAppPageState extends State<SignAppPage> {
         textAlign: TextAlign.center,
       ),
     );
+  }
+
+  ///
+  Future<void> _hacerLogin() async {
+
+    final nav = GoRouter.of(context);
+    _isLoading.value = 'auth';
+    
+    try {
+      await _signIn.login();
+    } on PlatformException catch (e) {
+      _isLoading.value = 'cancel';
+    } finally {
+      _isLoading.value = '';
+    }
+
+    if(_signIn.currentUser != null) {
+      if(_globals.goBackTo.isNotEmpty) {
+        nav.go(_globals.goBackTo);
+      }else{
+        nav.pop();
+      }
+    }
   }
 
   ///

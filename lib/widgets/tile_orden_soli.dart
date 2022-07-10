@@ -1,9 +1,8 @@
 import 'dart:math';
-
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:go_router/go_router.dart';
 
-import 'my_infinity_list.dart';
 import '../entity/orden_entity.dart';
 
 class TileOrdenSoli extends StatelessWidget {
@@ -37,9 +36,10 @@ class TileOrdenSoli extends StatelessWidget {
 
     final rnd = Random();
     final ind = rnd.nextInt(pzas.length);
+    const idT1 = 0;
 
     return InkWell(
-      onTap: () => _verPiezas(context),
+      onTap: () => context.go('/cotizo/${item.id}-$idT1-$idT1-$idT1/'),
       child: Container(
         width: MediaQuery.of(context).size.width,
         padding: const EdgeInsets.symmetric(horizontal: 10),
@@ -144,25 +144,4 @@ class TileOrdenSoli extends StatelessWidget {
     );
   }
 
-  ///
-  void _verPiezas(BuildContext context) async {
-
-    await showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        alignment: Alignment.bottomCenter,
-        backgroundColor: Colors.black,
-        contentPadding: const EdgeInsets.all(0),
-        insetPadding: const EdgeInsets.all(0),
-        scrollable: true,
-        titlePadding: const EdgeInsets.all(0),
-        buttonPadding: const EdgeInsets.all(0),
-        content: SizedBox(
-          width: MediaQuery.of(context).size.width,
-          height: MediaQuery.of(context).size.height - 90,
-          child: const MyInfinityList(tile: 'gral')
-        ),
-      )
-    );
-  }
 }

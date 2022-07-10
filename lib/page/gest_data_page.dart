@@ -1,9 +1,10 @@
-import 'package:cotizo/entity/orden_entity.dart';
+import 'package:cotizo/widgets/bg_img_pzas.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 
 import '../config/sngs_manager.dart';
+import '../entity/orden_entity.dart';
 import '../entity/chat_entity.dart';
 import '../providers/gest_data_provider.dart';
 import '../widgets/mensajes/get_anet_msg.dart';
@@ -59,29 +60,12 @@ class _GestDataPageState extends State<GestDataPage> {
             await _salirCot();
             return Future.value(false);
           },
-          child: _bg(
+          child: BGImgPzas(
+            bgColor: _globals.bgMain,
             child: _body()
           ),
         ),
       )
-    );
-  }
-
-  ///
-  Widget _bg({required Widget child}) {
-
-    return Container(
-      width: MediaQuery.of(context).size.width,
-      height: MediaQuery.of(context).size.height,
-      decoration: BoxDecoration(
-        image: DecorationImage(
-          image: const AssetImage('assets/images/bg.jpg'),
-          repeat: ImageRepeat.repeat,
-          invertColors: true,
-          colorFilter: ColorFilter.mode(_globals.bgMain, BlendMode.dst)
-        )
-      ),
-      child: child
     );
   }
 
