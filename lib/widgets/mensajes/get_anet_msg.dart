@@ -18,8 +18,8 @@ class GetAnet {
       id: id, from: ChatFrom.anet, key: ChatKey.estasListo, value: ''
     );
     
-    // El case indica el que esta en pantalla
-    // En el cuerpo del case indicamos cual es el que se insertará
+    // El case indica el mensaje actual que esta en pantalla
+    // En el cuerpo del case indicamos cual es el siguiente mensaje que se insertará
     switch (lastkey) {
       case ChatKey.none: //hidden
         chat.value= DialogsOf.getTime(modo: modo);

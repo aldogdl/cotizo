@@ -24,4 +24,10 @@ class OrdenesProvider with ChangeNotifier {
     indexFirsPerPage = items().indexWhere((element) => element.id == idOrdenInit);
     indexLastPerPage = items().indexWhere((element) => element.id == idOrdenFin);
   }
+
+  /// SECC de ver ordenas por solicitud
+  /// Utilizada para saber si es necesario filtrar las ordenes y mostrar solo las
+  /// que se indiquen en esta variable.
+  Map<String, dynamic> filterBySols = {};
+  
 }

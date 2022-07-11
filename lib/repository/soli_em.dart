@@ -52,10 +52,12 @@ class SoliEm {
     if(has.isEmpty) {
       // Cuenta con piezas?
       if(orden.containsKey('piezas') && orden['piezas'].isNotEmpty) {
+        // Hidratar piezas from server.
         ord = await hidratarPiezasFS(List<Map<String, dynamic>>.from(orden['piezas']), ord);
       }
       // Proceguimos con el auto
       if(ord.auto == 0) {
+        // Hidratar auto from server.
         ord = await hidratarAutoFS(orden, ord);
       }
       ord.fromServer(orden);
@@ -132,4 +134,44 @@ class SoliEm {
   ///
   Future<ModeloEntity?> getModeloById(int idMd) async => await _aem.getModeloById(idMd);
 
+  ///
+  Future<List<Map<String, dynamic>>> sortPerMark(List<OrdenEntity> ords) async {
+
+    List<Map<String, dynamic>> sort = [];
+    List<int> metidas = [];
+
+    if(ords.isNotEmpty) {
+      for (var i = 0; i < ords.length; i++) {
+        final auto = await getAutoById(ords[i].auto);
+        if(auto != null) {
+
+          if(metidas.contains(auto.marca)) {
+            
+            int indx = sort.indexWhere((element) => element['mrk'] == auto.marca);
+            if(indx != -1) {
+              final tite = Map<String, dynamic>.from(sort[indx]['tile']);
+              tite['cPzas'] = tite['cPzas'] + ords[i].piezas.length;
+              var ordenes = List<int>.from(tite['ords']);
+              ordenes.add(ords[i].id);
+              tite['ords'] = ordenes;
+              sort[indx]['tile'] = tite;
+            }
+          }else{
+
+            final marca = await getMarcaById(auto.marca);
+            Map<String, dynamic> tile = {
+              'logo':marca!.logo, 'marca':marca.nombre, 'idMrk': auto.marca,
+              'cPzas': ords[i].piezas.length, 'isNac': auto.isNac,
+              'ords': [ords[i].id], 'created': ords[i].createdAt
+            };
+            metidas.add(auto.marca);
+            Map<String, dynamic> mrk = {'mrk':auto.marca, 'tile':tile};
+            sort.add(mrk);
+          }
+        }
+      }
+    }
+    metidas = [];
+    return sort;
+  }
 }

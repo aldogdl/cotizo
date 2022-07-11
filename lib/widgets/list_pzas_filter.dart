@@ -32,6 +32,7 @@ class _ListPzasFilterState extends State<ListPzasFilter> {
   final SoliEm _solEm = SoliEm();
   final ScrollController _scrollCtr = ScrollController();
   final ValueNotifier<String> _msgLoad = ValueNotifier<String>('...');
+  final _ds = SharedDataOrden();
 
   OrdenesProvider? _ordProv;
   OrdenEntity? _orden;
@@ -41,6 +42,7 @@ class _ListPzasFilterState extends State<ListPzasFilter> {
 
   @override
   void initState() {
+
     if(widget.ids.contains('-')) {
       final partes = widget.ids.split('-');
       _idOrd = int.parse(partes.first);
@@ -93,6 +95,7 @@ class _ListPzasFilterState extends State<ListPzasFilter> {
       isLoad = false;
       title = 'La búsqueda arrojo...';
     }
+
     return SizedBox.expand(
       child: Column(
         children: [
@@ -219,6 +222,8 @@ class _ListPzasFilterState extends State<ListPzasFilter> {
         builder: (_, AsyncSnapshot snap) {
           
           if(snap.hasData) {
+            
+            _ds.pieza = snap.data;
             return TileOrdenPieza(
               idPieza: snap.data.id,
               idAuto: _orden!.auto,
@@ -226,7 +231,7 @@ class _ListPzasFilterState extends State<ListPzasFilter> {
               created: _orden!.createdAt,
               fotos: (_orden!.fotos.containsKey(snap.data.id))
                 ? List<String>.from(_orden!.fotos[snap.data.id]!) : <String>[],
-              box: SharedDataOrden(),
+              box: _ds,
             );
           }
 
@@ -242,15 +247,21 @@ class _ListPzasFilterState extends State<ListPzasFilter> {
   Future<String> _fetchData() async {
 
     if (!mounted) { return 'none'; }
+
+    _globals.goBackTo = '/cotizo/${widget.ids}';
+    
     _ordProv = context.read<OrdenesProvider>();
     Mget.init(context, context.read<GestDataProvider>());
+
     _msgLoad.value = 'Recuperando la Orde # $_idOrd';
     await Future.delayed(const Duration(microseconds: 200));
 
     final hasOrdInCache = _ordProv!.items().where((element) => element.id == _idOrd);
     if(hasOrdInCache.isNotEmpty) {
+
       _orden = hasOrdInCache.first;
     }else{
+
       final fileReg = '${widget.ids}-${DateTime.now().microsecondsSinceEpoch}.see';
       final result = await _solEm.oem.getAOrdenAndPieza(_idOrd, fileReg);
       _solEm.oem.cleanResult();
@@ -259,6 +270,7 @@ class _ListPzasFilterState extends State<ListPzasFilter> {
         _msgLoad.value = 'Hidratando Modelos';
         await Future.delayed(const Duration(microseconds: 200));
         _orden = await _solEm.hidratarOrdenFull(result, _ordProv!.items());
+        
         if( _solEm.addToList ) {
           if(_orden != null) {
             _ordProv!.addItem = _orden!;

@@ -38,13 +38,19 @@ class GetTipoBurbuja extends StatelessWidget {
   Widget _getTipoInteractivo(BuildContext context) {
 
     switch (msg.key) {
+
       case ChatKey.estasListo:
         return BurbujaDialog(
           msg: msg,
           isInteractive: true,
           labelOk: 'COTIZAR AHORA',
           labelNot: 'NO, SALIR',
-          onResponse: (Map<String, dynamic> res) => Mget.prov!.responseInteractive(context, res, msg.key)
+          onResponse: (Map<String, dynamic> res) {
+            if(Mget.globals.goBackTo.isNotEmpty) {
+              res['backUri'] = Mget.globals.goBackTo;
+            }
+            Mget.prov!.responseInteractive(context, res, msg.key);
+          }
         );
       case ChatKey.errAwaitFotos:
         return BurbujaDialog(

@@ -1,8 +1,8 @@
-import '../repository/soli_em.dart';
 import 'autos_entity.dart';
 import 'marca_entity.dart';
 import 'modelo_entity.dart';
 import 'pieza_entity.dart';
+import '../repository/soli_em.dart';
 
 class SharedDataOrden {
 

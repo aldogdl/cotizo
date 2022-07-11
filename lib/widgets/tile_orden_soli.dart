@@ -1,147 +1,148 @@
-import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 
+import '../entity/share_data_orden.dart';
 import '../entity/orden_entity.dart';
+import '../providers/gest_data_provider.dart';
+import '../services/my_get.dart';
+import '../vars/my_paths.dart';
 
 class TileOrdenSoli extends StatelessWidget {
 
   final OrdenEntity item;
+  final SharedDataOrden box;
   const TileOrdenSoli({
     Key? key,
-    required this.item
+    required this.item,
+    required this.box
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
 
-    List<Map<String, dynamic>> marcas = [
-      {'m':'FORD', 'md':'MUSTANG', 'a': '2009', 'n':'IMPORTADO'},
-      {'m':'FORD', 'md':'MUSTANG', 'a': '2009', 'n':'IMPORTADO'},
-      {'m':'FORD', 'md':'MUSTANG', 'a': '2009', 'n':'IMPORTADO'},
-      {'m':'FORD', 'md':'MUSTANG', 'a': '2009', 'n':'IMPORTADO'},
-      {'m':'FORD', 'md':'MUSTANG', 'a': '2009', 'n':'IMPORTADO'},
-      {'m':'FORD', 'md':'MUSTANG', 'a': '2009', 'n':'IMPORTADO'},
-    ];
+    Mget.init(context, context.read<GestDataProvider>());
+    
+    return FutureBuilder(
+      future: _getData(),
+      builder: (_, AsyncSnapshot snap) {
 
-    List<String> pzas = [
-      'https://peru21.pe/resizer/gf4thh61l3hOI_byR5Pmuk10KhU=/580x330/smart/filters:format(jpeg):quality(75)/arc-anglerfish-arc2-prod-elcomercio.s3.amazonaws.com/public/JHX7MNYQYNEX5LRW4IV5CZVO4Q.jpg',
-      'https://memolira.com/wp-content/uploads/2021/05/auto-chatarra-autopartes-3.jpg',
-      'https://i.ebayimg.com/images/g/8HgAAOSwmdtd0us8/s-l800.jpg',
-      'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR8Lx1zzdp8EMKBAa9QvQSf3qGoTQU7iLQoGQ&usqp=CAU',
-      'https://images.segundamano.mx/api/v1/smmx/images/36/3616539934.jpg?rule=web_gallery_3x',
-      'https://images.segundamano.mx/api/v1/smmx/images/17/1736608011.jpg?rule=web_gallery_3x',
-    ];
+        if(snap.connectionState == ConnectionState.done) {
 
-    final rnd = Random();
-    final ind = rnd.nextInt(pzas.length);
-    const idT1 = 0;
-
-    return InkWell(
-      onTap: () => context.go('/cotizo/${item.id}-$idT1-$idT1-$idT1/'),
-      child: Container(
-        width: MediaQuery.of(context).size.width,
-        padding: const EdgeInsets.symmetric(horizontal: 10),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.start,
-          children: [
-            CircleAvatar(
-              backgroundColor: Colors.grey,
-              radius: 25,
-              child: ClipOval(
-                child: CachedNetworkImage(
-                  imageUrl: pzas[ind],
-                  fit: BoxFit.cover,
-                ),
-              ),
-            ),
-            const SizedBox(width: 10),
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 10),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+          return InkWell(
+            onTap: () => context.go('/cotizo/${item.id}'),
+            child: Container(
+              width: MediaQuery.of(Mget.ctx!).size.width,
+              padding: const EdgeInsets.symmetric(horizontal: 10),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.start,
                 children: [
-                  SizedBox(
-                    width: MediaQuery.of(context).size.width * 0.72,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      mainAxisSize: MainAxisSize.max,
-                      children: [
-                        Text(
-                          '${marcas[ind]['md']} - ${marcas[ind]['a']}',
-                          textScaleFactor: 1,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 17
-                          ),
-                        ),
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(10),
-                                color: const Color(0xFF51a985)
-                              ),
-                              child: Text(
-                                '${rnd.nextInt(10)}',
-                                textScaleFactor: 1,
-                                style: const TextStyle(
-                                  color: Colors.black,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.bold
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 3),
-                            Text(
-                              'Pzas.',
-                              textScaleFactor: 1,
-                              style: TextStyle(
-                                color: Colors.white.withOpacity(0.5),
-                                fontSize: 11
-                              ),
-                            ),
-                          ],
-                        )
-                      ],
+                  _foto(),
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 10),
+                      child: _dataOrd()
                     ),
                   ),
-                  const SizedBox(height: 3),
-                  SizedBox(
-                    width: MediaQuery.of(context).size.width * 0.72,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      mainAxisSize: MainAxisSize.max,
-                      children: [
-                        Text(
-                          '${marcas[ind]['m']} - ${marcas[ind]['n']}',
-                          textScaleFactor: 1,
-                          style: TextStyle(
-                            color: Colors.white.withOpacity(0.5),
-                            fontSize: 17
-                          ),
-                        ),
-                        Text(
-                          'ID: 2536',
-                          textScaleFactor: 1,
-                          style: TextStyle(
-                            color: Colors.white.withOpacity(0.5),
-                            fontSize: 12
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+                  _pzasAndId()
                 ],
               ),
-            )
-          ],
+            ),
+          );
+        }
+
+        return const SizedBox();
+      },
+    );
+  }
+
+  ///
+  Widget _foto() {
+
+    return CircleAvatar(
+      backgroundColor: Colors.grey,
+      radius: 25,
+      child: ClipOval(
+        child: CachedNetworkImage(
+          imageUrl: MyPath.getUriFotoPieza(item.fotos[item.piezas.first]![0]),
+          fit: BoxFit.cover,
         ),
       ),
     );
   }
 
+  ///
+  Widget _dataOrd() {
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          '${box.modelo!.nombre} ${box.auto!.anio}',
+          textScaleFactor: 1,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 17
+          ),
+        ),
+        const SizedBox(height: 5),
+        Text(
+          '${box.marca!.nombre} -> ${(box.auto!.isNac) ? "NACIONAL" : "IMPORTADO"}',
+          textScaleFactor: 1,
+          style: TextStyle(
+            color: Colors.white.withOpacity(0.5),
+            fontSize: 14
+          ),
+        ),
+      ],
+    );
+
+  }
+
+  ///
+  Widget _pzasAndId() {
+
+    final sufix = (item.piezas.length > 1) ? 'Pzas.' : 'Pza.';
+
+    return Column(
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(10),
+            color: const Color(0xFF51a985)
+          ),
+          child: Text(
+            '${item.piezas.length} $sufix',
+            textScaleFactor: 1,
+            style: const TextStyle(
+              color: Colors.black,
+              fontSize: 12,
+              fontWeight: FontWeight.bold
+            ),
+          ),
+        ),
+        const SizedBox(height: 5),
+        Text(
+          'ID: ${item.id}',
+          textScaleFactor: 1,
+          style: TextStyle(
+            color: Colors.white.withOpacity(0.5),
+            fontSize: 14
+          ),
+        ),
+      ],
+    );
+  }
+  
+  ///
+  Future<void> _getData() async {
+
+    box.auto = await box.solEm.getAutoById(item.auto);
+    if(box.auto != null) {
+      box.marca = await box.solEm.getMarcaById(box.auto!.marca);
+      box.modelo = await box.solEm.getModeloById(box.auto!.modelo);
+    }
+  }
 }

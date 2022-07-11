@@ -288,7 +288,7 @@ class _SignAppPageState extends State<SignAppPage> {
     
     try {
       await _signIn.login();
-    } on PlatformException catch (e) {
+    } on PlatformException catch (_) {
       _isLoading.value = 'cancel';
     } finally {
       _isLoading.value = '';

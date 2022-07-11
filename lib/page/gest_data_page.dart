@@ -1,4 +1,3 @@
-import 'package:cotizo/widgets/bg_img_pzas.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
@@ -6,19 +5,25 @@ import 'package:go_router/go_router.dart';
 import '../config/sngs_manager.dart';
 import '../entity/orden_entity.dart';
 import '../entity/chat_entity.dart';
+import '../entity/share_data_orden.dart';
 import '../providers/gest_data_provider.dart';
-import '../widgets/mensajes/get_anet_msg.dart';
-import '../widgets/show_dialogs.dart';
 import '../vars/enums.dart';
 import '../vars/globals.dart';
+import '../widgets/mensajes/get_anet_msg.dart';
+import '../widgets/show_dialogs.dart';
 import '../widgets/foot_fotos.dart';
+import '../widgets/bg_img_pzas.dart';
 import '../widgets/escribir_long.dart';
 import '../widgets/mensajes/get_tipo_burbuja.dart';
 import '../widgets/tile_orden_soli.dart';
 
 class GestDataPage extends StatefulWidget {
 
-  const GestDataPage({Key? key}) : super(key: key);
+  final int idP;
+  const GestDataPage({
+    Key? key,
+    required this.idP,
+  }) : super(key: key);
 
   @override
   State<GestDataPage> createState() => _GestDataPageState();
@@ -105,7 +110,7 @@ class _GestDataPageState extends State<GestDataPage> {
     return Container(
       color: _globals.secMain,
       padding: const EdgeInsets.all(8),
-      child: TileOrdenSoli(item: OrdenEntity()),
+      child: TileOrdenSoli(item: OrdenEntity(), box: SharedDataOrden()),
     );
   }
 

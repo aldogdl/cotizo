@@ -280,10 +280,11 @@ class GestDataProvider with ChangeNotifier {
 
   ///
   void responseInteractive(BuildContext context, Map<String, dynamic> res, ChatKey key) async {
-
+    
     switch (key) {
       case ChatKey.estasListo:
         if(res['res']) {
+
           ChatEntity? msg = await GetAnet.msg(ChatKey.getAlertFotosLogos, id: msgs.length+1, modo: modoDialog);
           if(msg != null) {
             showMsgEstasListo = false;
@@ -299,7 +300,11 @@ class GestDataProvider with ChangeNotifier {
           }
         }else{
           clean();
-          context.goNamed('home');
+          if(res.containsKey('backUri')) {
+            context.go(res['backUri']);
+          }else{
+            context.goNamed('home');
+          }
         }
         break;
       case ChatKey.errAwaitFotos:

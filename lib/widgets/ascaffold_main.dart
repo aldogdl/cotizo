@@ -1,9 +1,9 @@
-import 'package:cotizo/config/sngs_manager.dart';
-import 'package:cotizo/services/my_get.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../config/sngs_manager.dart';
+import '../services/my_get.dart';
 import '../vars/globals.dart';
 import '../widgets/menu_main.dart';
 
@@ -29,24 +29,7 @@ class AscaffoldMain extends StatelessWidget {
 
     return SafeArea(
       child: WillPopScope(
-        onWillPop: () {
-
-          late final GoRouter nav;
-          if(Mget.ctx != null) {
-            try {
-              nav = GoRouter.of(Mget.ctx!);
-            } catch (e) {
-              nav = GoRouter.of(context);
-            }
-          }else{
-            nav = GoRouter.of(context);
-          }
-          if(nav.canPop()) {
-            return Future.value(true);
-          }
-          nav.go('/');
-          return Future.value(false);
-        },
+        onWillPop: () => _onWill(context),
         child: Scaffold(
           backgroundColor: _globals.bgMain,
           appBar: AppBar(
@@ -83,7 +66,27 @@ class AscaffoldMain extends StatelessWidget {
     );
   }
 
-  
+  ///
+  Future<bool> _onWill(BuildContext context) {
+
+    late final GoRouter nav;
+    if(Mget.ctx != null) {
+      try {
+        nav = GoRouter.of(Mget.ctx!);
+      } catch (e) {
+        nav = GoRouter.of(context);
+      }
+    }else{
+      nav = GoRouter.of(context);
+    }
+
+    if(nav.canPop()) {
+      return Future.value(true);
+    }
+    nav.go('/');
+    return Future.value(false);
+  }
+
   ///
   Future<void> _showMenuMain(BuildContext context) async {
 

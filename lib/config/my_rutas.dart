@@ -21,8 +21,8 @@ class MyRutas {
       ),
       GoRoute(
         name: 'gestData',
-        path: '/gest-data',
-        builder: (context, state) => const GestDataPage(),
+        path: '/gest-data/:idP',
+        builder: (context, state) => GestDataPage(idP: int.parse('${state.params['idP']}')),
       ),
       GoRoute(
         name: 'gestDataFromLink',
