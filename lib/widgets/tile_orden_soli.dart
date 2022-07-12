@@ -13,10 +13,12 @@ class TileOrdenSoli extends StatelessWidget {
 
   final OrdenEntity item;
   final SharedDataOrden box;
+  final bool withRouting;
   const TileOrdenSoli({
     Key? key,
     required this.item,
-    required this.box
+    required this.box,
+    this.withRouting = true
   }) : super(key: key);
 
   @override
@@ -31,7 +33,11 @@ class TileOrdenSoli extends StatelessWidget {
         if(snap.connectionState == ConnectionState.done) {
 
           return InkWell(
-            onTap: () => context.go('/cotizo/${item.id}'),
+            onTap: () {
+              if(withRouting) {
+                context.go('/cotizo/${item.id}');
+              }
+            },
             child: Container(
               width: MediaQuery.of(Mget.ctx!).size.width,
               padding: const EdgeInsets.symmetric(horizontal: 10),
@@ -52,7 +58,13 @@ class TileOrdenSoli extends StatelessWidget {
           );
         }
 
-        return const SizedBox();
+        return SizedBox(
+          width: MediaQuery.of(context).size.width,
+          height: MediaQuery.of(context).size.height * 0.065,
+          child: const Center(
+            child: SizedBox()
+          )
+        );
       },
     );
   }
@@ -107,21 +119,35 @@ class TileOrdenSoli extends StatelessWidget {
 
     return Column(
       children: [
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(10),
-            color: const Color(0xFF51a985)
-          ),
-          child: Text(
-            '${item.piezas.length} $sufix',
-            textScaleFactor: 1,
-            style: const TextStyle(
-              color: Colors.black,
-              fontSize: 12,
-              fontWeight: FontWeight.bold
+        Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(10),
+                color: const Color(0xFF51a985)
+              ),
+              child: Text(
+                '${item.piezas.length}',
+                textScaleFactor: 1,
+                style: const TextStyle(
+                  color: Colors.black,
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold
+                ),
+              ),
             ),
-          ),
+            const SizedBox(width: 3),
+            Text(
+              sufix,
+              textScaleFactor: 1,
+              style: const TextStyle(
+                color: Color(0xFF51a985),
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
         ),
         const SizedBox(height: 5),
         Text(

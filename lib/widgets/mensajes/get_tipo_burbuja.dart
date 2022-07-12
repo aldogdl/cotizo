@@ -46,9 +46,6 @@ class GetTipoBurbuja extends StatelessWidget {
           labelOk: 'COTIZAR AHORA',
           labelNot: 'NO, SALIR',
           onResponse: (Map<String, dynamic> res) {
-            if(Mget.globals.goBackTo.isNotEmpty) {
-              res['backUri'] = Mget.globals.goBackTo;
-            }
             Mget.prov!.responseInteractive(context, res, msg.key);
           }
         );

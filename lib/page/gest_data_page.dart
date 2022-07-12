@@ -7,6 +7,7 @@ import '../entity/orden_entity.dart';
 import '../entity/chat_entity.dart';
 import '../entity/share_data_orden.dart';
 import '../providers/gest_data_provider.dart';
+import '../providers/ordenes_provider.dart';
 import '../vars/enums.dart';
 import '../vars/globals.dart';
 import '../widgets/mensajes/get_anet_msg.dart';
@@ -34,6 +35,8 @@ class _GestDataPageState extends State<GestDataPage> {
   final ScrollController _scroolCtr = ScrollController();
   final Globals _globals = getIt<Globals>();
   late final GestDataProvider _prov;
+  late final OrdenesProvider _ordProv;
+  OrdenEntity _orden = OrdenEntity();
 
   bool _isInit = false;
   
@@ -55,6 +58,7 @@ class _GestDataPageState extends State<GestDataPage> {
     if(!_isInit) {
       _isInit = true;
       _prov = context.read<GestDataProvider>();
+      _ordProv = context.read<OrdenesProvider>();
     }
 
     return Scaffold(
@@ -110,7 +114,24 @@ class _GestDataPageState extends State<GestDataPage> {
     return Container(
       color: _globals.secMain,
       padding: const EdgeInsets.all(8),
-      child: TileOrdenSoli(item: OrdenEntity(), box: SharedDataOrden()),
+      child: FutureBuilder(
+        future: _getOrden(),
+        builder: (_, AsyncSnapshot snap) {
+
+          if(snap.connectionState == ConnectionState.done) {
+            return TileOrdenSoli(
+              item: _orden, box: SharedDataOrden(), withRouting: false,
+            );
+          }
+          return SizedBox(
+            width: MediaQuery.of(context).size.width,
+            height: MediaQuery.of(context).size.height * 0.065,
+            child: const Center(
+              child: SizedBox()
+            )
+          );
+        },
+      )
     );
   }
 
@@ -286,6 +307,17 @@ class _GestDataPageState extends State<GestDataPage> {
   }
 
   ///
+  Future<void> _getOrden() async {
+
+    if(_orden.id == 0) {
+      _orden = _ordProv.items().firstWhere(
+        (element) => element.id == _ordProv.idOrdenCurrent, 
+        orElse: () => OrdenEntity()
+      );
+    }
+  }
+
+  ///
   void getNextMsg(ChatEntity? msg) async {
 
     if(_prov.msgs.isNotEmpty) {
@@ -307,7 +339,15 @@ class _GestDataPageState extends State<GestDataPage> {
       }
     });
 
-    if(!alertar) { _prov.clean(); context.goNamed('home'); return; }
+    String goBack = '/';
+    if(_globals.histUri.isNotEmpty) {
+      goBack = _globals.getBack();
+    }
+    if(!alertar) {
+      _prov.clean();
+      context.go(goBack);
+      return;
+    }
 
     ShowDialogs.alert(
       context, 'exitCot',
@@ -316,7 +356,7 @@ class _GestDataPageState extends State<GestDataPage> {
       res = (res == null) ? false : res;
       if(res) {
         _prov.clean();
-        context.goNamed('home');
+        context.go(goBack);
       }
     });
   }

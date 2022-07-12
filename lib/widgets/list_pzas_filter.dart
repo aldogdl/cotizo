@@ -248,8 +248,6 @@ class _ListPzasFilterState extends State<ListPzasFilter> {
 
     if (!mounted) { return 'none'; }
 
-    _globals.goBackTo = '/cotizo/${widget.ids}';
-    
     _ordProv = context.read<OrdenesProvider>();
     Mget.init(context, context.read<GestDataProvider>());
 

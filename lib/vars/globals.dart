@@ -3,12 +3,21 @@ import 'package:flutter/material.dart' show Color;
 
 class Globals {
 
-  // Usada esta variable para saber si la pagina de login
-  // fue llamada desdeuna entrada de link profundo.
-  //
-  // El objetivo es saber a que pagina regresar despues de hacer login.
-  String goBackTo = '';
-  
+  String lastSecc = '';
+  List<String> histUri = [];
+  String getBack() {
+
+    String uri = '';
+    if(histUri.length > 2) {
+      histUri.removeLast();
+      uri = histUri.removeLast();
+    }else{
+      uri = histUri.first;
+      histUri = [];
+    }
+    return uri;
+  }
+
   Color bgMain = const Color.fromARGB(255, 13, 21, 26);
   Color secMain = const Color(0xFF202c33);
   Color txtOnsecMainDark = const Color(0xFF83929c);

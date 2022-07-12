@@ -70,6 +70,7 @@ class AscaffoldMain extends StatelessWidget {
   Future<bool> _onWill(BuildContext context) {
 
     late final GoRouter nav;
+
     if(Mget.ctx != null) {
       try {
         nav = GoRouter.of(Mget.ctx!);
@@ -80,11 +81,16 @@ class AscaffoldMain extends StatelessWidget {
       nav = GoRouter.of(context);
     }
 
-    if(nav.canPop()) {
-      return Future.value(true);
+    if(_globals.histUri.isEmpty) {
+      if(nav.canPop()) {
+        return Future.value(true);
+      }
+      nav.go('/');
+      return Future.value(false);
+    }else{
+      nav.go(_globals.getBack());
+      return Future.value(false);
     }
-    nav.go('/');
-    return Future.value(false);
   }
 
   ///

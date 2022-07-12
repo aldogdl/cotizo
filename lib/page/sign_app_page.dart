@@ -221,8 +221,8 @@ class _SignAppPageState extends State<SignAppPage> {
               backgroundColor: MaterialStateProperty.all(Colors.grey)
             ),
             onPressed: () {
-              if(_globals.goBackTo.isNotEmpty) {
-                context.go(_globals.goBackTo);
+              if(_globals.histUri.isNotEmpty) {
+                context.go(_globals.getBack());
               }else{
                 context.pop();
               }
@@ -295,8 +295,8 @@ class _SignAppPageState extends State<SignAppPage> {
     }
 
     if(_signIn.currentUser != null) {
-      if(_globals.goBackTo.isNotEmpty) {
-        nav.go(_globals.goBackTo);
+      if(_globals.histUri.isNotEmpty) {
+        nav.go(_globals.getBack());
       }else{
         nav.pop();
       }

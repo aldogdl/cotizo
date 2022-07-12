@@ -20,7 +20,6 @@ class LstPiezasByOrden extends StatelessWidget {
   Widget build(BuildContext context) {
 
     Mget.init(context, context.read<GestDataProvider>());
-    Mget.globals.goBackTo = '';
 
     return AscaffoldMain(
       body: (!Mget.auth!.isLogin)
@@ -75,10 +74,7 @@ class LstPiezasByOrden extends StatelessWidget {
             style: ButtonStyle(
               backgroundColor: MaterialStateProperty.all(const Color(0xFF00a884))
             ),
-            onPressed: () {
-              Mget.globals.goBackTo = '/cotizo/$ids';
-              Mget.ctx!.push('/login');
-            },
+            onPressed: () => Mget.ctx!.push('/login'),
             child: const Text(
               '¡HACER LOGIN AHORA!',
               textScaleFactor: 1,

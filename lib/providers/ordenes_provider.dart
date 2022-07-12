@@ -7,6 +7,7 @@ class OrdenesProvider with ChangeNotifier {
   int numberPage = 0;
   int indexFirsPerPage = 0;
   int indexLastPerPage = 0;
+  int idOrdenCurrent = 0;
 
   List<OrdenEntity> _items = [];
   List<OrdenEntity> items() => _items;

@@ -1,6 +1,8 @@
+import 'package:cotizo/providers/ordenes_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:provider/provider.dart';
 
 import '../entity/share_data_orden.dart';
 import '../services/my_get.dart';
@@ -30,11 +32,8 @@ class TileOrdenPieza extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
 
-    if(!Mget.isInit) {
-      Mget.isInit = true;
-      Mget.init(context, null);
-      Mget.size = MediaQuery.of(context).size;
-    }
+    Mget.init(context, null);
+    Mget.size = MediaQuery.of(context).size;
     
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 10),
@@ -49,19 +48,19 @@ class TileOrdenPieza extends StatelessWidget {
       ),
       child: FutureBuilder(
         future: _getDatos(),
-        builder: (_, __) => _body(context),
+        builder: (_, __) => _body(),
       ),
     );
   }
 
   ///
-  Widget _body(BuildContext context) {
+  Widget _body() {
 
     return Column(
       children: [
         Expanded(
           child: InkWell(
-            onTap: () async => _gestionarDatos(context),
+            onTap: () async => _gestionarDatos(),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -170,7 +169,7 @@ class TileOrdenPieza extends StatelessWidget {
   ///
   Widget _dataItem() {
 
-    final fecha = '${created.day}-${created.month}-${created.year}';
+    final fecha = '${created.day}/${created.month}/${created.year}';
 
     return Container(
       width: Mget.size.width,
@@ -264,10 +263,14 @@ class TileOrdenPieza extends StatelessWidget {
   }
 
   ///
-  void _gestionarDatos(BuildContext context) {
+  void _gestionarDatos() {
     
     if(Mget.auth!.isLogin) {
-      context.go('/gest-data');
+
+      final ordP = Mget.ctx!.read<OrdenesProvider>();
+      ordP.idOrdenCurrent = idOrden;
+      Mget.ctx!.go('/gest-data/$idPieza');
+
     }else{
       ShowDialogs.alert(
         Mget.ctx!, 'noLogin',

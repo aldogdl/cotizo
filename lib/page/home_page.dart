@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../config/sngs_manager.dart';
 import '../providers/ordenes_provider.dart';
 import '../providers/signin_provider.dart';
+import '../vars/globals.dart';
 import '../widgets/ascaffold_main.dart';
 import '../widgets/my_infinity_list.dart';
 
@@ -17,6 +19,7 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin {
 
+  final _globals = getIt<Globals>();
   late final TabController _tab;
   final List<String> _seccs = ['GENERALES', 'POR MARCAS', 'SOLICITUDES'];
   final List<Widget> _misTabs = [];
@@ -58,8 +61,19 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
       
     }).toList();
 
-    _tab = TabController(initialIndex: 0, length: _seccs.length, vsync: this)
-      ..addListener(() { _cleanValues(); });
+    /// Seccion para seleccionar la ultima pestaña visitada en caso de haberla
+    int initEn = 0;
+    if(_globals.lastSecc.isNotEmpty) {
+      initEn = _seccs.indexWhere((element) => element == _globals.lastSecc);
+    }else{
+      _globals.lastSecc = _seccs.first;
+    }
+    _tab = TabController(initialIndex: initEn, length: _seccs.length, vsync: this)
+      ..addListener(() {
+        _globals.lastSecc = _seccs[_tab.index];
+        _cleanFilterBySols();
+      });
+
     super.initState();
   }
 
@@ -103,7 +117,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
       unselectedLabelColor: Colors.grey,
       physics: const BouncingScrollPhysics(),
       enableFeedback: true,
-      onTap: (index) => _cleanValues(page: index),
+      onTap: (index) => _cleanFilterBySols(page: index),
       automaticIndicatorColorAdjustment: true,
       controller: _tab,
       tabs: _misTabs
@@ -135,8 +149,11 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     );
   }
 
-  ///
-  void _cleanValues({int page = -1}) {
+  /// filterBySols es el mapa donde ordenamos las ordenes por solicitud,
+  /// Al dar click en la lista de ordenes ordenadas por marca, mostramos
+  /// en la seccion de ordenar por solicitud, solo las solicitudes de dicha
+  /// marca seleccionada.
+  void _cleanFilterBySols({int page = -1}) {
 
     int index = (page == -1) ? _tab.index : page;
     
