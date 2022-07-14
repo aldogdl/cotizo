@@ -1,6 +1,6 @@
-import 'package:cotizo/entity/pieza_entity.dart';
 import 'package:hive/hive.dart';
 
+import '../entity/pieza_entity.dart';
 import '../vars/enums.dart';
 
 class PiezasRepository {
@@ -63,5 +63,21 @@ class PiezasRepository {
       return (res.isNotEmpty) ? res.first : null;
     }
     return null;
+  }
+
+  ///
+  Future<List<int>> buscarPiezas(String txt) async {
+
+    List<int> lst = [];
+    await openBox();
+    if(_box != null) {
+      _box!.values.map((element) {
+          if(element.piezaName.toLowerCase().startsWith(txt.toLowerCase())) {
+            lst.add(element.id);
+          }
+        }
+      ).toList();
+    }
+    return lst;
   }
 }

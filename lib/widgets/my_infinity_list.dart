@@ -158,6 +158,7 @@ class _MyInfinityListState extends State<MyInfinityList> {
             created: orden.createdAt,
             fotos: (orden.fotos.containsKey(orden.piezas[p]))
               ? List<String>.from(orden.fotos[orden.piezas[p]]!) : <String>[],
+            requerimientos: orden.obs[orden.piezas[p]]!,
             box: SharedDataOrden(),
           )
         );
@@ -193,7 +194,6 @@ class _MyInfinityListState extends State<MyInfinityList> {
       }
     }
 
-    // return const Text('esta', style: TextStyle(color: Colors.white));
     return const SizedBox(width: 0, height: 0);
   }
 

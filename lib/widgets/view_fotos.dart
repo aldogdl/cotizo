@@ -1,8 +1,12 @@
 import 'dart:io';
+import 'package:cotizo/config/sngs_manager.dart';
+import 'package:cotizo/services/my_image/my_im.dart';
 import 'package:cotizo/vars/my_paths.dart';
 import 'package:flutter/material.dart';
 import 'package:blur/blur.dart';
 import 'package:extended_image/extended_image.dart';
+
+import '../vars/globals.dart';
 
 class ViewFotos extends StatefulWidget {
 
@@ -27,6 +31,8 @@ class ViewFotos extends StatefulWidget {
 class _ViewFotosState extends State<ViewFotos> {
 
   final ExtendedPageController _ctrPage = ExtendedPageController();
+  final _globals = getIt<Globals>();
+
   int currentIndex = 0;
   List<String> fotos = [];
   List<int> fotosDel = [];
@@ -74,7 +80,8 @@ class _ViewFotosState extends State<ViewFotos> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                _delete(currentIndex),
+                if(widget.bySrc != 'network')
+                  _delete(currentIndex),
                 const Spacer(),
                 _flecha('back'),
                 const SizedBox(width: 5),
@@ -218,8 +225,32 @@ class _ViewFotosState extends State<ViewFotos> {
   ///
   Widget _byFilePath(int index) {
 
+    if(widget.bySrc == 'inventario') {
+
+      return FutureBuilder(
+        future: MyIm.getImageByPath(fotos[index]),
+        builder: (_, AsyncSnapshot snap) {
+
+          if(snap.connectionState == ConnectionState.done) {
+            if(snap.hasData) {
+              return _imgByFile(snap.data);
+            }else{
+              return Icon(Icons.photo_size_select_small_rounded, color: _globals.bgMain, size: 100);
+            }
+          }
+          return const Center( child: CircularProgressIndicator() );
+        },
+      );
+    }
+
+    return _imgByFile(File(fotos[index]));
+  }
+
+  ///
+  Widget _imgByFile(File file) {
+
     return ExtendedImage.file(
-      File(fotos[index]),
+      file,
       fit: BoxFit.contain,
       mode: ExtendedImageMode.gesture,
       clearMemoryCacheWhenDispose: true,

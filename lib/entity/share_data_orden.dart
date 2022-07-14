@@ -1,3 +1,5 @@
+import 'package:cotizo/entity/inventario_entity.dart';
+
 import 'autos_entity.dart';
 import 'marca_entity.dart';
 import 'modelo_entity.dart';
@@ -11,4 +13,5 @@ class SharedDataOrden {
   MarcaEntity? marca;
   ModeloEntity? modelo;
   PiezaEntity? pieza;
+  InventarioEntity? inv;
 }

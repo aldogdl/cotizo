@@ -89,6 +89,9 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     if(!_isInit) {
       _isInit = true;
       _ordP = context.read<OrdenesProvider>();
+      Future.delayed(const Duration(microseconds: 250), (){
+        _ordP!.isShowHome = false;
+      });
     }
 
     return DefaultTabController(

@@ -1,12 +1,16 @@
 
-import 'package:cotizo/entity/autos_entity.dart';
-import 'package:cotizo/entity/marca_entity.dart';
-import 'package:cotizo/entity/modelo_entity.dart';
 
+
+import 'package:cotizo/entity/inventario_entity.dart';
+
+import 'inventario_repository.dart';
 import 'autos_repository.dart';
 import 'ordenes_repository.dart';
 import 'piezas_repository.dart';
 import '../entity/orden_entity.dart';
+import '../entity/autos_entity.dart';
+import '../entity/marca_entity.dart';
+import '../entity/modelo_entity.dart';
 import '../entity/pieza_entity.dart';
 
 class SoliEm {
@@ -14,6 +18,7 @@ class SoliEm {
   final oem = OrdenesRepository();
   final _pem = PiezasRepository();
   final _aem = AutosRepository();
+  final _iem = InventarioRepository();
 
   // Usado para determinar si una orden fue hidratada y no estaba
   // incluida en la lista de cache. si es true, hay que agregarla.
@@ -174,4 +179,7 @@ class SoliEm {
     metidas = [];
     return sort;
   }
+
+  ///
+  Future<InventarioEntity> getInvById(int id) async => await _iem.getInventarioById(id);
 }

@@ -61,6 +61,32 @@ class SignInProvider  with ChangeNotifier {
   GoogleSignInAccount data() => _gSign.currentUser!;
 
   ///
+  String getCurc() {
+
+    String curc = '';
+    if(_gSign.currentUser != null) {
+
+      final email = _gSign.currentUser!.email;
+      if(email.contains('@')) {
+        final partes = email.split('@');
+        curc = partes.first;
+      }
+    }
+    return curc;
+  }
+
+  ///
+  String getIdOwn() {
+
+    String curc = getCurc();
+    if(curc.isNotEmpty) {
+      final partes = curc.split('c');
+      return partes.last;
+    }
+    return '';
+  }
+
+  ///
   Future<Map<String, dynamic>> metadata() async {
 
     return {

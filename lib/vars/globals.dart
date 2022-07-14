@@ -3,6 +3,10 @@ import 'package:flutter/material.dart' show Color;
 
 class Globals {
 
+  int idOrdenCurrent = 0;
+  String idsFromLinkCurrent = '';
+  String idCampaingCurrent = '';
+
   String lastSecc = '';
   List<String> histUri = [];
   String getBack() {

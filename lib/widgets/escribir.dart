@@ -276,12 +276,6 @@ class _EscribirState extends State<Escribir> {
             await Future.delayed(const Duration(milliseconds: 350));
           }
         }
-
-        //DriverApi upp = DriverApi(await GetIt.I<AccountUser>().getData().authHeaders);
-        // final fotoUp = await upp.upFoto(foto: imgs.first);
-        // if(fotoUp.isNotEmpty) {
-        //   print(fotoUp);
-        // }
       }
     }
   }

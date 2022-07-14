@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:googleapis/drive/v3.dart' as drive;
 import 'package:provider/provider.dart';
+import 'package:googleapis/drive/v3.dart' as drive;
 
 import '../providers/signin_provider.dart';
 import '../services/my_image/my_im.dart';
@@ -152,6 +152,13 @@ class _BaseLoggedPageState extends State<BaseLoggedPage> {
 
     if(imgs != null) {
       if(imgs.isNotEmpty) {
+
+        //DriverApi upp = DriverApi(await GetIt.I<AccountUser>().getData().authHeaders);
+        // final fotoUp = await upp.upFoto(foto: imgs.first);
+        // if(fotoUp.isNotEmpty) {
+        //   print(fotoUp);
+        // }
+
         //DriverApi upp = DriverApi(await GetIt.I<AccountUser>().getData().authHeaders);
         // final fotoUp = await upp.upFoto(foto: imgs.first);
         // if(fotoUp.isNotEmpty) {

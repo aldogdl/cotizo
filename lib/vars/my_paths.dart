@@ -43,7 +43,9 @@ class MyPath {
     }
     final map = <String, String>{
       'get_orden_and_pieza': 'get-orden-and-pieza',
-      'get_ordenes_and_piezas': 'get-ordenes-and-piezas'
+      'get_ordenes_and_piezas': 'get-ordenes-and-piezas',
+      'upload_img_rsp': 'upload-img',
+      'set_resp': 'set-resp',
     };
     return '$subBase${map[uri]}$params';
   }

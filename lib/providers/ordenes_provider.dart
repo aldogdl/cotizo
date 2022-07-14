@@ -7,8 +7,7 @@ class OrdenesProvider with ChangeNotifier {
   int numberPage = 0;
   int indexFirsPerPage = 0;
   int indexLastPerPage = 0;
-  int idOrdenCurrent = 0;
-
+  
   List<OrdenEntity> _items = [];
   List<OrdenEntity> items() => _items;
   setItems(List<OrdenEntity> its) {
@@ -31,4 +30,11 @@ class OrdenesProvider with ChangeNotifier {
   /// que se indiquen en esta variable.
   Map<String, dynamic> filterBySols = {};
   
+  /// Usado para cambiar el icono de ver inventario | ir a home
+  bool _isShowHome = false;
+  bool get isShowHome => _isShowHome;
+  set isShowHome(bool isHome) {
+    _isShowHome = isHome;
+    notifyListeners();
+  }
 }

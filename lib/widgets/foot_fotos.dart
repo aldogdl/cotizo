@@ -2,15 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart' show XFile;
 import 'package:provider/provider.dart';
 
-import 'package:cotizo/widgets/my_camera.dart';
+import 'show_dialogs.dart';
 import '../config/sngs_manager.dart';
 import '../entity/chat_entity.dart';
 import '../providers/gest_data_provider.dart';
-import 'show_dialogs.dart';
 import '../services/my_image/my_im.dart';
 import '../vars/constantes.dart';
 import '../vars/enums.dart';
 import '../vars/globals.dart';
+import '../widgets/my_camera.dart';
 
 class FootFotos extends StatefulWidget {
 
@@ -214,12 +214,6 @@ class _FootFotosState extends State<FootFotos>{
             await Future.delayed(const Duration(milliseconds: 350));
           }
         }
-
-        //DriverApi upp = DriverApi(await GetIt.I<AccountUser>().getData().authHeaders);
-        // final fotoUp = await upp.upFoto(foto: imgs.first);
-        // if(fotoUp.isNotEmpty) {
-        //   print(fotoUp);
-        // }
       }
     }
   }

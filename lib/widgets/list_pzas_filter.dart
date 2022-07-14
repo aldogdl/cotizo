@@ -231,7 +231,9 @@ class _ListPzasFilterState extends State<ListPzasFilter> {
               created: _orden!.createdAt,
               fotos: (_orden!.fotos.containsKey(snap.data.id))
                 ? List<String>.from(_orden!.fotos[snap.data.id]!) : <String>[],
+              requerimientos: _orden!.obs[snap.data.id]!,
               box: _ds,
+              idsFromLink: widget.ids
             );
           }
 

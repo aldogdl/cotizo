@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 
 import '../config/sngs_manager.dart';
+import '../providers/ordenes_provider.dart';
 import '../services/my_get.dart';
 import '../vars/globals.dart';
 import '../widgets/menu_main.dart';
@@ -45,10 +47,24 @@ class AscaffoldMain extends StatelessWidget {
               )
             ),
             actions: [
-              IconButton(
-                onPressed: (){},
-                icon: const Icon(Icons.search)
+              Selector<OrdenesProvider, bool>(
+                selector: (_, prov) => prov.isShowHome,
+                builder: (_, val, child) {
+                  
+                  if(val) {
+                    return IconButton(
+                      onPressed: () => context.go('/'),
+                      icon: const Icon(Icons.home)
+                    );
+                  }
+                  return child!;
+                },
+                child: IconButton(
+                  onPressed: () => context.go('/inventario'),
+                  icon: const Icon(Icons.search)
+                ),
               ),
+              
               IconButton(
                 onPressed: () async => await _showMenuMain(context),
                 icon: const Icon(Icons.more_vert_rounded)

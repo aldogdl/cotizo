@@ -74,7 +74,10 @@ class ShowDialogs {
       'errCam': '¡UPS!, ERROR al iniciar la Cámara\n\n'
         'Sucedio un error inesperado, por favor, intenta nuevamente entrar a '
         'esta sección.\n\n'
-        'Sentimos el inconveniente.'
+        'Sentimos el inconveniente.',
+      'deleteInv': 'Se eliminará esta autoparte del sistema con la finalidad de '
+      'no ocupar espacio de almacenamiento inecesario y mantener tu sistema lo más '
+      'limpio y organizado posibe.\n\n¿Estás de acuardo en continuar con la operación?.'
     };
     return msg[tipo];
   }

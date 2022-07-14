@@ -1,3 +1,4 @@
+import 'package:cotizo/widgets/send_respuesta.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
@@ -101,7 +102,11 @@ class _GestDataPageState extends State<GestDataPage> {
         Selector<GestDataProvider, Campos>(
           selector: (_, provi) => provi.currentCampo,
           builder: (_, campoActual, __) {
-            return _determinarFoot();
+
+            return Padding(
+              padding: const EdgeInsets.only(top: 16),
+              child: _determinarFoot()
+            );
           }
         )
       ]
@@ -140,14 +145,14 @@ class _GestDataPageState extends State<GestDataPage> {
 
     return Selector<GestDataProvider, List<ChatEntity>>(
       selector: (_, prov) => prov.msgs,
-      builder: (_, lstEntitys, __){
+      builder: (_, lstChats, __){
 
         final wids = <Widget>[];
-        for(var x = 0; x < lstEntitys.length; x++) {
+        for(var x = 0; x < lstChats.length; x++) {
           if(x == 0) {
             wids.add(const SizedBox(height: 35));
           }
-          wids.add(GetTipoBurbuja(msg: lstEntitys[x]));
+          wids.add(GetTipoBurbuja(msg: lstChats[x]));
         }
 
         Future.delayed(const Duration(milliseconds: 450), (){
@@ -251,10 +256,7 @@ class _GestDataPageState extends State<GestDataPage> {
           ),
           _linkFinal(
             'TERMINAR Y ENVIAR', ico: Icons.check_circle_sharp,
-            fnc: (){
-              _prov.clean();
-              context.goNamed('home');
-            }
+            fnc: () async => await _terminarAndSend()
           ),
         ],
       ),
@@ -311,7 +313,7 @@ class _GestDataPageState extends State<GestDataPage> {
 
     if(_orden.id == 0) {
       _orden = _ordProv.items().firstWhere(
-        (element) => element.id == _ordProv.idOrdenCurrent, 
+        (element) => element.id == _globals.idOrdenCurrent, 
         orElse: () => OrdenEntity()
       );
     }
@@ -359,6 +361,32 @@ class _GestDataPageState extends State<GestDataPage> {
         context.go(goBack);
       }
     });
+  }
+
+  ///
+  Future<void> _terminarAndSend() async {
+
+    await showModalBottomSheet(
+      context: context,
+      backgroundColor: _globals.bgMain,
+      isDismissible: false,
+      enableDrag: false,
+      builder: (_) => SendRespuesta(
+        prov: _prov, globals: _globals, orden: _orden, idPieza: widget.idP,
+        onFinish: (_) async {
+
+          final nav = GoRouter.of(context);
+          _prov.clean();
+          Navigator.of(context).pop();
+          await Future.delayed(const Duration(milliseconds: 250));
+          String goTo = '/';
+          if(_globals.histUri.isNotEmpty) {
+            goTo = _globals.getBack();
+          }
+          nav.go(goTo);
+        }
+      )
+    );
   }
 
   ///

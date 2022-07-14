@@ -1,11 +1,13 @@
-import 'package:cotizo/config/sngs_manager.dart';
 import 'package:go_router/go_router.dart';
 
+import '../vars/globals.dart';
+import '../config/sngs_manager.dart';
+
+import '../page/inventario_page.dart';
 import '../page/gest_data_page.dart';
 import '../page/lst_piezas_by_orden.dart';
 import '../page/home_page.dart';
 import '../page/sign_app_page.dart';
-import '../vars/globals.dart';
 
 class MyRutas {
 
@@ -30,6 +32,11 @@ class MyRutas {
         name: 'lstPiezasByOrden',
         path: '/cotizo/:ids',
         builder: (context, state) => LstPiezasByOrden(ids: '${state.params['ids']}'),
+      ),
+      GoRoute(
+        name: 'inventario',
+        path: '/inventario',
+        builder: (context, state) => const InventarioPage(),
       ),
     ],
     initialLocation: '/',

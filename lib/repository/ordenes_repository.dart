@@ -1,7 +1,8 @@
-import 'package:cotizo/entity/orden_entity.dart';
-import 'package:cotizo/services/my_http.dart';
+import 'package:cotizo/vars/my_paths.dart';
 import 'package:hive/hive.dart';
 
+import '../entity/orden_entity.dart';
+import '../services/my_http.dart';
 import '../vars/enums.dart';
 
 class OrdenesRepository {
@@ -56,5 +57,13 @@ class OrdenesRepository {
       }
     }
     return {};
+  }
+
+  ///
+  Future<Map<String, dynamic>> uploadImgOfRespuesta(Map<String, dynamic> data) async {
+
+    final uri = MyPath.getUri('upload_img_rsp', '');
+    await http.upFileByData(uri, metas: data);
+    return http.result;
   }
 }

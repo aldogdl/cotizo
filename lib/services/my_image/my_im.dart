@@ -1,11 +1,12 @@
 import 'dart:io';
 import 'dart:math' as math;
 import 'dart:typed_data';
-import 'package:cotizo/vars/constantes.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:image_size_getter/image_size_getter.dart';
 import 'package:path_provider/path_provider.dart';
+
+import '../../vars/constantes.dart';
 
 class MyIm {
 
@@ -29,55 +30,57 @@ class MyIm {
   }
 
   ///
-  static Future<Map<String, dynamic>> prepareImage({
-    XFile? foto,
-    Uint8List? data,
-    double minWidth = Constantes.minSize,
-    double minHeight = Constantes.minSize,
-  }) async {
+  static Future<Map<String, dynamic>> getDataInitImage(XFile foto) async {
 
     Map<String, dynamic> result = {};
     Size size = const Size(0,0);
 
-    if(foto != null) {
-      data = await readAsBytes(foto);
-      size = getSize(data);
-      Medidas medSrc  = getMedidas(data.lengthInBytes);
-      result['src'] = {'size': size, 'kb': medSrc.kb, 'mb': medSrc.mb};
-      result['src']['fotoName'] = foto.name;
-    }
-    if(data == null){ return result; }
-
-    size = getSize(data);
-    Medidas med  = getMedidas(data.lengthInBytes);
-    double scale = calcScale(size: size, minWidth: minWidth, minHeight: minHeight);
-
-    // Esta data es la que se envia al servidor.
-    data = await comprimir(data, scale: scale, size: size);
-    med  = getMedidas(data.lengthInBytes);
-    if(result.containsKey('src')) {
-      result['res'] = {'size': getSize(data), 'kb': med.kb, 'mb': med.mb, 'data':data};
-    }else{
-      result = {'size': getSize(data), 'kb': med.kb, 'mb': med.mb, 'data': data};
-    }
+    Uint8List data = await _readAsBytes(foto);
+    size = _getSize(data);
+    final medSrc  = _getMedidas(data.lengthInBytes);
+    result['size'] = size;
+    result['kb'] = medSrc.kb;
+    result['mb'] = medSrc.mb;
+    result['fotoName'] = foto.name;
+    result['data'] = data;
     return result;
   }
 
   ///
-  static Future<Uint8List> readAsBytes(XFile foto) async => await foto.readAsBytes();
+  static Future<Map<String, dynamic>> comprimirImage(Map<String, dynamic> info, {
+    double minWidth = 1024, double minHeight = 720
+  }) async {
+
+    double scale = _calcScale(
+      size: info['size'], minWidth: minWidth, minHeight: minHeight
+    );
+    // Esta data es la que se envia al servidor.
+    Uint8List data = await _comprimir(info['data'], scale: scale, size: info['size']);
+    // Recalculamos con el resultado de compresion las nuevas medias.
+    final med = _getMedidas(data.lengthInBytes);
+    final size = _getSize(data);
+    info['size'] = size;
+    info['kb'] = med.kb;
+    info['mb'] = med.mb;
+    info['data'] = data;
+    return info;
+  }
 
   ///
-  static Size getSize(Uint8List image) => ImageSizeGetter.getSize(MemoryInput(image));
+  static Future<Uint8List> _readAsBytes(XFile foto) async => await foto.readAsBytes();
 
   ///
-  static Medidas getMedidas(int bytes) {
+  static Size _getSize(Uint8List image) => ImageSizeGetter.getSize(MemoryInput(image));
+
+  ///
+  static Medidas _getMedidas(int bytes) {
     final kb = bytes / 1024;
     final mb = kb / 1024;
     return Medidas(kb: kb, mb: mb);
   }
   
   ///
-  static double calcScale({
+  static double _calcScale({
     required Size size,
     double minWidth = Constantes.minSize,
     double minHeight = Constantes.minSize,
@@ -89,9 +92,8 @@ class MyIm {
   }
 
   ///
-  static Future<Uint8List> comprimir(Uint8List list, {
-    required double scale,
-    required Size size
+  static Future<Uint8List> _comprimir(Uint8List list, {
+    required double scale, required Size size
   }) async {
     
     String w = (size.width / scale).toStringAsFixed(0);
@@ -105,15 +107,71 @@ class MyIm {
   }
 
   ///
-  static saveInApp() async {
+  static String buildNewNameFile(String file) {
 
-    Directory appDocDir = await getApplicationSupportDirectory();
-    print('el soporte de la app');
-    print(appDocDir.path);
-    appDocDir = await getApplicationDocumentsDirectory();
-    String appDocPath = appDocDir.path;
-    print(appDocPath);
+    final ext = _getExtention(file);
+    return (ext.isEmpty) ? '' : '${_getNameFile()}.$ext';
   }
+
+  ///
+  static String _getNameFile() => '${DateTime.now().millisecondsSinceEpoch}';
+
+  ///
+  static String _getExtention(String file) {
+
+    List<String> permitidas = ['jpg', 'jpeg', 'png'];
+    List<String> partes = file.split('.');
+    if(permitidas.contains(partes.last)) {
+      return partes.last;
+    }
+    return '';
+  }
+
+  ///
+  static Future<String> saveImageInApp(String nameFile, Uint8List bodyBytes) async {
+
+    Directory appDocDir = await getApplicationDocumentsDirectory();
+    String relative = '/$nameFile';
+    
+    final file = File('${appDocDir.path}$relative');
+    file.writeAsBytesSync(bodyBytes);
+    if(file.existsSync()) { return relative; }
+    return '';
+  }
+
+  ///
+  static Future<File?> getImageByPath(String nameFile) async {
+
+    Directory appDocDir = await getApplicationDocumentsDirectory();
+    
+    final file = File('${appDocDir.path}$nameFile');
+    if(file.existsSync()) { return file; }
+    return null;
+  }
+
+  ///
+  static Future<String> getPathImage(String nameFile) async {
+
+    Directory appDocDir = await getApplicationDocumentsDirectory();
+    
+    final file = File('${appDocDir.path}$nameFile');
+    if(file.existsSync()) { return file.path; }
+    return '';
+  }
+
+  ///
+  static Future<bool> removeFotoInApp(String relativePath) async {
+
+    Directory appDocDir = await getApplicationDocumentsDirectory();
+    
+    final file = File('${appDocDir.path}$relativePath');
+    if(file.existsSync()) {
+      file.deleteSync();
+      return true;
+    }
+    return false;
+  }
+
 }
 
 class Medidas {
