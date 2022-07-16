@@ -327,6 +327,7 @@ class _InventarioPageState extends State<InventarioPage> {
               double x = (mgs * restrics.maxWidth) / tt;
               final libres = tt - mgs;
               if(x < 1) { x = 10; }
+              if(libres == tt) { x = 0; }
 
               return Container(
                 constraints: BoxConstraints.expand(
@@ -444,6 +445,7 @@ class _InventarioPageState extends State<InventarioPage> {
       context: context,
       builder: (_) => AlertDialog(
         backgroundColor: Mget.globals.secMain,
+        contentPadding: const EdgeInsets.all(5),
         content: StatefulBuilder(
           builder: (BuildContext context, StateSetter setDialog) {
             return Column(
@@ -456,7 +458,10 @@ class _InventarioPageState extends State<InventarioPage> {
                 const Divider(color: Colors.grey),
                 _tituDialog(Icons.filter_frames, 'INFORMACIÓN GENERAL:'),
                 const SizedBox(height: 8),
-                _infoAlmacenamiento(setDialog)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  child: _infoAlmacenamiento(setDialog)
+                )
               ],
             );
           }

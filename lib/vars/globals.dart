@@ -22,6 +22,11 @@ class Globals {
     return uri;
   }
 
+  /// Usado para tener en memoria las piezas que ya respondieron, es decir...
+  /// toda pieza que este en el inventario ya fue respondida.
+  /// key = id de la orden | value = lista de ids de las piezas.
+  Map<int, List<int>> invFilter = {};
+
   Color bgMain = const Color.fromARGB(255, 13, 21, 26);
   Color secMain = const Color(0xFF202c33);
   Color txtOnsecMainDark = const Color(0xFF83929c);

@@ -35,8 +35,32 @@ class InventarioRepository {
 
     await openBox();
     if(_boxInv != null) {
-      _boxInv!.add(inv);
+      final has = _boxInv!.values.where((element) => element.id == inv.id);
+      if(has.isNotEmpty) {
+        await _boxInv!.put(has.first.key, inv);
+      }else{
+        await _boxInv!.add(inv);
+      }
     }
+  }
+
+  ///
+  Future<Map<int, List<int>>> getAllInvToFilter() async {
+
+    Map<int, List<int>> lst = {};
+    await openBox();
+    if(_boxInv != null) {
+
+      _boxInv!.values.map((i){
+        if(lst.containsKey(i.idOrden)) {
+          lst[i.idOrden]!.add(i.idPieza);
+        }else{
+          lst.putIfAbsent(i.idOrden, () => [i.idPieza]);
+        }
+      }).toList();
+    }
+
+    return lst;
   }
 
   /// 

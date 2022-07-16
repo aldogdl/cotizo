@@ -47,6 +47,14 @@ class TileOrdenPieza extends StatelessWidget {
     Mget.init(context, null);
     Mget.size = MediaQuery.of(context).size;
     
+    if(isInv == 0) {
+      if(Mget.globals.invFilter.containsKey(idOrden)) {
+        if(Mget.globals.invFilter[idOrden]!.contains(idPieza)) {
+          return const SizedBox();
+        }
+      }
+    }
+    
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 10),
       constraints: BoxConstraints.expand(

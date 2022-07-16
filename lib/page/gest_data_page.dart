@@ -371,20 +371,24 @@ class _GestDataPageState extends State<GestDataPage> {
       backgroundColor: _globals.bgMain,
       isDismissible: false,
       enableDrag: false,
-      builder: (_) => SendRespuesta(
-        prov: _prov, globals: _globals, orden: _orden, idPieza: widget.idP,
-        onFinish: (_) async {
+      builder: (_) => WillPopScope(
+        onWillPop: () => Future.value(false),
+        child: SendRespuesta(
+          tiempo: DateTime.now(),
+          prov: _prov, globals: _globals, orden: _orden, idPieza: widget.idP,
+          onFinish: (_) async {
 
-          final nav = GoRouter.of(context);
-          _prov.clean();
-          Navigator.of(context).pop();
-          await Future.delayed(const Duration(milliseconds: 250));
-          String goTo = '/';
-          if(_globals.histUri.isNotEmpty) {
-            goTo = _globals.getBack();
+            final nav = GoRouter.of(context);
+            _prov.clean();
+            Navigator.of(context).pop();
+            await Future.delayed(const Duration(milliseconds: 250));
+            String goTo = '/';
+            if(_globals.histUri.isNotEmpty) {
+              goTo = _globals.getBack();
+            }
+            nav.go(goTo);
           }
-          nav.go(goTo);
-        }
+        ),
       )
     );
   }

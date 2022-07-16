@@ -25,7 +25,10 @@ class DefaultFirebaseOptions {
       case TargetPlatform.iOS:
         return ios;
       case TargetPlatform.macOS:
-        return macos;
+        throw UnsupportedError(
+          'DefaultFirebaseOptions have not been configured for macos - '
+          'you can reconfigure this by running the FlutterFire CLI again.',
+        );
       case TargetPlatform.windows:
         throw UnsupportedError(
           'DefaultFirebaseOptions have not been configured for windows - '
@@ -44,39 +47,30 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyD19Loon44gM-HiPOkWreCCie8OvnuSl-E',
-    appId: '1:647320495318:web:75a4c0d63784eb70251577',
-    messagingSenderId: '647320495318',
-    projectId: 'autoparnet-c1d0b',
-    authDomain: 'autoparnet-c1d0b.firebaseapp.com',
-    storageBucket: 'autoparnet-c1d0b.appspot.com',
+    apiKey: 'AIzaSyA0TyOoWLbwYuViCDh00OTYRx8TBCzntKc',
+    appId: '1:41420743420:web:a48ab2f299af6212ba2d79',
+    messagingSenderId: '41420743420',
+    projectId: 'cotizo-ccf4d',
+    authDomain: 'cotizo-ccf4d.firebaseapp.com',
+    storageBucket: 'cotizo-ccf4d.appspot.com',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyDdngd4-WCZd_W9K6UOiDYr4RMTmU2mHpg',
-    appId: '1:647320495318:android:68e6ed97cd14678e251577',
-    messagingSenderId: '647320495318',
-    projectId: 'autoparnet-c1d0b',
-    storageBucket: 'autoparnet-c1d0b.appspot.com',
+    apiKey: 'AIzaSyAJ6CnW7ec0Q8jtRJt0ilw0FR-9VNyd1N4',
+    appId: '1:41420743420:android:10ede34dd6238161ba2d79',
+    messagingSenderId: '41420743420',
+    projectId: 'cotizo-ccf4d',
+    storageBucket: 'cotizo-ccf4d.appspot.com',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyCWl8_X6WGz6rlKpUo-pwdulfyfU7f4m-A',
-    appId: '1:647320495318:ios:3d87ddced4d85dce251577',
-    messagingSenderId: '647320495318',
-    projectId: 'autoparnet-c1d0b',
-    storageBucket: 'autoparnet-c1d0b.appspot.com',
-    iosClientId: '647320495318-aeurvqcjr18uokf9opr6mo264c0t4aif.apps.googleusercontent.com',
-    iosBundleId: 'com.autoparnet.cotizo',
-  );
-
-  static const FirebaseOptions macos = FirebaseOptions(
-    apiKey: 'AIzaSyCWl8_X6WGz6rlKpUo-pwdulfyfU7f4m-A',
-    appId: '1:647320495318:ios:3d87ddced4d85dce251577',
-    messagingSenderId: '647320495318',
-    projectId: 'autoparnet-c1d0b',
-    storageBucket: 'autoparnet-c1d0b.appspot.com',
-    iosClientId: '647320495318-aeurvqcjr18uokf9opr6mo264c0t4aif.apps.googleusercontent.com',
+    apiKey: 'AIzaSyCF5qUxK71T21aJL1lMrHZJLB-wyisR6eg',
+    appId: '1:41420743420:ios:67b5dfb64d89e102ba2d79',
+    messagingSenderId: '41420743420',
+    projectId: 'cotizo-ccf4d',
+    storageBucket: 'cotizo-ccf4d.appspot.com',
+    androidClientId: '41420743420-c07t96kdm8pfk7vm73cfibonht09gfb8.apps.googleusercontent.com',
+    iosClientId: '41420743420-n0fgg8dj80gahsh6gdn92neibketvth9.apps.googleusercontent.com',
     iosBundleId: 'com.autoparnet.cotizo',
   );
 }

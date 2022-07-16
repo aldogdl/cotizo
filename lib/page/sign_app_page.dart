@@ -93,7 +93,8 @@ class _SignAppPageState extends State<SignAppPage> {
                     ),
                   )
                 ),
-              )
+              ),
+              const SizedBox(height: 20)
             ],
           ),
         ),

@@ -87,7 +87,7 @@ class LstPiezasByOrden extends StatelessWidget {
           ),
           SizedBox(height: MediaQuery.of(Mget.ctx!).size.height * 0.1),
           TextButton(
-            onPressed: () => Mget.ctx!.go('/'),
+            onPressed: () => Mget.ctx!.go('/home'),
             child: const Text(
               'SALIR Y NO COTIZAR',
               textScaleFactor: 1,

@@ -1,31 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:camera/camera.dart';
 import 'package:provider/provider.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'config/my_rutas.dart';
 import 'config/sngs_manager.dart';
-import 'firebase_options.dart';
 import 'providers/gest_data_provider.dart';
 import 'providers/ordenes_provider.dart';
 import 'providers/signin_provider.dart';
-import 'vars/globals.dart';
+
 
 void main() async {
   
   WidgetsFlutterBinding.ensureInitialized();
   sngManager();
   await Hive.initFlutter();
-  final global = getIt<Globals>();
-  
-  // Get a specific camera from the list of available cameras.
-  final cameras = await availableCameras();
-  global.firstCamera = cameras.first;
   runApp(const MiddleApp());
 }
+
 
 class MiddleApp extends StatelessWidget {
 
@@ -46,31 +39,12 @@ class MiddleApp extends StatelessWidget {
 }
 
 
-class MyApp extends StatefulWidget {
-
+class MyApp extends StatelessWidget {
+  
   const MyApp({Key? key}) : super(key: key);
 
   @override
-  State<MyApp> createState() => _MyAppState();
-}
-
-
-class _MyAppState extends State<MyApp> {
-
-  @override
-  void initState() {
-
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      await Firebase.initializeApp(
-        options: DefaultFirebaseOptions.currentPlatform,
-      );
-    });
-    super.initState();
-  }
-
-  @override
   Widget build(BuildContext context) {
-
     SystemChrome.setPreferredOrientations([
       DeviceOrientation.portraitUp,
       DeviceOrientation.portraitDown

@@ -53,7 +53,7 @@ class AscaffoldMain extends StatelessWidget {
                   
                   if(val) {
                     return IconButton(
-                      onPressed: () => context.go('/'),
+                      onPressed: () => context.go('/home'),
                       icon: const Icon(Icons.home)
                     );
                   }
@@ -101,7 +101,7 @@ class AscaffoldMain extends StatelessWidget {
       if(nav.canPop()) {
         return Future.value(true);
       }
-      nav.go('/');
+      nav.go('/home');
       return Future.value(false);
     }else{
       nav.go(_globals.getBack());

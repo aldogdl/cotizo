@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import '../vars/globals.dart';
 import '../config/sngs_manager.dart';
 
+import '../page/splash_page.dart';
 import '../page/inventario_page.dart';
 import '../page/gest_data_page.dart';
 import '../page/lst_piezas_by_orden.dart';
@@ -11,11 +12,18 @@ import '../page/sign_app_page.dart';
 
 class MyRutas {
 
+  static final globals = getIt<Globals>();
+
   static final rutas = GoRouter(
     routes: [
       GoRoute(
-        name: 'home',
+        name: 'splash',
         path: '/',
+        builder: (context, state) => const SplashPage(),
+      ),
+      GoRoute(
+        name: 'home',
+        path: '/home',
         builder: (context, state) => const HomePage(),
       ),
       GoRoute(
@@ -39,15 +47,17 @@ class MyRutas {
         builder: (context, state) => const InventarioPage(),
       ),
     ],
+    urlPathStrategy: UrlPathStrategy.path,
     initialLocation: '/',
     // refreshListenable: _prov,
     redirect: (state) {
 
-      final globals = getIt<Globals>();
       if(globals.histUri.contains(state.location)){
         globals.histUri.remove(state.location);
       }
-      globals.histUri.add(state.location);
+      if(state.location != '/') {
+        globals.histUri.add(state.location);
+      }
       // if (!_prov.isLogin) return (state.subloc == '/login') ? null : '/login';
       // if (_prov.isLogin) return '/';
       return null;

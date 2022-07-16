@@ -1,7 +1,7 @@
-import 'package:cotizo/widgets/counter_load.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import 'counter_load.dart';
 import '../entity/orden_entity.dart';
 import '../entity/inventario_entity.dart';
 import '../entity/share_data_orden.dart';
@@ -17,6 +17,7 @@ class SendRespuesta extends StatefulWidget {
   final Globals globals;
   final OrdenEntity orden;
   final GestDataProvider prov;
+  final DateTime tiempo;
   final ValueChanged<void> onFinish;
   const SendRespuesta({
     Key? key,
@@ -24,6 +25,7 @@ class SendRespuesta extends StatefulWidget {
     required this.globals,
     required this.orden,
     required this.idPieza,
+    required this.tiempo,
     required this.onFinish,
   }) : super(key: key);
 
@@ -32,6 +34,7 @@ class SendRespuesta extends StatefulWidget {
 }
 
 class _SendRespuestaState extends State<SendRespuesta> {
+
   @override
   Widget build(BuildContext context) {
 
@@ -116,17 +119,16 @@ class _SendRespuestaState extends State<SendRespuesta> {
 
     share.auto  =  await share.solEm.getAutoById(widget.orden.auto);
     share.pieza =  await share.solEm.getPiezaById(widget.idPieza);
-    final tiempo= DateTime.now();
 
     InventarioEntity inv = InventarioEntity();
-    inv.id      = tiempo.millisecondsSinceEpoch;
+    inv.id      = widget.tiempo.millisecondsSinceEpoch;
     inv.auto    = share.auto!.id;
     inv.pieza   = share.pieza!.id;
     inv.idOrden = widget.orden.id;
     inv.idPieza = widget.idPieza;
     inv.costo   = double.parse(data['costo']); 
     inv.deta    = data['deta'];
-    inv.created = tiempo.toIso8601String();
+    inv.created = widget.tiempo.toIso8601String();
 
     await Future.delayed(const Duration(milliseconds: 250));
 
@@ -160,9 +162,13 @@ class _SendRespuestaState extends State<SendRespuesta> {
 
     yield 'Enviando Datos de Cotización';
     final result = await invEm.setRespToServer(dataSend);
-    print(dataSend);
-    print(result);
+
     if(!result['abort']) {
+      if(widget.globals.invFilter.containsKey(widget.orden.id)) {
+        widget.globals.invFilter[widget.orden.id]!.add(widget.idPieza);
+      }else{
+        widget.globals.invFilter.putIfAbsent(widget.orden.id, () => [widget.idPieza]);
+      }
       yield 'Listo, Redirigiendo...';
     }else{
       yield 'ERROR!, ${result['body']}';
