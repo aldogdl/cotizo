@@ -16,11 +16,13 @@ class MyHttp {
   }
 
   ///
-  Future<Map<String, dynamic>> get(String uri, {String params = '/'}) async {
+  Future<Map<String, dynamic>> get(
+    String uri, {String params = '/', Map<String, dynamic> querys = const {}}
+  ) async {
 
-    http.Response resp = await http.get(MyPath.getUri(uri, params));
+    http.Response resp = await http.get(MyPath.getUri(uri, params, querys: querys));
     if(resp.statusCode == 200) {
-      return Map<String, dynamic>.from(json.decode(resp.body));
+      result = Map<String, dynamic>.from(json.decode(resp.body));
     }else{
       await _analizaErrorFromServer(resp);
     }

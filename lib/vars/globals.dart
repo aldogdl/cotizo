@@ -3,10 +3,12 @@ import 'package:flutter/material.dart' show Color;
 
 class Globals {
 
+  String roleMain = '';
+  String version = '1.0.1';
   int idOrdenCurrent = 0;
   String idsFromLinkCurrent = '';
   String idCampaingCurrent = '';
-
+  bool isFromWhatsapp = false;
   String lastSecc = '';
   List<String> histUri = [];
   String getBack() {

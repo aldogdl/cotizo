@@ -5,8 +5,6 @@ part 'inventario_entity.g.dart';
 @HiveType(typeId: 5)
 class InventarioEntity extends HiveObject {
 
-  // flutter packages pub run build_runner build
-
   @HiveField(0)
   int id = 0;
 

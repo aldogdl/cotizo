@@ -7,7 +7,7 @@ class ContactsRepository {
 
   
   final _boxName = HiveBoxs.contact.name;
-  Box<ContactEntity>? _box;
+  Box<ContactEntity>? box;
   
   ///
   Map<String, dynamic> result = {'abort':false, 'msg':'ok', 'body':[]};
@@ -24,11 +24,11 @@ class ContactsRepository {
     }
 
     if(!Hive.isBoxOpen(_boxName)) {
-      _box = await Hive.openBox<ContactEntity>(_boxName, compactionStrategy: (entries, deletedEntries) {
+      box = await Hive.openBox<ContactEntity>(_boxName, compactionStrategy: (entries, deletedEntries) {
         return deletedEntries > 50;
       });
     }else{
-      _box = Hive.box<ContactEntity>(_boxName);
+      box = Hive.box<ContactEntity>(_boxName);
     }
   }
 }

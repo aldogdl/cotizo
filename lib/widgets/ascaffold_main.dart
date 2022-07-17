@@ -7,6 +7,7 @@ import '../config/sngs_manager.dart';
 import '../providers/ordenes_provider.dart';
 import '../services/my_get.dart';
 import '../vars/globals.dart';
+import '../widgets/show_dialogs.dart';
 import '../widgets/menu_main.dart';
 
 class AscaffoldMain extends StatelessWidget {
@@ -37,14 +38,26 @@ class AscaffoldMain extends StatelessWidget {
           appBar: AppBar(
             backgroundColor: _globals.secMain,
             elevation: 0,
-            title: Text(
-              'AutoparNet',
+            title: Text.rich(
+              TextSpan(
+                text: 'AutoparNet ',
+                style: GoogleFonts.comfortaa(
+                  color: _globals.txtOnsecMainDark,
+                  fontSize: 21,
+                  fontWeight: FontWeight.bold
+                ),
+                children: [
+                  TextSpan(
+                    text: _globals.version,
+                    style: TextStyle(
+                      color: _globals.txtComent,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold
+                    ),
+                  ),
+                ]
+              ),
               textScaleFactor: 1,
-              style: GoogleFonts.comfortaa(
-                color: _globals.txtOnsecMainDark,
-                fontSize: 21,
-                fontWeight: FontWeight.bold
-              )
             ),
             actions: [
               Selector<OrdenesProvider, bool>(
@@ -83,7 +96,7 @@ class AscaffoldMain extends StatelessWidget {
   }
 
   ///
-  Future<bool> _onWill(BuildContext context) {
+  Future<bool> _onWill(BuildContext context) async {
 
     late final GoRouter nav;
 
@@ -99,6 +112,14 @@ class AscaffoldMain extends StatelessWidget {
 
     if(_globals.histUri.isEmpty) {
       if(nav.canPop()) {
+        return Future.value(true);
+      }
+      if(_globals.isFromWhatsapp) {
+        return Future.value(true);
+      }
+      bool? acc = await _showAlertExit(context);
+      acc = (acc == null) ? false : acc;
+      if(acc) {
         return Future.value(true);
       }
       nav.go('/home');
@@ -124,4 +145,14 @@ class AscaffoldMain extends StatelessWidget {
     );
   }
 
+  ///
+  Future<bool?> _showAlertExit(BuildContext context) async {
+
+    return await ShowDialogs.alert(
+      context, 'exitApp',
+      hasActions: true,
+      labelNot: 'No SALIR',
+      labelOk: 'ABANDONAR'
+    );
+  }
 }

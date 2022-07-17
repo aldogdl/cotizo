@@ -1,8 +1,13 @@
+import 'package:cotizo/entity/account_entity.dart';
 import 'package:flutter/foundation.dart' show ChangeNotifier;
 import 'package:flutter/services.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
+import '../repository/acount_user_repository.dart';
+
 class SignInProvider  with ChangeNotifier {
+
+  final userEm = AcountUserRepository();
 
   final _gSign = GoogleSignIn(
     scopes: [
@@ -35,8 +40,24 @@ class SignInProvider  with ChangeNotifier {
         currentUser = null;
       });
       if(currentUser != null) {
+
         if(currentUser!.email.contains('@')) {
           isLogin = await _gSign.isSignedIn();
+          if(isLogin) {
+
+            final acount = AccountEntity();
+            acount.fromLoginGoogle(currentUser!);
+            acount.curc = getCurc();
+            await userEm.recoveryDataUser(acount.curc);
+            if(!userEm.result['abort']) {
+              if(userEm.result['body'].isNotEmpty) {
+                acount.id = userEm.result['body']['u_id'];
+                acount.roles = List<String>.from(userEm.result['body']['u_roles']);
+                await userEm.setDataUserInLocal(acount);
+                await userEm.setTokenMessaging(null);
+              }
+            }
+          }
         }
       }
     } on PlatformException catch (_) {

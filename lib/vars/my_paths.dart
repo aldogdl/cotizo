@@ -1,6 +1,6 @@
 class MyPath {
 
-  static const env = 'dev';
+  static const env = 'prod';
   static const baseProd = 'autoparnet.com';
   static const baseDev  = '192.168.1.74';
 
@@ -46,6 +46,8 @@ class MyPath {
       'get_ordenes_and_piezas': 'get-ordenes-and-piezas',
       'upload_img_rsp': 'upload-img',
       'set_resp': 'set-resp',
+      'get_user_by_campo': 'get-user-by-campo',
+      'set_token_messaging_by_id_user': 'set-token-messaging-by-id-user',
     };
     return '$subBase${map[uri]}$params';
   }

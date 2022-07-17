@@ -1,20 +1,20 @@
-
-
-
-import 'package:cotizo/entity/inventario_entity.dart';
-
 import 'inventario_repository.dart';
 import 'autos_repository.dart';
 import 'ordenes_repository.dart';
 import 'piezas_repository.dart';
+import '../config/sngs_manager.dart';
 import '../entity/orden_entity.dart';
 import '../entity/autos_entity.dart';
 import '../entity/marca_entity.dart';
 import '../entity/modelo_entity.dart';
 import '../entity/pieza_entity.dart';
+import '../entity/inventario_entity.dart';
+import '../vars/globals.dart';
 
 class SoliEm {
 
+  final _globals = getIt<Globals>();
+  
   final oem = OrdenesRepository();
   final _pem = PiezasRepository();
   final _aem = AutosRepository();
@@ -42,24 +42,31 @@ class SoliEm {
     List<OrdenEntity> ords = [];
 
     for (var i = 0; i < data.length; i++) {
+
       final ord = await hidratarOrdenFull(data[i], currents);
-      ords.add(ord);
+      if(ord != null) {
+        ords.add(ord);
+      }
     }
 
     return ords;
   }
 
   ///
-  Future<OrdenEntity> hidratarOrdenFull(Map<String, dynamic> orden, List<OrdenEntity> currents) async {
+  Future<OrdenEntity?> hidratarOrdenFull(Map<String, dynamic> orden, List<OrdenEntity> currents) async {
 
     var ord = OrdenEntity();
-    final has = currents.where((element) => element.id == orden['id']);
+    ord.id = orden['id'];
+    final has = currents.where((element) => element.id == ord.id);
+
     if(has.isEmpty) {
       // Cuenta con piezas?
       if(orden.containsKey('piezas') && orden['piezas'].isNotEmpty) {
         // Hidratar piezas from server.
         ord = await hidratarPiezasFS(List<Map<String, dynamic>>.from(orden['piezas']), ord);
       }
+
+      if(ord.piezas.isEmpty) {  return null; }
       // Proceguimos con el auto
       if(ord.auto == 0) {
         // Hidratar auto from server.
@@ -86,6 +93,15 @@ class SoliEm {
       // Necesito pasarlo por los filtro para ver si el cotizador maneja esta pieza
       // TODO
       bool isPass = true; // esta sera la que indica si paso el filtro o no
+
+      // Revisamos que la pieza no se encuentre entre el inventario
+      if(_globals.invFilter.containsKey(ord.id)) {
+        if(_globals.invFilter[ord.id]!.contains(piezas[p]['id'])) {
+          isPass = false;
+        }else{
+        }
+      }
+
       if(isPass) {
         var has = await _pem.existe(piezas[p]['piezaName']);
         if(has != null) {

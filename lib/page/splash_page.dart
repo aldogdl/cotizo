@@ -53,11 +53,24 @@ class _SplashPageState extends State<SplashPage> {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
+                Opacity(
+                  opacity: 0.5,
+                  child: SizedBox(
+                    width: MediaQuery.of(context).size.width,
+                    height: MediaQuery.of(context).size.height * 0.35,
+                    child: Image.asset(
+                      'assets/images/pistones.gif',
+                      fit: BoxFit.contain,
+                    ),
+                  ),
+                ),
                 Text(
                   val,
                   textScaleFactor: 1,
                   style: const TextStyle(
-                    color: Colors.green
+                    color: Colors.green,
+                    fontSize: 22,
+                    fontWeight: FontWeight.w200
                   )
                 )
               ],

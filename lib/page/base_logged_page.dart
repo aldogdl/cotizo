@@ -87,8 +87,8 @@ class _BaseLoggedPageState extends State<BaseLoggedPage> {
     );
   }
 
-  ///
-  Widget _verFotos() {
+  /// Sin uso...
+  Widget verFotos() {
 
     return FutureBuilder(
       future: _getFotos(),

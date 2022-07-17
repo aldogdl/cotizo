@@ -19,9 +19,6 @@ class SignAppPage extends StatefulWidget {
 class _SignAppPageState extends State<SignAppPage> {
 
   final ValueNotifier<String> _isLoading = ValueNotifier<String>('');
-  final TextEditingController _ctrCurc = TextEditingController();
-  final TextEditingController _ctrPass = TextEditingController();
-
   final PageController _ctrPage = PageController();
   final Globals _globals = getIt<Globals>();
   
@@ -310,13 +307,8 @@ class _SignAppPageState extends State<SignAppPage> {
     if(_signIn.currentUser != null) {
       if(_signIn.currentUser!.email.contains('@')) {
         return true;
-      }else{
-        print('sin email');
       }
-    }else{
-      print('userAccount nulo');
     }
-
     return false;
   }
 

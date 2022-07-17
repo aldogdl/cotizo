@@ -52,7 +52,7 @@ class DriverApi extends http.BaseClient {
       }
       return fotoPreparada;
     }
-    return {'err':'No se encontro el nombre de la imagen'};
+    return {'err':'No se encontró el nombre de la imagen'};
   }
 
   ///

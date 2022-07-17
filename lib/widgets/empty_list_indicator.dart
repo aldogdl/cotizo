@@ -8,10 +8,9 @@ class EmptyListIndicator extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
 
-    return Container(
-      constraints: BoxConstraints.expand(
-        width: MediaQuery.of(context).size.width
-      ),
+    return SizedBox(
+      width: MediaQuery.of(context).size.width,
+      height: MediaQuery.of(context).size.height * 0.7,
       child: Column(
         mainAxisSize: MainAxisSize.max,
         crossAxisAlignment: CrossAxisAlignment.center,
@@ -39,11 +38,11 @@ class EmptyListIndicator extends StatelessWidget {
           ),
           const SizedBox(height: 5),
           const Text(
-            'ESTAMOS TRABAJANDO ARDUAMENTE PARA TI.',
+            'ESTAMOS TRABAJANDO PARA TI...',
             textScaleFactor: 1,
             textAlign: TextAlign.center,
             style: TextStyle(
-              fontSize: 14,
+              fontSize: 16,
               fontWeight: FontWeight.w300,
               color: Color.fromARGB(255, 202, 202, 202)
             )
@@ -54,7 +53,7 @@ class EmptyListIndicator extends StatelessWidget {
             textScaleFactor: 1,
             textAlign: TextAlign.center,
             style: TextStyle(
-              fontSize: 14,
+              fontSize: 15,
               fontWeight: FontWeight.w300,
               color: Colors.grey
             )

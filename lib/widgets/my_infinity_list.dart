@@ -28,7 +28,7 @@ class MyInfinityList extends StatefulWidget {
 
 class _MyInfinityListState extends State<MyInfinityList> {
 
-  final SoliEm _solEm = SoliEm();
+  final _solEm = SoliEm();
   final _pagingController = PagingController<int, OrdenEntity>(firstPageKey: 1);
 
   late OrdenesProvider _ords;
@@ -55,34 +55,43 @@ class _MyInfinityListState extends State<MyInfinityList> {
   @override
   Widget build(BuildContext context) {
 
-    return RefreshIndicator( 
-      onRefresh: () => Future.sync (() => _pagingController.refresh() ),
-      child: PagedListView.separated(
-        pagingController: _pagingController,
-        padding: const EdgeInsets.all(10),
-        shrinkWrap: true,
-        builderDelegate: PagedChildBuilderDelegate<OrdenEntity>(
-          itemBuilder: (_, orden, index) {
-            
-            switch (widget.tile) {
-              case 'GENERALES':
-                return _sortPerPiezas(orden);
-              case 'POR MARCAS':
-                return _sortPerMarcas(orden.id);
-              case 'SOLICITUDES':
-                return _sortPerSolicitudes(orden);
-              default:
-                return const SizedBox();
-            }
-          },
-          noItemsFoundIndicatorBuilder: (context) => const EmptyListIndicator(),
-          firstPageErrorIndicatorBuilder: (context) => ErrorWidgetItems(
-            error: _pagingController.error.toString().toLowerCase(),
-            onTryAgain: (_) => _pagingController.refresh(),
+    return LayoutBuilder(
+      builder: (_, restrics) {
+
+        return SizedBox(
+          width: restrics.maxWidth,
+          height: restrics.maxHeight,
+          child: RefreshIndicator( 
+            onRefresh: () => Future.sync (() => _pagingController.refresh() ),
+            child: PagedListView.separated(
+              pagingController: _pagingController,
+              padding: const EdgeInsets.all(10),
+              shrinkWrap: true,
+              builderDelegate: PagedChildBuilderDelegate<OrdenEntity>(
+                itemBuilder: (_, orden, index) {
+                  
+                  switch (widget.tile) {
+                    case 'GENERALES':
+                      return _sortPerPiezas(orden);
+                    case 'POR MARCAS':
+                      return _sortPerMarcas(orden.id);
+                    case 'SOLICITUDES':
+                      return _sortPerSolicitudes(orden);
+                    default:
+                      return const SizedBox();
+                  }
+                },
+                noItemsFoundIndicatorBuilder: (context) => const EmptyListIndicator(),
+                firstPageErrorIndicatorBuilder: (context) => ErrorWidgetItems(
+                  error: _pagingController.error.toString().toLowerCase(),
+                  onTryAgain: (_) => _pagingController.refresh(),
+                ),
+              ),
+              separatorBuilder: (context, index) => const SizedBox(height: 0)
+            )
           ),
-        ),
-        separatorBuilder: (context, index) => const SizedBox(height: 0)
-      )
+        );
+      },
     );
   }
 
@@ -95,7 +104,7 @@ class _MyInfinityListState extends State<MyInfinityList> {
     }
 
     try {
-
+      
       final contentNewPage = await _fetchData(_pagingController.nextPageKey ?? 1);
 
       final isLastPage = contentNewPage.length < _ords.cantItemsPerPage;
@@ -123,8 +132,10 @@ class _MyInfinityListState extends State<MyInfinityList> {
       _solEm.oem.cleanResult();
       if(result.isNotEmpty) {
         response = await _solEm.setOrdenFromServer(result, _ords.items());
-        _ords.setItems(response);
-        _ords.setIndexResult(response.first.id, response.last.id);
+        if(response.isNotEmpty) {
+          _ords.setItems(response);
+          _ords.setIndexResult(response.first.id, response.last.id);
+        }
       }
     }else{
       
@@ -140,7 +151,7 @@ class _MyInfinityListState extends State<MyInfinityList> {
     if(widget.tile == 'POR MARCAS') {
       _lstSortMark = await _solEm.sortPerMark(response);
     }
-
+    
     return response;
   }
 
@@ -148,7 +159,9 @@ class _MyInfinityListState extends State<MyInfinityList> {
   Widget _sortPerPiezas(OrdenEntity orden) {
 
     if(orden.piezas.isNotEmpty) {
+      
       for(var p = 0; p < orden.piezas.length; p++) {
+
         return Padding(
           padding: const EdgeInsets.symmetric(vertical: 7),
           child: TileOrdenPieza(
@@ -164,6 +177,7 @@ class _MyInfinityListState extends State<MyInfinityList> {
         );
       }
     }
+
     return const SizedBox();
   }
 
@@ -179,6 +193,7 @@ class _MyInfinityListState extends State<MyInfinityList> {
       if(tile.isNotEmpty) {
         
         if(!_lstMrksSend.contains(tile['mrk'])) {
+
           _lstMrksSend.add(tile['mrk']);
           return Padding(
             padding: const EdgeInsets.symmetric(vertical: 7),

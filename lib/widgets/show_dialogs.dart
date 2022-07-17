@@ -76,8 +76,9 @@ class ShowDialogs {
         'esta sección.\n\n'
         'Sentimos el inconveniente.',
       'deleteInv': 'Se eliminará esta autoparte del sistema con la finalidad de '
-      'no ocupar espacio de almacenamiento inecesario y mantener tu sistema lo más '
-      'limpio y organizado posibe.\n\n¿Estás de acuardo en continuar con la operación?.'
+        'no ocupar espacio de almacenamiento inecesario y mantener tu sistema lo más '
+        'limpio y organizado posibe.\n\n¿Estás de acuardo en continuar con la operación?.',
+      'exitApp': '¿Realmente deseas salir de la apilicación de Autiparnet?'
     };
     return msg[tipo];
   }

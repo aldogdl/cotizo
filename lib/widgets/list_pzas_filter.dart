@@ -258,13 +258,14 @@ class _ListPzasFilterState extends State<ListPzasFilter> {
 
     final hasOrdInCache = _ordProv!.items().where((element) => element.id == _idOrd);
     if(hasOrdInCache.isNotEmpty) {
-
+      _globals.isFromWhatsapp = false;
       _orden = hasOrdInCache.first;
     }else{
 
       final fileReg = '${widget.ids}-${DateTime.now().microsecondsSinceEpoch}.see';
       final result = await _solEm.oem.getAOrdenAndPieza(_idOrd, fileReg);
       _solEm.oem.cleanResult();
+      _globals.isFromWhatsapp = true;
 
       if(result.isNotEmpty) {
         _msgLoad.value = 'Hidratando Modelos';
