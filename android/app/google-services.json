@@ -1,0 +1,54 @@
+{
+  "project_info": {
+    "project_number": "41420743420",
+    "project_id": "cotizo-ccf4d",
+    "storage_bucket": "cotizo-ccf4d.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:41420743420:android:10ede34dd6238161ba2d79",
+        "android_client_info": {
+          "package_name": "com.autoparnet.cotizo"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "41420743420-c07t96kdm8pfk7vm73cfibonht09gfb8.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.autoparnet.cotizo",
+            "certificate_hash": "569dca3bb4ea352a1ef75ab488263dfcfd413c5d"
+          }
+        },
+        {
+          "client_id": "41420743420-0o2586993eluhs6lo7ct7p87ma4nu2ea.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAJ6CnW7ec0Q8jtRJt0ilw0FR-9VNyd1N4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "41420743420-0o2586993eluhs6lo7ct7p87ma4nu2ea.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "41420743420-n0fgg8dj80gahsh6gdn92neibketvth9.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.autoparnet.cotizo"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
