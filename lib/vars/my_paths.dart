@@ -42,6 +42,8 @@ class MyPath {
       subBase = subBase.replaceFirst('/api/', '/');
     }
     final map = <String, String>{
+      'login_check_admin' : 'secure-api-check',
+      'api_is_token_caducado' : 'is-token-caducado',
       'get_orden_and_pieza': 'get-orden-and-pieza',
       'get_ordenes_and_piezas': 'get-ordenes-and-piezas',
       'upload_img_rsp': 'upload-img',
@@ -51,6 +53,10 @@ class MyPath {
       'get_user_by_campo': 'get-user-by-campo',
       'set_token_messaging_by_id_user': 'set-token-messaging-by-id-user',
     };
+
+    if(uri.startsWith('login_')) {
+      return map[uri]!;
+    }
 
     return '$subBase${map[uri]}${(params.isNotEmpty) ? params : ""}';
   }

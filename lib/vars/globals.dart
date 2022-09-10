@@ -3,8 +3,8 @@ import 'package:flutter/material.dart' show Color;
 
 class Globals {
 
-  String roleMain = '';
-  String version = '1.2.3';
+  String version = '1.2.4';
+  
   int idOrdenCurrent = 0;
   String idsFromLinkCurrent = '';
   String idCampaingCurrent = '';

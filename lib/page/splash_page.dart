@@ -1,11 +1,15 @@
 import 'package:camera/camera.dart';
+import 'package:cotizo/providers/signin_provider.dart';
+import 'package:cotizo/repository/acount_user_repository.dart';
 import 'package:cotizo/repository/no_tengo_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 
 import '../api/push_msg.dart';
 import '../config/sngs_manager.dart';
+import '../entity/account_entity.dart';
 import '../repository/inventario_repository.dart';
 import '../vars/globals.dart';
 
@@ -20,14 +24,16 @@ class SplashPage extends StatefulWidget {
 class _SplashPageState extends State<SplashPage> {
 
   final ValueNotifier<String> _msgs = ValueNotifier<String>('Inicializando...');
-  final _invEm = InventarioRepository();
-  final _ntgEm = NoTengoRepository();
+  final _invEm   = InventarioRepository();
+  final _ntgEm   = NoTengoRepository();
+  final _userEm  = AcountUserRepository();
   final _globals = getIt<Globals>();
-  final pushMsg = getIt<PushMsg>();
+  final pushMsg  = getIt<PushMsg>();
+  
+  AccountEntity? user;
   
   @override
   void initState() {
-
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback(_initWidget);
   }
@@ -37,7 +43,6 @@ class _SplashPageState extends State<SplashPage> {
     _msgs.dispose();
     super.dispose();
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -92,6 +97,9 @@ class _SplashPageState extends State<SplashPage> {
 
     final nav = GoRouter.of(context);
 
+    bool isOk = await _revisandoCredenciales();
+    if(!isOk) { return; }
+
     _msgs.value = 'Recuperando filtro Inventario';
     await Future.delayed(const Duration(milliseconds: 250));
     _globals.invFilter = await _invEm.getAllInvToFilter();
@@ -118,4 +126,52 @@ class _SplashPageState extends State<SplashPage> {
     nav.go('/home');
   }
 
+  ///
+  Future<bool> _revisandoCredenciales() async {
+
+    final nav = GoRouter.of(context);
+    final siging = context.read<SignInProvider>();
+    
+    _msgs.value = 'Verificando Identidad';
+    await Future.delayed(const Duration(milliseconds: 250));
+    user = await _userEm.getDataUserInLocal();
+
+    if(user!.id == 0) {
+
+      _msgs.value = 'Autenticate por favor.';
+      Future.delayed(const Duration(milliseconds: 1500), (){
+        nav.go('/login');
+      });
+      return false;
+
+    }else{
+
+      _msgs.value = 'Bienvenido: ${user!.curc.toUpperCase()}';
+      await Future.delayed(const Duration(milliseconds: 500));
+      _msgs.value = 'Revisando tus Credenciales';
+      await Future.delayed(const Duration(milliseconds: 250));
+      await _userEm.isTokenCaducado();
+      
+      if(_userEm.result['abort']) {
+        _msgs.value = 'Actualizando Credenciales';
+        await Future.delayed(const Duration(milliseconds: 250));
+        await _userEm.login({'username':user!.curc, 'password': user!.password});
+        
+        if(_userEm.result['abort']) {
+          _msgs.value = 'Autenticate por favor.';
+          Future.delayed(const Duration(milliseconds: 1500), (){
+            nav.go('/login');
+          });
+          return false;
+
+        }else{
+          await _userEm.setTokenServer(_userEm.result['body']);
+        }
+      }
+    }
+
+    siging.isLogin = true;
+    return true;
+  }
+  
 }

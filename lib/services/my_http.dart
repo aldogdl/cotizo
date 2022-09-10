@@ -9,6 +9,7 @@ class MyHttp {
 
   ///
   Map<String, dynamic> result = {'abort':false, 'msg':'ok', 'body':[]};
+  String token = '';
 
   ///
   void cleanResult() {
@@ -17,10 +18,19 @@ class MyHttp {
 
   ///
   Future<Map<String, dynamic>> get(
-    String uri, {String params = '/', Map<String, dynamic>? querys}
+    String uri, {String params = '/', Map<String, dynamic>? querys, bool hasTkn = false}
   ) async {
 
-    http.Response resp = await http.get(MyPath.getUri(uri, params, querys: querys));
+     Map<String, String> headers = {
+      'Content-type': 'application/json',
+      'Accept': 'application/json',
+    };
+    if(hasTkn) {
+      headers['Authorization'] = 'Bearer $token';
+    }
+    Uri url = MyPath.getUri(uri, params, querys: querys);
+    
+    http.Response resp = await http.get(url, headers: headers);
     if(resp.statusCode == 200) {
       result = Map<String, dynamic>.from(json.decode(resp.body));
     }else{
@@ -30,12 +40,51 @@ class MyHttp {
   }
 
   ///
-  Future<void> post(Uri url, {Map<String, dynamic> data = const {}}) async {
+  Future<void> makeLogin(Map<String, dynamic> data) async {
 
     Map<String, String> headers = {
       'Content-type': 'application/json',
       'Accept': 'application/json',
     };
+    
+    try {
+
+      Uri url = MyPath.getUri('login_check_admin', '');
+      var response = await http.post(url, headers: headers, body: json.encode(data));
+      if(response.statusCode == 200) {
+
+        var body = json.decode(response.body);
+
+        if(body.isNotEmpty) {
+          if(body.containsKey('token')) {
+            result = {'abort': false, 'msg': 'ok', 'body': body['token']};
+            return;
+          }else{
+            await _analizaErrorFromServerCode200();
+          }
+        }
+      }else{
+        await _analizaErrorFromServer(response);
+      }
+
+    } catch (e) {
+
+      result = {'abort':true, 'msg': e.toString(), 'body':'ERROR, Sin conexión al servidor, intentalo nuevamente.'};
+      return;
+    }
+  }
+
+  ///
+  Future<void> post(Uri url, {Map<String, dynamic> data = const {}, bool hasTkn = false}) async {
+
+    Map<String, String> headers = {
+      'Content-type': 'application/json',
+      'Accept': 'application/json',
+    };
+    if(hasTkn) {
+      headers['Authorization'] = 'Bearer $token';
+    }
+
     var req = http.MultipartRequest('POST', url);
     
     req.headers.addAll(headers);
@@ -139,7 +188,7 @@ class MyHttp {
       if(reServer.body.toString().contains('Invalid ')){
         result['abort'] = true;
         result['msg'] = 'Invalidas';
-        result['body'] = 'Revisa tus datos, las Credenciales son invalidas.';
+        result['body'] = 'Revisa tus datos.';
       }
     }
 

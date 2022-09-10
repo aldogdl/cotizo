@@ -5,12 +5,9 @@ import '../config/sngs_manager.dart';
 import '../entity/account_entity.dart';
 import '../services/my_http.dart';
 import '../vars/enums.dart';
-import '../vars/globals.dart';
 import '../vars/my_paths.dart';
 
 class AcountUserRepository {
-
-  final _globals = getIt<Globals>();
 
   final _boxName = HiveBoxs.account.name;
   final http = MyHttp();
@@ -51,6 +48,24 @@ class AcountUserRepository {
   }
 
   ///
+  Future<void> isTokenCaducado() async {
+
+    http.token = await getTokenServer();
+    await http.get('api_is_token_caducado', hasTkn: true);
+    result = http.result;
+    return;
+  }
+
+  ///
+  Future<void> login(Map<String, dynamic> data) async {
+    
+    await http.makeLogin(data);
+    result = http.result;
+    http.cleanResult();
+    return;
+  }
+
+  ///
   Future<void> recoveryDataUser(String curc) async {
 
     await http.get('get_user_by_campo', querys: {'campo':'curc', 'valor':curc});
@@ -77,7 +92,6 @@ class AcountUserRepository {
 
     bool ok = await _isMyOpen();
     if(ok) {
-      _box!.clear();
       await _box!.deleteFromDisk();
     }
   }
@@ -86,15 +100,14 @@ class AcountUserRepository {
   Future<void> setDataUserInLocal(AccountEntity acount) async {
 
     bool ok = await _isMyOpen();
-    _globals.roleMain = (acount.roles.contains('ROLE_EVAL')) ? 'ROLE_EVAL' : 'ROLE_COTZ';
-
     if(ok) {
       final user = _box!.values.where((element) => element.id == acount.id);
       if(user.isNotEmpty) {
-        user.first.box!.put(user.first.key, acount);
+        await user.first.box!.put(user.first.key, acount);
       }else{
-        _box!.clear();
-        _box!.add(acount);
+        await _box!.clear();
+        await _box!.add(acount);
+        await acount.save();
       }
     }
   }
@@ -117,6 +130,7 @@ class AcountUserRepository {
       }
 
       if(_box!.values.isNotEmpty) {
+
         final user = _box!.values.first;
         if(user.id != 0) {
           if(user.msgToken != elTk) {
@@ -133,6 +147,25 @@ class AcountUserRepository {
   }
 
   ///
+  Future<void> setTokenServer(String token) async {
+
+    bool ok = await _isMyOpen();
+    if(ok) {
+
+      if(token.isNotEmpty) {  
+        if(_box!.values.isNotEmpty) {
+
+          final user = _box!.values.first;
+          if(user.id != 0) {
+            user.serverToken = token;
+            user.save();
+          }
+        }
+      }
+    }
+  }
+
+  ///
   Future<int> getIdUser() async {
 
     bool ok = await _isMyOpen();
@@ -144,4 +177,31 @@ class AcountUserRepository {
     }
     return 0;
   }
+
+  ///
+  Future<String> getCurc() async {
+
+    bool ok = await _isMyOpen();
+    if(ok) {
+      final user = _box!.values;
+      if(user.isNotEmpty) {
+        return user.first.curc;
+      }
+    }
+    return '';
+  }
+
+  ///
+  Future<String> getTokenServer() async {
+
+    bool ok = await _isMyOpen();
+    if(ok) {
+      final user = _box!.values;
+      if(user.isNotEmpty) {
+        return user.first.serverToken;
+      }
+    }
+    return '';
+  }
+
 }

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../repository/acount_user_repository.dart';
 import '../services/my_get.dart';
 import '../providers/gest_data_provider.dart';
 import '../widgets/ascaffold_main.dart';
@@ -24,7 +24,7 @@ class LstPiezasByOrden extends StatefulWidget {
 class _LstPiezasByOrdenState extends State<LstPiezasByOrden> {
 
   bool _isIni = false;
-  bool _isIntentLogin = false;
+  final _userEm = AcountUserRepository();
 
   @override
   Widget build(BuildContext context) {
@@ -47,6 +47,7 @@ class _LstPiezasByOrdenState extends State<LstPiezasByOrden> {
     if(Mget.ctx == null) {
       Mget.init(context, context.read<GestDataProvider>());
     }
+
     return SizedBox.expand(
       child: Column(
         children: [
@@ -62,7 +63,7 @@ class _LstPiezasByOrdenState extends State<LstPiezasByOrden> {
           ),
           SizedBox(height: MediaQuery.of(Mget.ctx!).size.height * 0.05),
           const Text(
-            'Autentícate por favor',
+            'GRACIAS POR TU TIEMPO',
             textScaleFactor: 1,
             style: TextStyle(
               color: Colors.white,
@@ -74,8 +75,8 @@ class _LstPiezasByOrdenState extends State<LstPiezasByOrden> {
           const Padding(
             padding: EdgeInsets.symmetric(horizontal: 10),
             child: Text(
-              'No olvides autenticarte con la cuenta de Acceso que AutoparNet '
-              'te ha otorgado como Socio. ',
+              'Espera por favor un momento, estamos habilitando tus credenciales '
+              'y autenticando tu exclusividad. ',
               textAlign: TextAlign.center,
               textScaleFactor: 1,
               style: TextStyle(
@@ -86,41 +87,20 @@ class _LstPiezasByOrdenState extends State<LstPiezasByOrden> {
             )
           ),
           SizedBox(height: MediaQuery.of(Mget.ctx!).size.height * 0.1),
-          AbsorbPointer(
-            absorbing: _isIntentLogin,
-            child: ElevatedButton(
-              style: ButtonStyle(
-                backgroundColor: MaterialStateProperty.all(const Color(0xFF00a884))
-              ),
-              onPressed: () async {
-                setState(() {
-                  _isIntentLogin = true;
-                });
-                await _hacerLogin();
-              },
-              child: Text(
-                (_isIntentLogin) ? 'UN MOMENTO, POR FAVOR.' : '¡HACER LOGIN AHORA!',
+          StreamBuilder<String>(
+            stream: _hacerLogin(),
+            initialData: 'Validando...',
+            builder: (_, AsyncSnapshot<String> val) {
+              return Text(
+                val.data!,
                 textScaleFactor: 1,
                 style: const TextStyle(
-                  color: Colors.black,
+                  color: Color(0xFF00a884),
                   fontSize: 15,
                   fontWeight: FontWeight.bold
                 )
-              )
-            ),
-          ),
-          SizedBox(height: MediaQuery.of(Mget.ctx!).size.height * 0.1),
-          TextButton(
-            onPressed: () => Mget.ctx!.push('/home'),
-            child: const Text(
-              'SALIR Y NO COTIZAR',
-              textScaleFactor: 1,
-              style: TextStyle(
-                color: Color(0xFF00a884),
-                fontSize: 15,
-                fontWeight: FontWeight.bold
-              )
-            )
+              );
+            },
           )
         ]
       )
@@ -128,31 +108,37 @@ class _LstPiezasByOrdenState extends State<LstPiezasByOrden> {
   }
 
   ///
-  Future<void> _hacerLogin() async {
+  Stream<String> _hacerLogin() async* {
 
-    bool isOk = false;
-    
     final nav = GoRouter.of(context);
+
+    final user = await _userEm.getDataUserInLocal();
+    if(user.id == 0) {
+      nav.go('/login');
+      return;
+    }
+
+    yield 'Bienvenido: ${user.curc.toUpperCase()}';
+    await _userEm.isTokenCaducado();
     
-    try {
-      await Mget.auth!.login();
-    } on PlatformException catch (_) {
-      isOk = false;
-    } finally {
-      if(Mget.auth!.currentUser != null) {
-        if(Mget.auth!.currentUser!.email.contains('@')) {
-          isOk = true;
-        }
+    if(_userEm.result['abort']) {
+      yield 'Actualizando Credenciales';
+      await _userEm.login({'username':user.curc, 'password': user.password});
+      
+      if(_userEm.result['abort']) {
+        yield 'Autenticate por favor.';
+        Future.delayed(const Duration(milliseconds: 1500), (){
+          nav.go('/login');
+        });
+        return;
+
+      }else{
+        await _userEm.setTokenServer(_userEm.result['body']);
       }
     }
 
-    if(isOk) {
-      setState(() {
-        Mget.auth!.isLogin = true;
-      });
-    }else{
-      nav.go('/login');
-    }
+    Future.microtask(() => Mget.auth!.isLogin = true);
+    setState(() {});
   }
 
 }

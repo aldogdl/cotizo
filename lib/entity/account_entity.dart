@@ -1,6 +1,4 @@
 import 'package:hive/hive.dart';
-import 'package:google_sign_in/google_sign_in.dart' show GoogleSignInAccount;
-
 
 part 'account_entity.g.dart';
 
@@ -13,13 +11,13 @@ class AccountEntity extends HiveObject {
   int id = 0;
 
   @HiveField(1)
-  String displayName = '';
+  String name = '';
 
   @HiveField(2)
-  String email = '';
+  String curc = '';
 
   @HiveField(3)
-  String? photoUrl;
+  String password = '';
 
   @HiveField(4)
   String serverToken = '';
@@ -28,22 +26,18 @@ class AccountEntity extends HiveObject {
   String msgToken = '';
 
   @HiveField(6)
-  String curc = '';
-
-  @HiveField(7)
   List<String> roles = [];
 
   ///
-  void fromLoginGoogle(GoogleSignInAccount user) {
+  void fromServer(Map<String, dynamic> user) {
 
-    id = 0;
-    displayName = user.displayName ?? '';
-    email = user.email;
-    photoUrl = user.photoUrl ?? '';
-    serverToken = '0';
-    msgToken = '0';
-    curc = '0';
-    roles = <String>[];
+    id = user['id'];
+    name = user['name'];
+    curc = user['curc'];
+    password = user['password'];
+    serverToken = user['serverToken'];
+    msgToken = user['msgToken'];
+    roles = user['roles'];
   }
 
   ///
@@ -51,12 +45,11 @@ class AccountEntity extends HiveObject {
 
     return {
       'id': id,
-      'displayName': displayName,
-      'email': email,
-      'photoUrl': photoUrl,
+      'name': name,
+      'curc': curc,
+      'password': password,
       'serverToken': serverToken,
       'msgToken': msgToken,
-      'curc': curc,
       'roles': roles,
     };
   }

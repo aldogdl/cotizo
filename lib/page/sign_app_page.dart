@@ -1,15 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
-import 'package:flutter/services.dart' show PlatformException;
 
-import 'siging_pages/cuenta_nueva.dart';
-import 'siging_pages/datos.dart';
-import 'siging_pages/listo_login.dart';
-import 'siging_pages/permisos.dart';
-import 'siging_pages/welcome.dart';
 import '../config/sngs_manager.dart';
+import '../entity/account_entity.dart';
 import '../providers/signin_provider.dart';
 import '../vars/globals.dart';
 import '../widgets/bg_img_pzas.dart';
@@ -24,18 +19,26 @@ class SignAppPage extends StatefulWidget {
 
 class _SignAppPageState extends State<SignAppPage> {
 
-  final ValueNotifier<String> _isLoading = ValueNotifier<String>('');
-  final PageController _ctrPage = PageController();
+  final ValueNotifier<String> _isLoading = ValueNotifier<String>('¡Autenticarme Ahora!');
   final Globals _globals = getIt<Globals>();
-  
-  int _pageCurrent = 0;
+  final _frmKey = GlobalKey<FormState>();
+  final  _ctrCurc = TextEditingController();
+  final  _ctrPass = TextEditingController();
+  final  _fcCurc  = FocusNode();
+  final  _fcPass  = FocusNode();
+
   bool _isInit = false;
+  bool _isObscure = true;
+  bool _isAbsorb = false;
   late final SignInProvider _signIn;
 
   @override
   void dispose() {
-    _ctrPage.dispose();
     _isLoading.dispose();
+    _ctrCurc.dispose();
+    _ctrPass.dispose();
+    _fcCurc.dispose();
+    _fcPass.dispose();
     super.dispose();
   }
 
@@ -46,285 +49,256 @@ class _SignAppPageState extends State<SignAppPage> {
       _isInit = true;
       _signIn = context.read<SignInProvider>();
     }
-
+    
     return Scaffold(
       backgroundColor: _globals.bgMain,
+      extendBody: true,
+      extendBodyBehindAppBar: true,
       body: Container(
-        padding: const EdgeInsets.symmetric(vertical: 20),
         constraints: BoxConstraints.expand(
           width: MediaQuery.of(context).size.width
         ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          mainAxisSize: MainAxisSize.max,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Expanded(
-              child: BGImgPzas(
-                bgColor: _globals.bgMain,
-                child: PageView(
-                  controller: _ctrPage,
-                  onPageChanged: (index) => setState(() {
-                    _pageCurrent = index;
-                  }),
-                  children: [
-                    FutureBuilder(
-                      future: _checkUser(),
-                      initialData: false,
-                      builder: (_, AsyncSnapshot snap) {
-                        return _buildPage(
-                          sgv: 'avatar_male.svg',
-                          child: _dataLogin(snap.data ?? false)
-                        );
-                      },
-                    ),
-                    _buildPage(sgv: 'bookmarks.svg', child: Welcome(globals: _globals)),
-                    _buildPage(sgv: '', child: Permisos(globals: _globals)),
-                    _buildPage(sgv: '', ico: Icons.co_present_rounded, child: Datos(globals: _globals)),
-                    _buildPage(
-                      sgv: '', ico: Icons.attach_email_outlined,
-                      child: CuentaNueva(globals: _globals),
-                      isLast: true
-                    ),
-                  ],
-                )
-              )
-            ),
-            const SizedBox(height: 18),
-            SizedBox(
-              width: MediaQuery.of(context).size.width * 0.85,
-              height: MediaQuery.of(context).size.height * 0.07,
-              child: ElevatedButton.icon(
-                style: ButtonStyle(
-                  backgroundColor: MaterialStateProperty.all(
-                    const Color.fromARGB(255, 15, 109, 185)
-                  )
+        child: BGImgPzas(
+          bgColor: _globals.bgMain,
+          child: SafeArea(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              mainAxisSize: MainAxisSize.max,
+              children: [
+                SizedBox(
+                  height: MediaQuery.of(context).size.width * 0.12
                 ),
-                onPressed: () async => await _hacerLogin(),
-                icon: const Icon(Icons.account_circle),
-                label: const Text(
-                  'LOGIN CUANTA DE GOOGLE',
+                SizedBox(
+                  width: MediaQuery.of(context).size.width * 0.4,
+                  height: MediaQuery.of(context).size.width * 0.4,
+                  child: SvgPicture.asset(
+                    'assets/svgs/avatar_male.svg',
+                    semanticsLabel: 'Autenticate'
+                  ),
+                ),
+                const SizedBox(height: 20),
+                const Text(
+                  'AUTENTICATE POR FAVOR',
                   textScaleFactor: 1,
                   style: TextStyle(
-                    fontSize: 17
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                    color: Colors.white,
+                    letterSpacing: 1.1
                   ),
-                )
-              ),
+                ),
+                const SizedBox(height: 10),
+                Expanded(
+                  child: ListView(
+                    padding: const EdgeInsets.all(20),
+                    children: [
+                      _frm(),
+                      const SizedBox(height: 20),
+                      SizedBox(
+                        height: 45,
+                        child: ValueListenableBuilder<String>(
+                          valueListenable: _isLoading,
+                          builder: (_, val, __) {
+                            return AbsorbPointer(
+                              absorbing: _isAbsorb,
+                              child: _btnLogin(val),
+                            );
+                          },
+                        )
+                      ),
+                      const SizedBox(height: 30),
+                      SizedBox(
+                        width: MediaQuery.of(context).size.width * 0.7,
+                        child: const Image(
+                          image: AssetImage('assets/images/logo_dark.png'),
+                        ),
+                      )
+                    ],
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 10)
-          ],
+          )
+        )
+      )
+    );
+  }
+
+  ///
+  Widget _frm() {
+
+    return Form(
+      key: _frmKey,
+      child: Column(
+        children: [
+          TextFormField(
+            controller: _ctrCurc,
+            focusNode: _fcCurc,
+            autocorrect: true,
+            autovalidateMode: AutovalidateMode.onUserInteraction,
+            textInputAction: TextInputAction.next,
+            keyboardType: TextInputType.visiblePassword,
+            validator: (curc) {
+              if(curc == null || curc.isEmpty) {
+                return 'El CURC es necesario.';
+              }
+              if(!curc.startsWith('anet')) {
+                return 'El CURC es invalido.';
+              }
+              return null;
+            },
+            style: _styleTxt(),
+            decoration: InputDecoration(
+              fillColor: Colors.black,
+              filled: true,
+              hintText: 'anetc0c0',
+              hintStyle: TextStyle(
+                color: Colors.white.withOpacity(0.4),
+                fontSize: 16,
+                fontWeight: FontWeight.w100,
+                letterSpacing: 1.1
+              ),
+              border: _border(),
+              enabledBorder: _border(),
+              prefixIcon: const Icon(Icons.key, color: Colors.grey)
+            ),
+          ),
+          const SizedBox(height: 20),
+          TextFormField(
+            controller: _ctrPass,
+            focusNode: _fcPass,
+            autocorrect: true,
+            autovalidateMode: AutovalidateMode.onUserInteraction,
+            textInputAction: TextInputAction.done,
+            keyboardType: TextInputType.visiblePassword,
+            onFieldSubmitted: (txt) => _hacerLogin(),
+            validator: (pass) {
+              if(pass == null || pass.isEmpty) {
+                return 'La contraseña es necesaria.';
+              }
+              if(pass.length < 4) {
+                return 'La contraseña es invalida.';
+              }
+              return null;
+            },
+            obscureText: _isObscure,
+            style: _styleTxt(),
+            decoration: InputDecoration(
+              border: _border(),
+              enabledBorder: _border(color: Colors.blue),
+              focusedBorder: _border(color: Colors.blue),
+              prefixIcon: const Icon(Icons.password_sharp, color: Colors.grey),
+              fillColor: Colors.black,
+              filled: true,
+              suffixIcon: IconButton(
+                onPressed: () => setState(() {
+                  _isObscure = !_isObscure;
+                }),
+                padding: const EdgeInsets.all(0),
+                color: Colors.green,
+                visualDensity: VisualDensity.compact,
+                iconSize: 25,
+                constraints: const BoxConstraints(
+                  maxHeight: 10, minHeight: 10
+                ),
+                icon: (_isObscure)
+                  ? const Icon(Icons.visibility_off, color: Colors.green)
+                  : const Icon(Icons.visibility, color: Colors.green),
+              )
+            ),
+          )
+        ],
+      )
+    );
+  }
+
+  ///
+  Widget _btnLogin(String msg) {
+
+    return ElevatedButton(
+      style: ButtonStyle(
+        backgroundColor: MaterialStateProperty.all(_globals.colorGreen)
+      ),
+      onPressed: () async {
+        FocusManager.instance.primaryFocus?.unfocus();
+        await _hacerLogin();
+      },
+      child: Text(
+        msg,
+        textScaleFactor: 1,
+        style: const TextStyle(
+          fontSize: 20,
+          color: Colors.black,
+          fontWeight: FontWeight.bold
         ),
       )
     );
   }
 
   ///
-  Widget _buildPage
-    ({
-      required String sgv, required Widget child,
-      IconData ico = Icons.security,
-      bool isLast = false
-    })
-  {
+  TextStyle _styleTxt() {
 
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        if(sgv.isNotEmpty)
-          _getSgv(sgv)
-        else
-          Icon(ico, size: 120, color: Colors.blueGrey),
-        child,
-        if(!isLast)
-          ValueListenableBuilder(
-            valueListenable: _isLoading,
-            builder: (_, acc, child) {
-              return (acc == 'auth') ? child! : _btnSaberMas();
-            },
-            child: _autenticando(),
-          ),
-        const SizedBox(height: 20),
-        _indicadorDePosicion()
-      ],
+    return const TextStyle(
+      color: Colors.grey,
+      fontSize: 18
     );
   }
 
   ///
-  Widget _autenticando() {
+  OutlineInputBorder _border({ Color color = Colors.green} ) {
 
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      mainAxisSize: MainAxisSize.max,
-      children: [
-        const SizedBox(
-          width: 30, height: 30,
-          child: CircularProgressIndicator(),
-        ),
-        const SizedBox(width: 10),
-        Text(
-          'Autenticando...',
-          textScaleFactor: 1,
-          style: TextStyle(
-            color: _globals.txtOnsecMainSuperLigth
-          ),
-        )
-      ],
-    );
-  }
-
-  ///
-  Widget _btnSaberMas() {
-
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      mainAxisSize: MainAxisSize.max,
-      children: [
-        ElevatedButton(
-          onPressed: () async {
-            await _ctrPage.animateToPage(
-              _pageCurrent+1,
-              duration: const Duration(microseconds: 1000), curve: Curves.easeIn
-            );
-          },
-          child: Text(
-            (_pageCurrent == 0) ? '¿Por que una cuenta nueva?' : 'Saber Más...',
-            textScaleFactor: 1,
-            style: const TextStyle(
-              fontSize: 17,
-              color: Color.fromARGB(255, 22, 22, 22)
-            ),
-          )
-        )
-      ],
-    );
-  }
-
-  ///
-  Widget _getSgv(String sgv) {
-
-    return Container(
-      padding: const EdgeInsets.all(20),
-      height: MediaQuery.of(context).size.height * 0.35,
-      child: SvgPicture.asset(
-        'assets/svgs/$sgv',
-        alignment: Alignment.topCenter,
-        fit: BoxFit.contain,
-      ),
-    );
-  }
-
-  ///
-  Widget _indicadorDePosicion() {
-
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      mainAxisSize: MainAxisSize.max,
-      children: List.generate(5, (index) {
-        return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 5),
-          child: Icon(
-            Icons.circle,
-            size: 13,
-            color: (index == _pageCurrent)
-              ? _globals.colorGreen
-              : const Color.fromARGB(255, 68, 68, 68)
-          ),
-        );
-      })
-    );
-  }
-
-  ///
-  Widget _dataLogin(bool isLoged) {
-
-    return Container(
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          TextButton(
-            onPressed: () {
-              if(_globals.histUri.isNotEmpty) {
-                context.go(_globals.getBack());
-              }else{
-                context.pop();
-              }
-            },
-            child: Text(
-              'CONTINUAR SIN AUTENTICACIÓN',
-              textScaleFactor: 1,
-              style: TextStyle(
-                fontSize: 15,
-                color: _globals.colorGreen
-              ),
-            )
-          ),
-          const SizedBox(height: 35),
-          Text(
-            'No olvides otorgar TODO los permisos',
-            style: TextStyle(
-              fontSize: 13,
-              color: _globals.txtOnsecMainLigth
-            )
-          ),
-        ],
-      ),
+    color = _globals.colorGreen;
+    return OutlineInputBorder(
+      borderRadius: BorderRadius.circular(8),
+      borderSide: BorderSide(color: color, width: 1)
     );
   }
 
   ///
   Future<void> _hacerLogin() async {
 
-    _isLoading.value = 'auth';
-    final nav = GoRouter.of(context);
+    if(_frmKey.currentState!.validate()) {
 
-    try {
-      await _signIn.login();
-    } on PlatformException catch (_) {
-      _isLoading.value = 'cancel';
-    } finally {
-      _isLoading.value = '';
-    }
+      _isLoading.value = 'Revisando Credenciales';
+      final nav = GoRouter.of(context);
+      final account = AccountEntity();
 
-    bool isOk = await _checkUser();
-    if(isOk) {
+      setState(() {
+        _isAbsorb = true;
+      });
 
-      isOk = await _signIn.isSame();
-      if(isOk) { nav.pop(); }
+      final curc = _ctrCurc.text.trim().toLowerCase();
+      await _signIn.login({
+        'username': curc,
+        'password': _ctrPass.text.trim().toLowerCase()
+      });
 
-      await showModalBottomSheet(
-        context: context,
-        isDismissible: false,
-        isScrollControlled: true,
-        backgroundColor: _globals.bgMain,
-        builder: (ctx) {
-
-          final nav = GoRouter.of(ctx);
-          return ListoLogin(
-            globals: _globals,
-            onFinish: (_) {
-              if(nav.canPop()) {
-                Future.microtask(() => nav.pop());
-              }else{
-                Future.microtask(() => nav.go('/home'));
-              }
-            }
-          );
-        }
-      );
-    }
-  }
-
-  ///
-  Future<bool> _checkUser() async {
-
-    if(_signIn.currentUser != null) {
-      if(_signIn.currentUser!.email.contains('@')) {
-        return true;
+      if(_signIn.userEm.result['abort']) {
+        setState(() { _isAbsorb = false; });
+        _isLoading.value = _signIn.userEm.result['body'];
+        return;
       }
+
+      account.serverToken = _signIn.userEm.result['body'];
+      account.curc = curc;
+      account.password = _ctrPass.text.trim().toLowerCase();
+
+      _isLoading.value = 'Preparando todo para ti';
+      _signIn.userEm.cleanResult();
+      await _signIn.userEm.recoveryDataUser(curc);
+      if(_signIn.userEm.result['abort']) {
+        setState(() { _isAbsorb = false; });
+        _isLoading.value = 'ERROR! Inténtalo de nuevo';
+        return;
+      }
+
+      account.id = _signIn.userEm.result['body']['u_id'];
+      account.roles = List<String>.from(_signIn.userEm.result['body']['u_roles']);
+      await _signIn.userEm.setDataUserInLocal(account);
+      _signIn.isLogin = true;
+      nav.go('/');
     }
-    return false;
   }
 
 }

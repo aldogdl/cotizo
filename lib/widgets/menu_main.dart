@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:google_sign_in/google_sign_in.dart' show GoogleSignInAccount;
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../config/sngs_manager.dart';
+import '../entity/account_entity.dart';
 import '../providers/signin_provider.dart';
 import '../vars/globals.dart';
 
@@ -26,7 +27,7 @@ class MenuMain extends StatelessWidget {
             Divider(color: _globals.txtOnsecMainDark),
             _item(
               icono: Icons.bubble_chart_rounded, label: 'Inventario',
-              fnc: () {}
+              fnc: () => context.go('/inventario')
             ),
             _item(
               icono: Icons.bar_chart_sharp, label: 'Coutas de Almacenamiento',
@@ -36,14 +37,33 @@ class MenuMain extends StatelessWidget {
               icono: Icons.settings, label: 'Configuración',
               fnc: () {}
             ),
-            Divider(color: _globals.txtOnsecMainDark),
-            _dataAccount(provi.currentUser),
             _item(
               icono: Icons.unpublished_rounded, label: 'Cerrar Sesión',
               fnc: () async {
-                provi.logout().then((value) => Navigator.of(context).pop());
+                final nav = Navigator.of(context);
+                await provi.logout();
+                nav.pop();
               }
             ),
+            Divider(color: _globals.txtOnsecMainDark),
+            FutureBuilder(
+              future: provi.getDataUser(),
+              builder: (_, AsyncSnapshot snapshot) {
+                if(snapshot.connectionState == ConnectionState.done) {
+                  if(snapshot.hasData) {
+                    return _dataAccount(snapshot.data);
+                  }
+                }
+                return _dataAccount(null);
+              }
+            ),
+            const SizedBox(height: 30),
+            SizedBox(
+              width: MediaQuery.of(context).size.width * 0.7,
+              child: const Image(
+                image: AssetImage('assets/images/logo_1024.png'),
+              ),
+            )
           ],
         ),
       ),
@@ -81,13 +101,27 @@ class MenuMain extends StatelessWidget {
   }
 
   ///
-  Widget _dataAccount(GoogleSignInAccount? account) {
+  Widget _dataAccount(AccountEntity? account) {
 
-    String curc = 'Sin Registro';
+    String curc  = 'Sin Registro';
+    String iDMsg = 'Sin Id de Mensajería';
+    String dDSrv = 'Sin Token de Servidor';
+    
     if(account != null) {
-      List<String> partes = account.email.split('@');
-      if(partes.isNotEmpty) {
-        curc = partes.first;
+      curc = account.curc;
+      iDMsg= account.msgToken;
+      dDSrv= account.serverToken;
+      
+      if(iDMsg.length > 10) {
+        var first = iDMsg.substring(0, 10);
+        var last  = iDMsg.substring((iDMsg.length - 10), iDMsg.length);
+        iDMsg = '$first...$last';
+      }
+
+      if(dDSrv.length > 10) {
+        var first = dDSrv.substring(0, 10);
+        var last  = dDSrv.substring((dDSrv.length - 10), dDSrv.length);
+        dDSrv = '$first...$last';
       }
     }
 
@@ -100,9 +134,9 @@ class MenuMain extends StatelessWidget {
       ),
       child: Column(
         children: [
-          _row('ID:', (account != null) ? account.id : '0000000'),
-          _row('CURC:', curc),
-          _row('EMAIL:', (account != null) ? account.email : 'anónimo@cuenta.com'),
+          _row('IDMsg:', iDMsg),
+          _row('IDSrv:', dDSrv),
+          _row('CURC:', curc.toUpperCase()),
         ],
       ),
     );
@@ -112,8 +146,8 @@ class MenuMain extends StatelessWidget {
   Widget _item({
     required IconData icono,
     required String label,
-    required Function fnc,
-  }) {
+    required Function fnc}) 
+  {
 
     return TextButton(
       onPressed: () => fnc(),
@@ -155,9 +189,8 @@ class MenuMain extends StatelessWidget {
 
   ///
   Widget _texto(String label, {
-    double sz = 17,
-    Color cl = const Color.fromARGB(255, 246, 247, 248)
-  }) {
+    double sz = 17, Color cl = const Color.fromARGB(255, 246, 247, 248)}) 
+  {
 
     return Text(
       label,

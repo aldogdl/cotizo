@@ -371,9 +371,15 @@ class TileOrdenPieza extends StatelessWidget {
           Selector<SignInProvider, bool>(
             selector: (_, prov) => prov.isLogin,
             builder: (_, val, __) {
+
               return Padding(
                 padding: const EdgeInsets.only(right: 8.0),
                 child: ElevatedButton.icon(
+                  style: ButtonStyle(
+                    backgroundColor: (val) 
+                      ? MaterialStateProperty.all(Colors.green)
+                      : MaterialStateProperty.all(const Color.fromARGB(255, 81, 169, 133))
+                  ),
                   onPressed: () async => (isInv != 0) ? null : _gestionarDatos(context),
                   icon: const Icon(Icons.monetization_on_outlined, color: Colors.black),
                   label: const Text(

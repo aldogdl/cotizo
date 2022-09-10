@@ -18,34 +18,31 @@ class AccountEntityAdapter extends TypeAdapter<AccountEntity> {
     };
     return AccountEntity()
       ..id = fields[0] as int
-      ..displayName = fields[1] as String
-      ..email = fields[2] as String
-      ..photoUrl = fields[3] as String?
+      ..name = fields[1] as String
+      ..curc = fields[2] as String
+      ..password = fields[3] as String
       ..serverToken = fields[4] as String
       ..msgToken = fields[5] as String
-      ..curc = fields[6] as String
-      ..roles = (fields[7] as List).cast<String>();
+      ..roles = (fields[6] as List).cast<String>();
   }
 
   @override
   void write(BinaryWriter writer, AccountEntity obj) {
     writer
-      ..writeByte(8)
+      ..writeByte(7)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
-      ..write(obj.displayName)
+      ..write(obj.name)
       ..writeByte(2)
-      ..write(obj.email)
+      ..write(obj.curc)
       ..writeByte(3)
-      ..write(obj.photoUrl)
+      ..write(obj.password)
       ..writeByte(4)
       ..write(obj.serverToken)
       ..writeByte(5)
       ..write(obj.msgToken)
       ..writeByte(6)
-      ..write(obj.curc)
-      ..writeByte(7)
       ..write(obj.roles);
   }
 
