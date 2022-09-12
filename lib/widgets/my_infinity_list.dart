@@ -1,25 +1,21 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
+import 'package:provider/provider.dart';
 
+import 'filtrado_por_mds.dart';
+import 'filtrado_por_mrks.dart';
+import 'filtrado_por_sols.dart';
 import 'empty_list_indicator.dart';
+import 'filtrar_dialog.dart';
 import 'tile_orden_pieza.dart';
-import '../entity/share_data_orden.dart';
 import '../entity/orden_entity.dart';
-import '../repository/soli_em.dart';
+import '../entity/share_data_orden.dart';
 import '../providers/ordenes_provider.dart';
-import '../widgets/tile_orden_mrks.dart';
-import '../widgets/tile_orden_soli.dart';
+import '../vars/globals.dart';
 
 class MyInfinityList extends StatefulWidget {
-  
-  final String tile;
-  final ValueChanged<String> onPress;
-  const MyInfinityList({
-    Key? key,
-    required this.tile,
-    required this.onPress
-  }) : super(key: key);
+
+  const MyInfinityList({ Key? key }) : super(key: key);
 
   @override
   State<MyInfinityList> createState() => _MyInfinityListState();
@@ -27,15 +23,16 @@ class MyInfinityList extends StatefulWidget {
 
 class _MyInfinityListState extends State<MyInfinityList> {
 
-  final _solEm = SoliEm();
+  final _txtFiltros = 'Organiza los Resultados por:';
+  final _filtros = ValueNotifier<String>('Organiza los Resultados por:');
+  final _showFilter = ValueNotifier<bool>(false);
+  final _scrollCtrFilter = ScrollController();
   final _pagingController = PagingController<int, OrdenEntity>(firstPageKey: 1);
+
   late OrdenesProvider _ords;
-
-  List<Map<String, dynamic>> _lstSortMark = [];
-  List<int> _lstMrksSend = [];
-
   bool _isInit = false;
   int pageCurrent = 0;
+  List<OrdenEntity> _lstfiltrada = [];
 
   @override
   void initState() {
@@ -47,9 +44,12 @@ class _MyInfinityListState extends State<MyInfinityList> {
   @override
   void dispose() {
     _pagingController.dispose();
+    _filtros.dispose();
+    _showFilter.dispose();
+    _scrollCtrFilter.dispose();
     super.dispose();
   }
-
+  
   @override
   Widget build(BuildContext context) {
 
@@ -59,45 +59,18 @@ class _MyInfinityListState extends State<MyInfinityList> {
         return SizedBox(
           width: restrics.maxWidth,
           height: restrics.maxHeight,
-          child: RefreshIndicator( 
-            onRefresh: () =>
-              Future.sync (() {
-                _ords.numberPage = -1;
-                _ords.items().clear();
-                _pagingController.refresh();
-            }),
-            child: PagedListView.separated(
-              pagingController: _pagingController,
-              padding: const EdgeInsets.all(10),
-              shrinkWrap: true,
-              builderDelegate: PagedChildBuilderDelegate<OrdenEntity>(
-                itemBuilder: (_, orden, index) {
-                  
-                  switch (widget.tile) {
-                    case 'GENERALES':
-                      return _sortPerPiezas(orden);
-                    case 'POR MARCAS':
-                      return _sortPerMarcas(orden.id);
-                    case 'SOLICITUDES':
-                      return _sortPerSolicitudes(orden);
-                    default:
-                      return const SizedBox();
-                  }
-                },
-                noItemsFoundIndicatorBuilder: (context) => const EmptyListIndicator(),
-                firstPageErrorIndicatorBuilder: (context) => EmptyListIndicator(
-                  error: _pagingController.error.toString().toLowerCase(),
-                  onTray: (_) {
-                    _ords.numberPage = -1;
-                    Future.sync (() {
-                      _ords.items().clear();
-                      _pagingController.refresh();
-                    });
+          child: Column(
+            children: [
+              _headFilter(),
+              Expanded(
+                child: ValueListenableBuilder(
+                  valueListenable: _showFilter,
+                  builder: (_, verFilter, __) {
+                    return (verFilter) ? _lstFiltrada() : _lstInfinity();
                   },
                 ),
-              ),
-              separatorBuilder: (context, index) => const SizedBox(height: 5)
-            )
+              )
+            ],
           ),
         );
       },
@@ -105,58 +78,107 @@ class _MyInfinityListState extends State<MyInfinityList> {
   }
 
   ///
-  Future<void> _fetchPage(int pageKey) async {
+  Widget _headFilter() {
 
-    if(!_isInit) {
-      _isInit = true;
-      _ords = context.read<OrdenesProvider>();
-    }
+    return Container(
+      decoration: const BoxDecoration(
+        color: Colors.black,
+      ),
+      child: ValueListenableBuilder(
+        valueListenable: _filtros,
+        builder: (_, val, child) {
 
-    try {
-      
-      final ordenes = await _fetchData(_pagingController.nextPageKey ?? 1);
-      final isLastPage = ordenes.length < _ords.cantItemsPerPage;
+          if(val.contains('Organiza')){ return child!; }
 
-      if (isLastPage) {
-        _pagingController.appendLastPage(ordenes);
-      } else {
-        _pagingController.appendPage(ordenes, (pageKey + 1));
-      }
-
-    } catch (error) {
-      _pagingController.error = error;
-    }
+          return Row(
+            children: [
+              const SizedBox(width: 10),
+              Text(
+                val,
+                style: const TextStyle(
+                  color: Color.fromARGB(255, 81, 169, 133)
+                ),
+              ),
+              const Spacer(),
+              TextButton(
+                onPressed: () async => await _refreshComplete(fromFilter: true),
+                child: const Text(
+                  'VER TODOS',
+                  style: TextStyle(
+                    color: Colors.orange
+                  ),
+                ),
+              )
+            ],
+          );
+        },
+        child: Row(
+          children: [
+            const SizedBox(width: 10),
+            Text(
+              _txtFiltros,
+              style: const TextStyle(
+                color: Color.fromARGB(255, 81, 169, 133)
+              ),
+            ),
+            const Spacer(),
+            const Icon(Icons.arrow_forward, color: Color.fromARGB(255, 95, 95, 95)),
+            FiltrarDialog(
+              from: 'sols',
+              onPresed: (fnc) async {
+                Navigator.of(context).pop();
+                _showModalfilter(fnc);
+              },
+            )
+          ],
+        ),
+      ),
+    );
   }
 
   ///
-  Future<List<OrdenEntity>> _fetchData(int page) async {
+  Widget _lstFiltrada() {
 
-    if (!mounted) { return []; }
-
-    List<OrdenEntity> response = [];
-
-    if(_ords.numberPage != page) {
-      
-      _ords.numberPage = page;
-      final result = await _solEm.oem.getAllOrdenesAndPiezas(_ords.numberPage);
-      _solEm.oem.cleanResult();
-      
-      if(result.isNotEmpty) {
-        response = await _ords.toEntity(result);
-      }
-      
-    }else{
-      response = await _ords.getRange();
+    if(_lstfiltrada.isEmpty) {
+      return const EmptyListIndicator(from: 'filter');
     }
 
-    _lstSortMark = [];
-    _lstMrksSend = [];
+    return ListView.builder(
+      controller: _scrollCtrFilter,
+      itemCount: _lstfiltrada.length,
+      padding: const EdgeInsets.all(10),
+      itemBuilder: (BuildContext context, int index) {
+        return _sortPerPiezas(_lstfiltrada[index]);
+      },
+    );
+  }
 
-    if(widget.tile == 'POR MARCAS') {
-      _lstSortMark = await _solEm.sortPerMark(response);
-    }
-    
-    return response;
+  ///
+  Widget _lstInfinity() {
+
+    return RefreshIndicator(
+      onRefresh: () async => await _refreshComplete(),
+      child: PagedListView.separated(
+        pagingController: _pagingController,
+        padding: const EdgeInsets.all(10),
+        shrinkWrap: true,
+        builderDelegate: PagedChildBuilderDelegate<dynamic>(
+          itemBuilder: (_, orden, index) => _sortPerPiezas(orden),
+          noItemsFoundIndicatorBuilder: (context) => const EmptyListIndicator(),
+          firstPageErrorIndicatorBuilder: (context) => EmptyListIndicator(
+            error: _pagingController.error.toString().toLowerCase(),
+            onTray: (_) {
+              _ords.numberPage = -1;
+              Future.sync (() {
+                _ords.items().clear();
+                _pagingController.refresh();
+              });
+            },
+          ),
+        ),
+        separatorBuilder: (context, index) => const SizedBox(height: 5)
+      )
+    );
   }
 
   ///
@@ -181,7 +203,14 @@ class _MyInfinityListState extends State<MyInfinityList> {
             requerimientos: orden.obs[pza.id]!,
             box: SharedDataOrden(),
             onNt: (int idP) async {
-              await _ords.setNoTengo(orden.id, idP);
+
+              //await _ords.setNoTengo(orden.id, idP);
+              if(_ords.filterBySols.isNotEmpty) {
+                if(_lstfiltrada.isNotEmpty) {
+                  _lstfiltrada.removeWhere((element) => element.id == orden.id);
+                }
+                setState(() {});
+              }
               _pagingController.refresh();
             },
           )
@@ -191,56 +220,172 @@ class _MyInfinityListState extends State<MyInfinityList> {
   }
 
   ///
-  Widget _sortPerMarcas(int idOrden) {
+  void _showModalfilter(String filtro) {
 
-    if(_lstSortMark.isNotEmpty) {
-      
-      final tile = _lstSortMark.firstWhere(
-        (element) => element['tile']['ords'].contains(idOrden),
-        orElse: () => {}
-      );
+    final globals = Globals();
+    late Widget widgetFiltro;
 
-      if(tile.isNotEmpty) {
-        
-        if(!_lstMrksSend.contains(tile['mrk'])) {
-
-          _lstMrksSend.add(tile['mrk']);
-          return Padding(
-            padding: const EdgeInsets.symmetric(vertical: 7),
-            child: TileOrdenMrks(
-              item: tile['tile'],
-              onPress: (item) {
-                _ords.filterBySols = item;
-                widget.onPress('SOLICITUDES');
-              },
-            ),
-          );
-        }
-      }
+    switch (filtro) {
+      case 'marcas':
+        widgetFiltro = FiltradoPorMrks(onPress: (_) => _refreshWithFilter());
+        break;
+      case 'modelos':
+        widgetFiltro = FiltradoPorMds(onPress: (_) => _refreshWithFilter());
+        break;
+      case 'cotizaciones':
+        widgetFiltro = FiltradoPorSols(onPress: (_) => _refreshWithFilter());
+        break;
+      default:
     }
 
-    return const SizedBox(width: 0, height: 0);
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: globals.secMain,
+      builder: (_) {
+
+        return SafeArea(
+          child: Column(
+            children: [
+              Container(
+                width: MediaQuery.of(context).size.width,
+                padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 10),
+                decoration: BoxDecoration(
+                  color: globals.bgMain,
+                  border: Border(
+                    top: BorderSide(
+                      color: globals.colorGreen,
+                      width: 3
+                    )
+                  )
+                ),
+                child: Row(
+                  children: [
+                    Text(
+                      'Filtrado por: ${filtro.toUpperCase()}',
+                      textScaleFactor: 1,
+                      textAlign: TextAlign.left,
+                      style: TextStyle(
+                        color: globals.colorGreen,
+                        fontSize: 17
+                      ),
+                    ),
+                    const Spacer(),
+                    IconButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      icon: const Icon(Icons.close, color: Colors.white)
+                    )
+                  ],
+                ),
+              ),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 10),
+                  child: widgetFiltro,
+                )
+              )
+            ],
+          ),
+        );
+      }
+    );
   }
 
   ///
-  Widget _sortPerSolicitudes(OrdenEntity orden) {
+  Future<void> _fetchPage(int pageKey) async {
 
-    late Widget child;
+    if (!mounted) { return; }
 
-    if(_ords.filterBySols.isNotEmpty) {
-      if(_ords.filterBySols['ords'].contains(orden.id)) {
-        child = TileOrdenSoli(item: orden, box: SharedDataOrden());
-      }else{
-        return const SizedBox();
-      }
-    }else{
-      child = TileOrdenSoli(item: orden, box: SharedDataOrden());
+    if(!_isInit) {
+      _isInit = true;
+      _ords = context.read<OrdenesProvider>(); 
     }
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 14),
-      child: child
-    );
+    // Revisamos para ver si no hay algun filtro en memoria
+    if(_ords.filterBySols.isNotEmpty) {
+      await _refreshWithFilter();
+      setState(() {});
+      return;
+    }
+
+    final ordenes = await _ords.fetchData(_pagingController.nextPageKey ?? 1);
+    bool isLastPage = ordenes.length < _ords.cantItemsPerPage;
+    _ords.numberPage = pageKey;
+
+    try {
+      if (isLastPage) {
+        _pagingController.appendLastPage(List<OrdenEntity>.from(ordenes));
+      } else {
+        _pagingController.appendPage(List<OrdenEntity>.from(ordenes), (pageKey + 1));
+      }
+    } catch (error) {
+      try {
+        _pagingController.error = error;
+      } catch (_) {}
+    }
+  }
+
+  ///
+  Future<void> _refreshComplete({bool fromFilter = false}) async {
+
+    Future.sync (() {
+
+      if(fromFilter) {
+        _filtros.value = _txtFiltros;
+        _showFilter.value = false;
+        _lstfiltrada = [];
+        _ords.filterBySols.clear();
+        _ords.typeFilter = '';
+        _pagingController.refresh();
+        return;
+      }
+
+      final ords = context.read<OrdenesProvider>();
+      ords.numberPage = -1;
+      ords.items().clear();
+      _pagingController.refresh();
+    });
+  }
+
+  ///
+  Future<void> _refreshWithFilter() async {
+    
+    if(_ords.typeFilter == 'marcas') {
+
+      final ords = List<int>.from(_ords.filterBySols['ords']);
+      if(ords.isNotEmpty) {
+        for (var i = 0; i < ords.length; i++) {
+          final ord = _ords.items().where((o) => o.id == ords[i]);
+          if(ord.isNotEmpty) {
+            OrdenEntity? ordn = await _ords.solEm.cleanOrdenEmpty(ord.first);
+            if(ordn != null) {
+              _lstfiltrada.add(ordn);
+            }
+          }
+        }
+      }
+      
+      _filtros.value = 'Piezas del ${_ords.filterBySols['marca'].toUpperCase()}';
+    }
+
+    if(_ords.typeFilter == 'modelos') {
+
+      final ords = List<int>.from(_ords.filterBySols['ords']);
+      if(ords.isNotEmpty) {
+        for (var i = 0; i < ords.length; i++) {
+          final ord = _ords.items().where((o) => o.id == ords[i]);
+          if(ord.isNotEmpty) {
+            OrdenEntity? ordn = await _ords.solEm.cleanOrdenEmpty(ord.first);
+            if(ordn != null) {
+              _lstfiltrada.add(ordn);
+            }
+          }
+        }
+      }
+
+      _filtros.value = 'Piezas del ${_ords.filterBySols['modelo'].toUpperCase()}';
+    }
+
+    Future.microtask(() => _showFilter.value = true);
   }
 
 }

@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../config/sngs_manager.dart';
 import '../entity/account_entity.dart';
 import '../providers/signin_provider.dart';
 import '../vars/globals.dart';
+import '../widgets/cuotas_storage.dart';
 
 class MenuMain extends StatelessWidget {
 
@@ -18,88 +18,70 @@ class MenuMain extends StatelessWidget {
 
     final provi = context.read<SignInProvider>();
     
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.all(10),
-        child: Column(
-          children: [
-            _titulo(context),
-            Divider(color: _globals.txtOnsecMainDark),
-            _item(
-              icono: Icons.bubble_chart_rounded, label: 'Inventario',
-              fnc: () => context.go('/inventario')
-            ),
-            _item(
-              icono: Icons.bar_chart_sharp, label: 'Coutas de Almacenamiento',
-              fnc: () {}
-            ),
-            _item(
-              icono: Icons.settings, label: 'Configuración',
-              fnc: () {}
-            ),
-            _item(
-              icono: Icons.unpublished_rounded, label: 'Cerrar Sesión',
-              fnc: () async {
-                final nav = Navigator.of(context);
-                await provi.logout();
-                nav.pop();
-              }
-            ),
-            Divider(color: _globals.txtOnsecMainDark),
-            FutureBuilder(
-              future: provi.getDataUser(),
-              builder: (_, AsyncSnapshot snapshot) {
-                if(snapshot.connectionState == ConnectionState.done) {
-                  if(snapshot.hasData) {
-                    return _dataAccount(snapshot.data);
-                  }
-                }
-                return _dataAccount(null);
-              }
-            ),
-            const SizedBox(height: 30),
-            SizedBox(
-              width: MediaQuery.of(context).size.width * 0.7,
-              child: const Image(
-                image: AssetImage('assets/images/logo_1024.png'),
-              ),
-            )
-          ],
-        ),
-      ),
-    );
-  }
-
-  ///
-  Widget _titulo(BuildContext context) {
-
-    return Container(
-      constraints: BoxConstraints.expand(
-        width: MediaQuery.of(context).size.width,
-        height: 50
-      ),
-      child: Row(
+    return Padding(
+      padding: const EdgeInsets.all(10),
+      child: ListView(
         children: [
-          Icon(Icons.menu, color: _globals.txtOnsecMainDark),
-          const SizedBox(width: 10),
-          Text(
-            'MENÚ PRINCIPAL',
-            textScaleFactor: 1,
-            style: TextStyle(
-              fontSize: 17,
-              color: _globals.txtOnsecMainLigth
+          Center(
+            child: SizedBox(
+              width: MediaQuery.of(context).size.width * 0.6,
+              child: const Image(
+                image: AssetImage('assets/images/logo_only.png'),
+              ),
             ),
           ),
-          const Spacer(),
-          IconButton(
-            onPressed: () => Navigator.of(context).pop(),
-            icon: Icon(Icons.close, color: _globals.txtOnsecMainSuperLigth)
-          )
+          Divider(color: _globals.txtOnsecMainDark),
+          _item(
+            icono: Icons.unpublished_rounded, label: 'Cerrar Sesión',
+            fnc: () async {
+              final nav = Navigator.of(context);
+              await provi.logout();
+              nav.pop();
+            }
+          ),
+          _titleSecc('Cuotas de Almacenamiento en Inventario'),
+          const SizedBox(height: 8),
+          const CuotasStorage(),
+          _titleSecc('Claves de Registro y Acceso'),
+          FutureBuilder(
+            future: provi.getDataUser(),
+            builder: (_, AsyncSnapshot snapshot) {
+              if(snapshot.connectionState == ConnectionState.done) {
+                if(snapshot.hasData) {
+                  return _dataAccount(snapshot.data);
+                }
+              }
+              return _dataAccount(null);
+            }
+          ),
         ],
       ),
     );
   }
 
+  ///
+  Widget _titleSecc(String titulo) {
+
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      margin: const EdgeInsets.only(top: 8),
+      decoration: BoxDecoration(
+        color: Colors.black,
+        border: Border.symmetric(
+          horizontal: BorderSide(color: _globals.colorGreen)
+        )
+      ),
+      child: Text(
+        titulo,
+        textScaleFactor: 1,
+        textAlign: TextAlign.center,
+        style: TextStyle(
+          fontSize: 14,
+          color: _globals.colorGreen
+        ),
+      ),
+    );
+  }
   ///
   Widget _dataAccount(AccountEntity? account) {
 

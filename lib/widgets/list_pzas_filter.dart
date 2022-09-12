@@ -219,21 +219,57 @@ class _ListPzasFilterState extends State<ListPzasFilter> {
         children: [
           Container(
             margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+            padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: _globals.secMain,
+              color: _globals.colorGreen.withOpacity(0.8),
               borderRadius: BorderRadius.circular(20)
             ),
-            child: Center(
-              child: Text(
-                'Estas son piezas de la Orden $_idOrd',
-                textScaleFactor: 1,
-                style: const TextStyle(
-                  fontSize: 14,
-                  letterSpacing: 1.03,
-                  color: Colors.white
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(left: 10),
+                  child: Row(
+                    children: [
+                      const Text(
+                        'PIEZAS DE LA ORDEN ',
+                        textScaleFactor: 1,
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1.03,
+                          color: Colors.black
+                        ),
+                      ),
+                      Text(
+                        '#$_idOrd',
+                        textScaleFactor: 1,
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1.03,
+                          color: Colors.black
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
+                IconButton(
+                  padding: const EdgeInsets.all(0),
+                  constraints: const BoxConstraints(
+                    maxHeight: 25
+                  ),
+                  iconSize: 25,
+                  onPressed: () {
+                    if(context.canPop()) {
+                      context.pop();
+                    }else{
+                      context.go('/home');
+                    }
+                  },
+                  icon: const Icon(Icons.cancel_outlined, color: Colors.black)
+                )
+              ],
             ),
           ),
           Expanded(
@@ -332,7 +368,6 @@ class _ListPzasFilterState extends State<ListPzasFilter> {
         if( _solEm.addToList ){
           if(_orden != null) {
             _ordProv!.addItem = _orden!;
-            _ordProv!.setIndexResult(_ordProv!.items().first.id, _orden!.id);
           }
         }else{
           _msgLoad.value = 'Parece ser que ya haz cotizado todas las '

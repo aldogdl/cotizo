@@ -118,7 +118,7 @@ class _SendRespuestaState extends State<SendRespuesta> {
     final invEm = InventarioRepository();
     final pzaEm = PiezasRepository();
     final data  = widget.prov.getData();
-    final own   = context.read<SignInProvider>().getIdUser();
+    final own   = await context.read<SignInProvider>().getIdUser();
 
     share.auto  =  await share.solEm.getAutoById(widget.orden.auto);
     final pzaS  =  widget.orden.piezas.firstWhere(

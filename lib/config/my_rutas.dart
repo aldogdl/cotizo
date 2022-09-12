@@ -4,7 +4,6 @@ import '../vars/globals.dart';
 import '../config/sngs_manager.dart';
 
 import '../page/splash_page.dart';
-import '../page/inventario_page.dart';
 import '../page/gest_data_page.dart';
 import '../page/lst_piezas_by_orden.dart';
 import '../page/home_page.dart';
@@ -40,11 +39,6 @@ class MyRutas {
         name: 'lstPiezasByOrden',
         path: '/cotizo/:ids',
         builder: (context, state) => LstPiezasByOrden(ids: '${state.params['ids']}'),
-      ),
-      GoRoute(
-        name: 'inventario',
-        path: '/inventario',
-        builder: (context, state) => const InventarioPage(),
       ),
     ],
     urlPathStrategy: UrlPathStrategy.path,

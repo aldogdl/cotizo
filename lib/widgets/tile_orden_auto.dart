@@ -3,13 +3,15 @@ import 'package:flutter/material.dart';
 import '../services/my_get.dart';
 import 'avatar_logo.dart';
 
-class TileOrdenMrks extends StatelessWidget {
+class TileOrdenAuto extends StatelessWidget {
 
   final Map<String, dynamic> item;
+  final String tipo;
   final ValueChanged<Map<String, dynamic>> onPress;
-  const TileOrdenMrks({
+  const TileOrdenAuto({
     Key? key,
     required this.item,
+    required this.tipo,
     required this.onPress,
   }) : super(key: key);
 
@@ -21,7 +23,7 @@ class TileOrdenMrks extends StatelessWidget {
       Mget.isInit = true;
       Mget.size = MediaQuery.of(context).size;
     }
-    
+
     return InkWell(
       onTap: () => onPress(item),
       child: Container(
@@ -74,7 +76,7 @@ class TileOrdenMrks extends StatelessWidget {
       children: [
         Text.rich(
           TextSpan(
-            text: '${item['marca']}  ',
+            text: (tipo == 'mrk') ? '${item['marca']}  ' : '${item['modelo']}  ',
             style: const TextStyle(
               color: Colors.white,
               fontSize: 17
@@ -102,7 +104,7 @@ class TileOrdenMrks extends StatelessWidget {
             textScaleFactor: 1,
             style: const TextStyle(
               color: Colors.black,
-              fontSize: 12,
+              fontSize: 14,
               fontWeight: FontWeight.bold
             ),
           ),

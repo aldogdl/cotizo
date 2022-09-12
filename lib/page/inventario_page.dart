@@ -1,16 +1,15 @@
+import 'package:cotizo/widgets/filtrar_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../entity/inventario_entity.dart';
 import '../entity/share_data_orden.dart';
-import '../providers/ordenes_provider.dart';
 import '../repository/piezas_repository.dart';
 import '../repository/inventario_repository.dart';
 import '../widgets/show_dialogs.dart';
 import '../widgets/tile_orden_pieza.dart';
 import '../services/my_get.dart';
 import '../providers/gest_data_provider.dart';
-import '../widgets/ascaffold_main.dart';
 
 class InventarioPage extends StatefulWidget {
 
@@ -30,7 +29,6 @@ class _InventarioPageState extends State<InventarioPage> {
 
   late Future<void> _getPiezas;
   List<InventarioEntity> _lstPzas = [];
-  Map<String, dynamic> _info = {};
   String _filTo = '';
 
   int page = 1;
@@ -53,37 +51,31 @@ class _InventarioPageState extends State<InventarioPage> {
   Widget build(BuildContext context) {
 
     Mget.init(context, context.read<GestDataProvider>());
-    Future.delayed(const Duration(microseconds: 250), (){
-      context.read<OrdenesProvider>().isShowHome = true;
-    });
     
-    return AscaffoldMain(
-      body: SizedBox(
-        width: MediaQuery.of(context).size.width,
-        height: MediaQuery.of(context).size.height,
-        child: Column(
-          children: [
-            _head(),
-            Expanded(
-              child: FutureBuilder(
-                future: _getPiezas,
-                builder: (_, AsyncSnapshot snap) {
-                  
-                  if(snap.connectionState == ConnectionState.done) {
-                    if(_lstPzas.isNotEmpty) {
-                      return _lstPiezas();
-                    }else{
-                      return _sinData();
-                    }
+    return SizedBox(
+      width: MediaQuery.of(context).size.width,
+      height: MediaQuery.of(context).size.height,
+      child: Column(
+        children: [
+          _head(),
+          Expanded(
+            child: FutureBuilder(
+              future: _getPiezas,
+              builder: (_, AsyncSnapshot snap) {
+                
+                if(snap.connectionState == ConnectionState.done) {
+                  if(_lstPzas.isNotEmpty) {
+                    return _lstPiezas();
+                  }else{
+                    return _sinData();
                   }
-
-                  return _load();
                 }
-              ),
-            )
-          ]
-        ),
-      )
+                return _load();
+              }
+            ),
+          )
+        ]
+      ),
     );
 
   }
@@ -190,16 +182,26 @@ class _InventarioPageState extends State<InventarioPage> {
                     await _buscar();
                   }
                 },
-                icon: Icon(val, color: Colors.white)
+                icon: Icon(val, color: Colors.green)
               );
             },
             child: const SizedBox(
               width: 30, height: 30, child: CircularProgressIndicator(strokeWidth: 3)
             ),
           ),
-          IconButton(
-            onPressed: () => _dialogFiltrar(),
-            icon: const Icon(Icons.filter_list, color: Colors.white)
+          FiltrarDialog(
+            from: 'inv',
+            onPresed: (fnc) async {
+              if(fnc == 'all') {
+                Navigator.of(context).pop();
+                await _recoveryPzas();
+                setState(() {});
+              }else{
+                _filTo = fnc;
+                Navigator.of(context).pop();
+                _modalFiltrarPor();
+              }
+            },
           )
         ],
       ),
@@ -226,152 +228,18 @@ class _InventarioPageState extends State<InventarioPage> {
           prefixIconConstraints: const BoxConstraints(
             maxWidth: 30, minWidth: 30
           ),
-          contentPadding: const EdgeInsets.all(5)
+          contentPadding: const EdgeInsets.all(5),
         ),
         style: const TextStyle(color: Colors.grey),
       )
     );
   }
 
-  ///
-  Widget _filtrarPorMenu() {
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _txtIco(ico: Icons.directions_car_filled, label: 'POR MODELOS', fnc: 'modelos'),
-        _txtIco(ico: Icons.abc, label: 'POR MARCAS', fnc: 'marcas'),
-        _txtIco(ico: Icons.filter_alt_off, label: 'MOSTRAR TODOS', fnc: 'all'),
-      ],
-    );
-
-  }
-
-  ///
-  Widget _txtIco({
-    required IconData ico,
-    required String label,
-    required String fnc}) 
-  {
-
-    return TextButton.icon(
-      onPressed: () async {
-        if(fnc == 'all') {
-          Navigator.of(context).pop();
-          await _recoveryPzas();
-          setState(() {});
-        }else{
-          _filTo = fnc;
-          Navigator.of(context).pop();
-          _modalFiltrarPor();
-        }
-      },
-      icon: Icon(ico),
-      label: _text(label)
-    );
-  }
-
-  ///
-  Widget _infoAlmacenamiento(StateSetter setDialog) {
-
-    const sp = SizedBox(height: 10);
-    return FutureBuilder(
-      future: _getInfo(),
-      builder: (_, AsyncSnapshot snap) {
-        
-        if(snap.connectionState == ConnectionState.done) {
-
-          return Column(
-            children: [
-              _txtRow('total de piezas', _info['pzs']),
-              sp,
-              _txtRow('total de fotos', _info['fts']),
-              sp,
-              _txtRow('disco', '${_info['kb']} kbs.'),
-              sp,
-              sp,
-              _status(),
-              sp,
-              const Divider(color: Colors.grey),
-              _text('almacenamiento [ ${_info['mg']} Mgs. ]', fs: 13, cl: Colors.grey),
-            ],
-          );
-        }
-        
-        return _load();
-      },
-    );
-  }
 
   ///
   Widget _load() {
     return const Center(
       child: CircularProgressIndicator(),
-    );
-  }
-
-  ///
-  Widget _status() {
-
-    const int tt = 250;
-    double mgs = double.parse(_info['mg']);
-
-    return Row(
-      children: [
-        _text('0', fs: 12),
-        const SizedBox(width: 5),
-        Expanded(
-          child: LayoutBuilder(
-            builder: (_, restrics) {
-
-              double x = (mgs * restrics.maxWidth) / tt;
-              final libres = tt - mgs;
-              if(x < 1) { x = 10; }
-              if(libres == tt) { x = 0; }
-
-              return Container(
-                constraints: BoxConstraints.expand(
-                  width: restrics.maxWidth,
-                  height: 20
-                ),
-                child: Stack(
-                  alignment: Alignment.centerLeft,
-                  children: [
-                    Container(
-                      color: Colors.blueGrey,
-                    ),
-                    Container(
-                      width: x,
-                      color: Colors.green,
-                    ),
-                    Center(
-                      child: _text(
-                        'Libres: ${libres.toStringAsFixed(2)} Mgs.',
-                        fs: 12,
-                        cl: Colors.black
-                      ),
-                    )
-                  ],
-                )
-              );
-            },
-          ),
-        ),
-        const SizedBox(width: 5),
-        _text('$tt',fs: 12),
-      ],
-    );
-  }
-
-  ///
-  Widget _txtRow(String label, String value) {
-
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        _text(label, fs: 14, cl: Colors.grey),
-        _text(value, fs: 14, cl: Colors.white),
-      ],
     );
   }
 
@@ -435,39 +303,6 @@ class _InventarioPageState extends State<InventarioPage> {
     return OutlineInputBorder(
       borderRadius: BorderRadius.circular(10),
       borderSide: const BorderSide(color: Colors.grey, width: 0.8)
-    );
-  }
-
-  ///
-  Future<void> _dialogFiltrar() async {
-
-    showDialog(
-      context: context,
-      barrierColor: Colors.black.withOpacity(0.5),
-      builder: (_) => AlertDialog(        
-        backgroundColor: Mget.globals.secMain,
-        contentPadding: const EdgeInsets.all(15),
-        content: StatefulBuilder(
-          builder: (BuildContext context, StateSetter setDialog) {
-            return Column(
-              mainAxisSize: MainAxisSize.min,
-              mainAxisAlignment: MainAxisAlignment.start,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _tituDialog(Icons.filter_alt, 'FILTRAR RESULTADOS:'),
-                _filtrarPorMenu(),
-                const Divider(color: Colors.grey),
-                _tituDialog(Icons.filter_frames, 'INFORMACIÓN GENERAL:'),
-                const SizedBox(height: 8),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  child: _infoAlmacenamiento(setDialog)
-                )
-              ],
-            );
-          }
-        ),
-      )
     );
   }
 
@@ -569,14 +404,6 @@ class _InventarioPageState extends State<InventarioPage> {
   ///
   Future<void> _borrar(int id) async => await _invEm.deleteInvById(id);
  
-  ///
-  Future<void> _getInfo() async {
-
-    if(_info.isEmpty) {
-      _info = await _invEm.getInfo();
-    }
-  }
-
   ///
   Future<List<Map<String, dynamic>>> _filtrarResultadosBy() async {
 

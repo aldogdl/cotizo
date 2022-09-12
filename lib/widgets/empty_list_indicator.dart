@@ -4,17 +4,20 @@ import 'package:flutter_svg/flutter_svg.dart';
 class EmptyListIndicator extends StatelessWidget {
 
   final String error;
+  final String from;
   final ValueChanged<void>? onTray;
   const EmptyListIndicator({
     Key? key,
     this.error = '',
+    this.from = '',
     this.onTray,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
 
-    return SizedBox(
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10),
       width: MediaQuery.of(context).size.width,
       height: MediaQuery.of(context).size.height * 0.7,
       child: Column(
@@ -44,35 +47,46 @@ class EmptyListIndicator extends StatelessWidget {
   ///
   Widget _sinDatos() {
 
+    String msgTit = 'SIN SOLICITUDES POR EL MOMENTO';
+    String msgSubTit = 'ESTAMOS TRABAJANDO PARA TI...';
+    String msgTip = 'Estate al pendiente, cientos de clientes esperan tus Autopartes, nosotros los estamos buscando.';
+    
+    if(from == 'filter') {
+      msgTit = 'LISTA SIN ELEMENTOS';
+      msgSubTit = 'ELIMINA TU SELECCIÓN DE FILTROS';
+      msgTip = 'Presiona el botón titulado "VER TODOS" para eliminar '
+      'el tipo de filtrado y visualizar todas las autopartes pendientes por cotizar.';
+    }
+
     return Column(
-      children: const [
+      children: [
          Text(
-          'SIN SOLICITUDES POR EL MOMENTO',
+          msgTit,
           textScaleFactor: 1,
           textAlign: TextAlign.center,
-          style: TextStyle(
+          style: const TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
             color: Colors.green
           )
         ),
-        SizedBox(height: 5),
+        const SizedBox(height: 10),
         Text(
-          'ESTAMOS TRABAJANDO PARA TI...',
+          msgSubTit,
           textScaleFactor: 1,
           textAlign: TextAlign.center,
-          style: TextStyle(
+          style: const TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w300,
             color: Color.fromARGB(255, 202, 202, 202)
           )
         ),
-        SizedBox(height: 5),
+        const SizedBox(height: 15),
         Text(
-          'Estate al pendiente, cientos de clientes esperan tus Autopartes, nosotros los estamos buscando.',
+          msgTip,
           textScaleFactor: 1,
           textAlign: TextAlign.center,
-          style: TextStyle(
+          style: const TextStyle(
             fontSize: 15,
             fontWeight: FontWeight.w300,
             color: Colors.grey

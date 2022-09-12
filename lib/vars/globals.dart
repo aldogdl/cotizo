@@ -3,13 +3,12 @@ import 'package:flutter/material.dart' show Color;
 
 class Globals {
 
-  String version = '1.2.4';
+  String version = '1.3.1';
   
   int idOrdenCurrent = 0;
   String idsFromLinkCurrent = '';
   String idCampaingCurrent = '';
   bool isFromWhatsapp = false;
-  String lastSecc = '';
   List<String> histUri = [];
   void setHistUri(String uri) {
     if(!histUri.contains(uri)) {

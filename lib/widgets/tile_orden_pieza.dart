@@ -84,7 +84,7 @@ class TileOrdenPieza extends StatelessWidget {
             children: [
               Expanded(
                 child: InkWell(
-                  onTap: () => _visor(),
+                  onTap: () => _visor(context),
                   child: _foto(),
                 ),
               ),
@@ -460,12 +460,12 @@ class TileOrdenPieza extends StatelessWidget {
   }
 
   ///
-  void _visor() async {
+  void _visor(BuildContext context) async {
 
     await showDialog(
-      context: Mget.ctx!,
+      context: context,
       builder: (_) => ShowDialogs.visorFotosDialog(
-        Mget.ctx!, ViewFotos(
+        context, ViewFotos(
           fotosList: fotos,
           bySrc: (isInv != 0) ? 'inventario' : 'network',
         )

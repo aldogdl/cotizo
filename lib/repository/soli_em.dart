@@ -254,6 +254,23 @@ class SoliEm {
   Future<ModeloEntity?> getModeloById(int idMd) async => await _aem.getModeloById(idMd);
 
   ///
+  Future<Map<String, dynamic>> getDataAuto(int idAuto) async {
+
+    Map<String, dynamic> tile = {};
+
+    final auto = await getAutoById(idAuto);
+    if(auto != null) {
+      final marca = await getMarcaById(auto.marca);
+      tile = {
+        'logo':marca!.logo, 'marca':marca.nombre, 'idMrk': auto.marca,
+        'isNac': auto.isNac
+      };
+    }
+    
+    return tile;
+  } 
+
+  ///
   Future<List<Map<String, dynamic>>> sortPerMark(List<OrdenEntity> ords) async {
 
     List<Map<String, dynamic>> sort = [];
@@ -286,6 +303,50 @@ class SoliEm {
             metidas.add(auto.marca);
             Map<String, dynamic> mrk = {'mrk':auto.marca, 'tile':tile};
             sort.add(mrk);
+          }
+        }
+      }
+    }
+    metidas = [];
+    return sort;
+  }
+
+  ///
+  Future<List<Map<String, dynamic>>> sortPerMoelos(List<OrdenEntity> ords) async {
+
+    List<Map<String, dynamic>> sort = [];
+    List<int> metidas = [];
+
+    if(ords.isNotEmpty) {
+      for (var i = 0; i < ords.length; i++) {
+        final auto = await getAutoById(ords[i].auto);
+        if(auto != null) {
+
+          if(metidas.contains(auto.modelo)) {
+            
+            int indx = sort.indexWhere((element) => element['mdl'] == auto.modelo);
+            if(indx != -1) {
+              final tite = Map<String, dynamic>.from(sort[indx]['tile']);
+              tite['cPzas'] = tite['cPzas'] + ords[i].piezas.length;
+              var ordenes = List<int>.from(tite['ords']);
+              ordenes.add(ords[i].id);
+              tite['ords'] = ordenes;
+              sort[indx]['tile'] = tite;
+            }
+
+          }else{
+
+            final marca = await getMarcaById(auto.marca);
+            final modelo = await getModeloById(auto.modelo);
+            Map<String, dynamic> tile = {
+              'logo':marca!.logo, 'marca':marca.nombre, 'idMrk': auto.marca,
+              'modelo':modelo!.nombre, 'idMd': modelo.id,
+              'cPzas': ords[i].piezas.length, 'isNac': auto.isNac,
+              'ords': [ords[i].id], 'created': ords[i].createdAt
+            };
+            metidas.add(auto.modelo);
+            Map<String, dynamic> mdl = {'mdl':auto.modelo, 'tile':tile};
+            sort.add(mdl);
           }
         }
       }

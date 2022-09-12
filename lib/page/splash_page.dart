@@ -147,9 +147,6 @@ class _SplashPageState extends State<SplashPage> {
     }else{
 
       _msgs.value = 'Bienvenido: ${user!.curc.toUpperCase()}';
-      await Future.delayed(const Duration(milliseconds: 500));
-      _msgs.value = 'Revisando tus Credenciales';
-      await Future.delayed(const Duration(milliseconds: 250));
       await _userEm.isTokenCaducado();
       
       if(_userEm.result['abort']) {
