@@ -33,11 +33,15 @@
 
             <!-- Deep linking -->
             <meta-data android:name="flutter_deeplinking_enabled" android:value="true" />
+            <meta-data
+                android:name="com.google.firebase.messaging.default_notification_channel_id"
+                android:value="ANETCHANNEL"
+            />
             <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="https" android:host="autoparnet.com" android:path="/cotizo/" />
+                <data android:scheme="https" android:host="autoparnet.com" android:pathPrefix="/cotizo/" />
                 <data android:scheme="http" />
             </intent-filter>
             

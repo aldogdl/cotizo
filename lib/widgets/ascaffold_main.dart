@@ -1,3 +1,5 @@
+import 'package:cotizo/api/push_msg.dart';
+import 'package:firebase_messaging/firebase_messaging.dart' show AuthorizationStatus;
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -26,7 +28,23 @@ class AscaffoldMain extends StatelessWidget {
   Widget build(BuildContext context) {
 
     final size = MediaQuery.of(context).size;
+    final push = getIt<PushMsg>();
+    late IconData icono;
 
+    switch(push.authPush) {
+      case AuthorizationStatus.denied:
+        icono = Icons.notifications_off_outlined;
+        break;
+      case AuthorizationStatus.notDetermined:
+        icono = Icons.notification_important_outlined;
+        break;
+      case AuthorizationStatus.provisional:
+        icono = Icons.notifications_paused_rounded;
+        break;
+      default:
+        icono = Icons.notifications_active;
+    }
+    
     return SafeArea(
       child: WillPopScope(
         onWillPop: () => _onWill(context),
@@ -67,6 +85,10 @@ class AscaffoldMain extends StatelessWidget {
                     fontSize: 11.5,
                     fontWeight: FontWeight.bold
                   ),
+                ),
+                const SizedBox(width: 8),
+                Icon(
+                  icono, color: const Color.fromARGB(255, 107, 107, 107), size: 18,
                 )
               ],
             ),

@@ -3,7 +3,7 @@ import 'package:flutter/material.dart' show Color;
 
 class Globals {
 
-  String version = '1.3.1';
+  String version = '1.3.3';
   
   int idOrdenCurrent = 0;
   String idsFromLinkCurrent = '';

@@ -1,7 +1,4 @@
 import 'package:camera/camera.dart';
-import 'package:cotizo/providers/signin_provider.dart';
-import 'package:cotizo/repository/acount_user_repository.dart';
-import 'package:cotizo/repository/no_tengo_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -10,6 +7,9 @@ import 'package:provider/provider.dart';
 import '../api/push_msg.dart';
 import '../config/sngs_manager.dart';
 import '../entity/account_entity.dart';
+import '../providers/signin_provider.dart';
+import '../repository/acount_user_repository.dart';
+import '../repository/no_tengo_repository.dart';
 import '../repository/inventario_repository.dart';
 import '../vars/globals.dart';
 
@@ -67,7 +67,7 @@ class _SplashPageState extends State<SplashPage> {
                     width: MediaQuery.of(context).size.width,
                     height: MediaQuery.of(context).size.height * 0.35,
                     child: Image.asset(
-                      'assets/images/pistones.gif',
+                      'assets/images/logo_only.png',
                       fit: BoxFit.contain,
                     ),
                   ),

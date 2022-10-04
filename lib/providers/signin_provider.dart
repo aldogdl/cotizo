@@ -21,7 +21,7 @@ class SignInProvider  with ChangeNotifier {
   set isLogin(bool isLog) {
     _isLogin = isLog;
     notifyListeners();
-  } 
+  }
 
   ///
   Future<void> login(Map<String, dynamic> data) async => await userEm.login(data);

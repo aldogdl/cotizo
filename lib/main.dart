@@ -10,12 +10,12 @@ import 'providers/gest_data_provider.dart';
 import 'providers/ordenes_provider.dart';
 import 'providers/signin_provider.dart';
 
-
 void main() async {
   
   WidgetsFlutterBinding.ensureInitialized();
   sngManager();
   await Hive.initFlutter();
+  
   runApp(const MiddleApp());
 }
 

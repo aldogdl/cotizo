@@ -12,16 +12,6 @@ class MyPath {
   }
 
   ///
-  static String getUriLogoMrk(String marca) {
-
-    final base = 'mrks_logos/$marca';
-    if(env == 'dev') {
-      return Uri.http(baseDev, 'autoparnet/public_html/$base').toString();
-    }
-    return Uri.https(baseProd, base).toString();
-  }
-
-  ///
   static Uri getUri(String uri, String params, {Map<String, dynamic>? querys}) {
 
     String url = _getPathUri(uri, params);

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../services/my_get.dart';
-import 'avatar_logo.dart';
 
 class TileOrdenAuto extends StatelessWidget {
 
@@ -33,9 +32,23 @@ class TileOrdenAuto extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.start,
           mainAxisSize: MainAxisSize.max,
           children: [
-            AvatarLogo(
-              logo: (item['logo'].isEmpty || item['logo'] == '0')
-                ? 'no-logo.png' : item['logo']
+            Container(
+              width: 45, height: 45,
+              padding: const EdgeInsets.all(3),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(50),
+                color: const Color.fromARGB(255, 83, 83, 83)
+              ),
+              child: Center(
+                child: Text(
+                  _getInitialMrk(item['marca']),
+                  textScaleFactor: 1,
+                  style: const TextStyle(
+                    fontSize: 30, fontWeight: FontWeight.w800,
+                    color: Color.fromARGB(255, 51, 51, 51)
+                  ),
+                ),
+              ),
             ),
             const SizedBox(width: 10),
             Expanded(child: _tile())
@@ -160,4 +173,6 @@ class TileOrdenAuto extends StatelessWidget {
     );
   }
 
+  ///
+  String _getInitialMrk(String marca) => marca.substring(0, 1);
 }
