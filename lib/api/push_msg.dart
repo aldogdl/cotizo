@@ -8,12 +8,18 @@ import 'package:flutter_ringtone_player/flutter_ringtone_player.dart';
 import '../repository/acount_user_repository.dart';
 import '../firebase_options.dart';
 
+
+FlutterLocalNotificationsPlugin? flnp;
+FirebaseMessaging? messaging;
+const String _idC = 'ANETCHANNEL';
+const String _nameC = 'oportunidades.de.venta';
+const String _desC = 'Entérate de las nuevas oportunidades de venta';
+
 /// Funcion de alto nivel para la recepción de mensajes en background
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  await _configLocalNotiff();
 
   if (message.notification != null) {
     // Msg con Notificacion
@@ -29,41 +35,68 @@ void notifBackgroundHandler(NotificationResponse notificationResponse) {
   // print(notificationResponse.payload);
 }
 
+///
+Future<void> _configLocalNotiff() async {
+
+  if(Platform.isAndroid) {
+
+    flnp = FlutterLocalNotificationsPlugin();
+    const initSettings = InitializationSettings(
+      android: AndroidInitializationSettings('ic_launcher')
+    );
+    await flnp!.initialize(
+      initSettings,
+      onDidReceiveNotificationResponse: notifBackgroundHandler
+    );
+
+    await flnp!.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
+      ?.createNotificationChannel(
+        const AndroidNotificationChannel(
+          _idC, _nameC, description: _desC, importance: Importance.max, playSound: true,
+        )
+      );
+  }
+}
+
+///
+void _showNotiff(RemoteMessage message) {
+
+  String? titulo = '[?] Tendrás estas Refacciones...';
+  String? descripcion = 'Uno de nuestros cientos de clientes nos ha solicitado refacciones.\n¡AutoparNet trabajando para ti!.';
+  if (message.notification != null) {
+    titulo = message.notification!.title;
+    descripcion = message.notification!.body;        
+  }
+
+  var pay = 'from local'; 
+  if(descripcion!.contains('cod:')) {
+    final partes = descripcion.split('cod:');
+    pay = partes.last;
+  }
+  const detalles = NotificationDetails(
+    android: AndroidNotificationDetails(
+      _idC, _nameC, channelDescription: _desC,
+      importance: Importance.max,
+      priority: Priority.high,
+      icon: 'ic_launcher'
+    )
+  );
+  flnp!.show(0, titulo, descripcion, detalles, payload: pay);
+}
+
+
 class PushMsg {
 
   String? fcmToken;
-  AuthorizationStatus? authPush;
-  FirebaseMessaging? messaging;
-  FlutterLocalNotificationsPlugin? flnp;
+  AuthorizationStatus? authPush;  
   final _userEm = AcountUserRepository();
-
+  
   /// Inicializamos el servicio de Messanging
   Future<void> init() async {
     
-    if(Platform.isAndroid) {
-
-      flnp = FlutterLocalNotificationsPlugin();
-      // initialise the plugin. app_icon needs to be a added as a drawable resource to the Android head project
-      const initConfAndroid = AndroidInitializationSettings('ic_launcher');
-      const initSettings = InitializationSettings(android: initConfAndroid);
-      await flnp!.initialize(
-        initSettings,
-        onDidReceiveNotificationResponse: notifBackgroundHandler
-      );
-
-      const channel = AndroidNotificationChannel(
-        'ANETCHANNEL',
-        'com.google.firebase.messaging.default_notification_channel_id',
-        description: 'Este canal es usado para agregar importancia a las notificaciones',
-        importance: Importance.max,
-      );
-
-      await flnp!.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
-        ?.createNotificationChannel(channel);
-    }
-
     await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-    
+    await _configLocalNotiff();
+
     messaging = FirebaseMessaging.instance;
     if(messaging != null) {
 
@@ -73,6 +106,7 @@ class PushMsg {
         await _userEm.setTokenMessaging(fcmToken!);
       }
       _listenerOnMessage();
+      _onRefreshToken();
       FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
     }
   }
@@ -106,33 +140,16 @@ class PushMsg {
   void _listenerOnMessage() async {
 
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-
-      String? titulo = '[?] Tendrás estas Refacciones...';
-      String? descripcion = 'Uno de nuestros cientos de clientes nos ha solicitado refacciones.\n¡AutoparNet trabajando para ti!.';
-      if (message.notification != null) {
-        // Msg con Notificacion
-        titulo = message.notification!.title;
-        descripcion = message.notification!.body;        
-      }
-
-      const details = AndroidNotificationDetails(
-        'ANETCHANNEL', 'com.google.firebase.messaging.default_notification_channel_id',
-        channelDescription: 'Este canal es usado para agregar importancia a las notificaciones',
-        importance: Importance.max,
-        priority: Priority.high,
-        icon: 'ic_launcher',
-        ticker: 'ticker'
-      );
-
-      var pay = 'from local'; 
-      if(descripcion!.contains('cod:')) {
-        final partes = descripcion.split('cod:');
-        pay = partes.last;
-      }
-      const notificationDetails = NotificationDetails(android: details);
-      flnp!.show(0, titulo, descripcion, notificationDetails, payload: pay);
-      
+      _showNotiff(message);
       FlutterRingtonePlayer.playNotification();
+    });
+  }
+
+  /// Recibiendo mensajes en foreground
+  void _onRefreshToken() async {
+
+    messaging!.onTokenRefresh.listen((newToken) async {
+      await _userEm.setTokenMessaging(newToken);
     });
   }
 

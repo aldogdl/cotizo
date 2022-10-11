@@ -521,7 +521,7 @@ class TileOrdenPieza extends StatelessWidget {
       context, 'noTengo',
       hasActions: true,
       labelNot: 'CANCELAR',
-      labelOk: 'ELIMINAR'
+      labelOk: 'CONTINUAR'
     );
   }
 

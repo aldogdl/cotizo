@@ -73,9 +73,8 @@ class OrdenesProvider with ChangeNotifier {
   }
 
   ///
-  Future<void> setNoTengo(int idOrd, int idPza) async {
-    await solEm.setNoTengo(idOrd, idPza);
-  }
+  Future<void> setNoTengo(int idOrd, int idPza) async
+    => await solEm.setNoTengo(idOrd, idPza);
 
   /// SECC de ver ordenas por solicitud
   /// Utilizada para saber si es necesario filtrar las ordenes y mostrar solo las

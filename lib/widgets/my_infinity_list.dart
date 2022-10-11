@@ -204,11 +204,15 @@ class _MyInfinityListState extends State<MyInfinityList> {
             box: SharedDataOrden(),
             onNt: (int idP) async {
 
-              //await _ords.setNoTengo(orden.id, idP);
+              await _ords.setNoTengo(orden.id, idP);
               if(_ords.filterBySols.isNotEmpty) {
                 if(_lstfiltrada.isNotEmpty) {
-                  _lstfiltrada.removeWhere((element) => element.id == orden.id);
+                  _lstfiltrada.removeWhere((element) => element.id == idP);
+                  orden.piezas.removeWhere((element) => element.id == idP);
+                  setState(() {});
                 }
+              }else{
+                orden.piezas.removeWhere((element) => element.id == idP);
                 setState(() {});
               }
               _pagingController.refresh();

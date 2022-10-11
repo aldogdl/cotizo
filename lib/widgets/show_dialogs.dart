@@ -91,8 +91,9 @@ class ShowDialogs {
         'Necesitas autenticarte por medio de la cuenta de acceso otorgada '
         'por AutoparNet.\n\n'
         '¿Deseas autenticarte ahora?',
-      'noTengo': 'ELIMINAR\n\n'
-        '¿Eliminar esta autoparte de tu lista de solicitudes?.\n\n',
+      'noTengo': 'AGRADECEMOS TU AVISO\n\n'
+        'Esta pieza en automático desaparecerá '
+        'del listado de solicitudes.\n\n¿Estás segur@ de continuar?',
       'errCam': '¡UPS!, ERROR al iniciar la Cámara\n\n'
         'Sucedio un error inesperado, por favor, intenta nuevamente entrar a '
         'esta sección.\n\n'

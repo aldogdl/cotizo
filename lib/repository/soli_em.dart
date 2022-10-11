@@ -181,8 +181,8 @@ class SoliEm {
   Future<void> setNoTengo(int idOrd, int idPza) async {
     
     final nt = NoTengoEntity();
-    nt.idCot = await _usEm.getIdUser();
     nt.idOrd = idOrd;
+    nt.idCot = await _usEm.getIdUser();
     nt.idPza = idPza;
     await _ntEm.setBoxNoTengo(nt);
   }
