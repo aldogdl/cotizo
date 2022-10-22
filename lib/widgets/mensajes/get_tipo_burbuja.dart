@@ -44,7 +44,7 @@ class GetTipoBurbuja extends StatelessWidget {
           msg: msg,
           isInteractive: true,
           labelOk: 'COTIZAR AHORA',
-          labelNot: 'NO, SALIR',
+          labelNot: 'CANCELAR',
           onResponse: (Map<String, dynamic> res) {
             Mget.prov!.responseInteractive(context, res, msg.key);
           }

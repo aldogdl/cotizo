@@ -10,7 +10,7 @@ import '../services/my_image/my_im.dart';
 import '../vars/constantes.dart';
 import '../vars/enums.dart';
 import '../vars/globals.dart';
-import '../widgets/my_camera.dart';
+import 'camara/my_camera.dart';
 
 class FootFotos extends StatefulWidget {
 
@@ -34,6 +34,7 @@ class _FootFotosState extends State<FootFotos>{
   final Globals _globals = getIt<Globals>();
 
   bool _isInit = false;
+  bool _showGaleriFromCamera = false;
 
   @override
   void dispose() async {
@@ -47,6 +48,10 @@ class _FootFotosState extends State<FootFotos>{
     if(!_isInit) {
       _isInit = true;
       _prov = context.read<GestDataProvider>();
+      if(_prov.initCamAuto) {
+        _prov.initCamAuto = false;
+        Future.microtask(() => _getFotosFromCamera());
+      }
     }
     return _body();
   }
@@ -110,6 +115,7 @@ class _FootFotosState extends State<FootFotos>{
       ),
     );
   }
+  
   ///
   Widget _iconBol(IconData i, String label, Color c, Function fnc) {
 
@@ -147,9 +153,13 @@ class _FootFotosState extends State<FootFotos>{
     } catch (_) {}
 
     if(_prov.campos[Campos.rFotos].length == Constantes.cantFotos) {
-      await _alertFotosCant();
+      if(mounted) {
+        await _alertFotosCant();
+      }
       return;
     }
+
+    await _prov.cleanMsgsAnetInFotos();
   }
 
   ///
@@ -162,6 +172,15 @@ class _FootFotosState extends State<FootFotos>{
           builder: (context) => MyCamera(
             onFinish: (fotos) async {
               await _sendFotosToMessage(fotos);
+            },
+            fromGaleria: (acc) async {
+              if(acc) {
+                setState(() {
+                  _showGaleriFromCamera = true;
+                });
+              }
+              final nav = Navigator.of(context);
+              nav.pop();
             }
           )
         ),
@@ -170,9 +189,12 @@ class _FootFotosState extends State<FootFotos>{
   }
 
   ///
-  Future<void> _getFotoFromGalery() async => await _sendFotosToMessage(
-    await MyIm.galeria()
-  );
+  Future<void> _getFotoFromGalery() async {
+    
+    _preGetFotos().then((_) async {
+      await _sendFotosToMessage( await MyIm.galeria() );
+    });
+  }
 
   ///
   Future<void> _sendFotosToMessage(List<XFile>? imgs) async {
@@ -181,23 +203,31 @@ class _FootFotosState extends State<FootFotos>{
       
       if(imgs.isNotEmpty) {
 
+        _prov.imgTmps = 0;
         List<String> imgPaths = [];
-        List<String> currents = _prov.campos[Campos.rFotos];
-        int restan = Constantes.cantFotos - currents.length;
-        currents = [];
-        if(restan <= 0) {
-          await _alertFotosCant();
-          return;
-        }
+        final pathsCurrent = List<String>.from(_prov.campos[Campos.rFotos]).toList();
+        _prov.campos[Campos.rFotos] = [];
 
         for(var i = 0; i < imgs.length; i++) {
-          if(i < restan) {
+          if((pathsCurrent.length + imgPaths.length) < Constantes.cantFotos) {
             imgPaths.add(imgs[i].path);
             _prov.campos[Campos.rFotos].add(imgs[i].path);
           }
         }
+ 
+        if(pathsCurrent.isNotEmpty) {
+          for (var i = 0; i < pathsCurrent.length; i++) {
+            final has = imgPaths.where((pic) => pic == pathsCurrent[i]);
+            if(has.isEmpty) {
+              imgPaths.add(pathsCurrent[i]);
+              _prov.campos[Campos.rFotos].add(pathsCurrent[i]);
+            }
+          }
+        }
 
         if(imgPaths.isNotEmpty) {
+
+          imgPaths = imgPaths.reversed.toList();
 
           for(var i = 0; i < imgPaths.length; i++) {
             widget.onSend(
@@ -210,11 +240,22 @@ class _FootFotosState extends State<FootFotos>{
                 value: imgPaths[i],
               )
             );
-            await Future.delayed(const Duration(milliseconds: 350));
+            await Future.delayed(const Duration(milliseconds: 150));
           }
+          imgPaths = [];
         }
+
+        if(_showGaleriFromCamera) {
+          _showGaleriFromCamera = false;
+          Future.delayed(const Duration(milliseconds: 300), () async {
+            await _getFotoFromGalery();
+          });
+        }
+        return;
       }
     }
+
+    _prov.msgCampos = ':-) Al menos coloca una FOTO';
   }
 
   ///

@@ -204,7 +204,12 @@ class _MyInfinityListState extends State<MyInfinityList> {
             box: SharedDataOrden(),
             onNt: (int idP) async {
 
-              await _ords.setNoTengo(orden.id, idP);
+              // Guardar en File LOCAL y BD REMOTO
+              int idUSer = await _ords.solEm.getIdUser();
+              await _ords.setNoTengo(
+                orden.id, idP, idUSer, fileSee: orden.buildFileSee(idUSer, 'nth'),
+              );
+
               if(_ords.filterBySols.isNotEmpty) {
                 if(_lstfiltrada.isNotEmpty) {
                   _lstfiltrada.removeWhere((element) => element.id == idP);

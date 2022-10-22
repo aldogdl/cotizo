@@ -2,7 +2,7 @@ import 'package:hive/hive.dart';
 
 import '../entity/no_tengo_entity.dart';
 import '../services/my_http.dart';
-import '../vars/my_paths.dart';
+import '../services/my_paths.dart';
 import '../vars/enums.dart';
 
 class NoTengoRepository {
@@ -15,7 +15,7 @@ class NoTengoRepository {
   ///
   Future<void> openBox() async {
 
-    if(!Hive.isAdapterRegistered(11)) {
+    if(!Hive.isAdapterRegistered(noTengoHT)) {
       Hive.registerAdapter<NoTengoEntity>(NoTengoEntityAdapter());
     }
 
@@ -27,11 +27,11 @@ class NoTengoRepository {
   }
 
   ///
-  Future<void> setBoxNoTengo(NoTengoEntity nt) async {
+  Future<void> setBoxNoTengo(NoTengoEntity nt, {String fileSee = ''}) async {
 
     await openBox();
-    if(_boxNt != null) {
 
+    if(_boxNt != null) {
       final has = _boxNt!.values.where(
         (i) => i.idOrd == nt.idOrd && i.idPza == nt.idPza
       );
@@ -39,8 +39,13 @@ class NoTengoRepository {
       if(has.isNotEmpty) {
         await _boxNt!.put(has.first.key, nt);
       }else{
+      
         await _boxNt!.add(nt);
-        setNtToServer(nt.toJson());
+        Map<String, dynamic> data = nt.toJson();
+        if(fileSee.isNotEmpty) {
+          data['see'] = fileSee;
+        }
+        setNtToServer(data);
       }
     }
   }
@@ -101,7 +106,7 @@ class NoTengoRepository {
   /// 
   Future<void> setNtToServer(Map<String, dynamic> json) async {
 
-    Uri uri = MyPath.getUri('set_no_tengo', '/');
+    Uri uri = MyPath.getUri('set_no_tengo', '');
     await _http.post(uri, data: json);
   }
 

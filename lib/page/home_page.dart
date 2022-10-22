@@ -23,15 +23,13 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   final _globals = getIt<Globals>();
   late final TabController _tab;
   final List<String> _seccs = ['MENÚ', 'SOLICITUDES', 'INVENTARIO'];
-  final List<Widget> _misTabs = [];
   final List<Widget> _misPages= [];
 
   @override
   void initState() {
 
     _tab = TabController(length: _seccs.length, initialIndex: 1, vsync: this);
-
-    _seccs.map((tab){
+    _seccs.map((tab) {
 
       switch (tab) {
         case 'MENÚ':
@@ -43,42 +41,6 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
         default:
           _misPages.add(const InventarioPage());
       }
-
-      if(tab == 'MENÚ') {
-        _misTabs.add(
-          Tab(
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(Icons.menu),
-                const SizedBox(width: 5),
-                Text(
-                  tab,
-                  textScaleFactor: 1,
-                  style: const TextStyle(
-                    fontSize: 16
-                  ),
-                )
-              ],
-            )
-          )
-        );
-        
-      }else{
-
-        _misTabs.add(
-          Tab(
-            child: Text(
-              tab,
-              textScaleFactor: 1,
-              style: const TextStyle(
-                fontSize: 16
-              ),
-            )
-          )
-        );
-      }
-      
     }).toList();
 
     super.initState();
@@ -113,15 +75,15 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
 
     return TabBar(
       indicatorColor: const Color(0xFF4da07f),
-      indicatorWeight: 4.0,
+      indicatorWeight: 3.5,
+      labelPadding: const EdgeInsets.symmetric(horizontal: 0),
       labelColor: Colors.white,
-      labelPadding: const EdgeInsets.only(top: 10.0),
       unselectedLabelColor: Colors.grey,
       physics: const BouncingScrollPhysics(),
       enableFeedback: true,
       automaticIndicatorColorAdjustment: true,
       controller: _tab,
-      tabs: _misTabs
+      tabs: _seccs.map((tab) => buildTaps(tab)).toList()
     );
   }
 
@@ -135,6 +97,54 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     );
   }
 
+  ///
+  Widget buildTaps(String tab) {
+
+    double textScaleFactor = 0.82;
+    TextStyle styleText = const TextStyle(
+      fontSize: 17,
+      letterSpacing: 1.1
+    );
+
+    if(MediaQuery.of(context).size.width < 360) {
+      textScaleFactor = 0.8;
+      styleText = const TextStyle(
+        fontSize: 15.5,
+        letterSpacing: 1
+      );
+    }
+
+    if(tab == 'MENÚ') {
+
+      return Tab(
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.menu),
+            const SizedBox(width: 5),
+            Text(
+              tab,
+              textScaleFactor: 1,
+              style: const TextStyle(
+                fontSize: 15
+              ),
+            )
+          ],
+        )
+      );
+      
+    }else{
+
+      return Tab(
+        child: Text(
+          tab,
+          textScaleFactor: textScaleFactor,
+          style: styleText,
+        )
+      );
+    }
+  }
+  
   ///
   Widget? _btnLogin(BuildContext context) {
 

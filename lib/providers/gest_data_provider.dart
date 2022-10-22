@@ -1,21 +1,27 @@
+import 'dart:io' show File;
+
 import 'package:camera/camera.dart' show XFile;
-import 'package:cotizo/repository/ordenes_repository.dart';
+import 'package:cotizo/entity/push_in_entity.dart';
+import 'package:flutter/foundation.dart' show compute;
 import 'package:flutter/material.dart' show BuildContext, ChangeNotifier;
 import 'package:cron/cron.dart';
 import 'package:go_router/go_router.dart';
 
+import '../api/push_msg.dart';
+import '../repository/ordenes_repository.dart';
 import '../config/sngs_manager.dart';
 import '../entity/chat_entity.dart';
+import '../services/isolates/task_server_isolate.dart';
 import '../services/my_image/my_im.dart';
 import '../vars/globals.dart';
 import '../widgets/mensajes/get_anet_msg.dart';
-import '../widgets/mensajes/dialogs.dart';
 import '../vars/constantes.dart';
 import '../vars/enums.dart';
 
 class GestDataProvider with ChangeNotifier {
 
   final _globals = getIt<Globals>();
+  final _pushs = getIt<PushMsg>();
 
   Cron cronImgProcess = Cron();
   final int espera = 3;
@@ -24,17 +30,22 @@ class GestDataProvider with ChangeNotifier {
   ///
   void clean() {
     _msgs = [];
-    currentCampo = Campos.none;
-    onCheckFotos = false;
-    changeKeyboard = 'txt';
-    reviciones = 0;
-    imgTmps = 0;
-    dataSaveImg= [];
     _imgsListas = [];
     _imgProcessCurrent = '';
     _globals.idOrdenCurrent = 0;
     _globals.idsFromLinkCurrent = '';
     _globals.idCampaingCurrent = '';
+    _currentCampo = Campos.none;
+    _ftsGestDel = [];
+    _changeKeyboard = 'txt';
+    ansuelo = {};
+    carnada = {};
+    onCheckFotos = false;
+    reviciones = 0;
+    imgTmps = 0;
+    dataSaveImg= [];
+    isAccEdit = false;
+    ftsGest = [];
     campos = {
       Campos.rFotos: <String>[],
       Campos.isValidFotos :false,
@@ -46,6 +57,14 @@ class GestDataProvider with ChangeNotifier {
     };
   }
 
+  /// Cambiamos el modo de cotizar.
+  int _modoCot = 1;
+  int get modoCot => _modoCot;
+  set modoCot(int tipo) {
+    _modoCot = tipo;
+    notifyListeners();
+  }
+
   /// Cambiamos el teclado segun el requerimiento del campo en curso.
   String _changeKeyboard = 'txt';
   String get changeKeyboard => _changeKeyboard;
@@ -54,17 +73,10 @@ class GestDataProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  /// Usado para rectificar que las fotos esten completas cunado son agregadas
-  /// de una sola vez todas.
-  int imgTmps = 0;
-
   /// mostrar la primer pagina de Estas Listo!!
   bool showMsgEstasListo = true;
   /// Utilizado para encender el check de las fotos
   int reviciones = 0;
-  bool onCheckFotos = false;
-  // Los mensajes pueden ser largos y explicativos en caso de ser un dummy
-  ModoDialog modoDialog = ModoDialog.dummy;
 
   ///
   Campos _currentCampo = Campos.none;
@@ -85,6 +97,132 @@ class GestDataProvider with ChangeNotifier {
     Campos.isCheckData: false
   };
 
+  /// Usado para rectificar que las fotos esten completas cunado son agregadas
+  /// de una sola vez todas.
+  int imgTmps = 0;
+
+  /// Saber cuando se esta editado un campo.
+  bool isAccEdit = false;
+
+  bool onCheckFotos = false;
+  /// Usado para saber si mostramos el mensaje encima de la camara de agrega fotos
+  bool showAlertAddFotos = true;
+  /// Usado para saber si la camara se inicia automáticamente modo PILOTO
+  bool initCamAuto = false;
+  /// Utilizado en el btn de take foto para absorver los click cuando la foto
+  /// se esta tomando y evitar que clicken mas en el proceso de la toma.
+  bool _isTakeFoto = false;
+  bool get isTakeFoto => _isTakeFoto;
+  set isTakeFoto(bool mc) {
+    _isTakeFoto = mc;
+    notifyListeners();
+  }
+  /// Lista de fotos usadas para gestionar las imagenes en el widget camara.
+  bool _ftsGestRefresh = false;
+  bool get ftsGestRefresh => _ftsGestRefresh;
+  set ftsGestRefresh(bool mc) {
+    _ftsGestRefresh = mc;
+    notifyListeners();
+  }
+  /// Lista de fotos usadas para gestionar las imagenes en el widget camara.
+  List<XFile> ftsGest = [];
+  /// Adicionamos una foto desde la camara
+  void addNewFoto(XFile foto) {
+    var tmp = List<XFile>.from(ftsGest).toList();
+    ftsGest.clear();
+    tmp.insert(0, foto);
+    ftsGest = List<XFile>.from(tmp);
+    tmp.clear();
+    ftsGestRefresh = !ftsGestRefresh;
+  }
+  /// Usado para saber que foto se ha seleccionado para ser borrada.
+  List<int> _ftsGestDel = [];
+  List<int> get ftsGestDel => _ftsGestDel;
+  set ftsGestDel(List<int> mc) {
+    _ftsGestDel = mc;
+    notifyListeners();
+  }
+  /// Agregamos el path de la foto que se requiere eliminar
+  void addFtoToDelete(String ftPat, bool isAdd) {
+
+    var tmp = List<int>.from(_ftsGestDel);
+    if(tmp.isNotEmpty) {
+      if(tmp.first == -1) {
+        tmp.clear();
+      }
+    }
+    _ftsGestDel.clear();
+    if(ftsGest.isNotEmpty) {
+      final ind = ftsGest.indexWhere((element) => element.path == ftPat);
+      if(ind != -1) {
+        if(isAdd) {
+          tmp.add(ind);
+        }else{
+          tmp.remove(ind);
+        }
+      }
+      ftsGestDel = (tmp.isEmpty) ? [-1] : List<int>.from(tmp);
+    }
+    tmp.clear();
+  }
+  /// Borramos desde la camara todas las imagenes que han sido eliminadas
+  Future<void> deleteFotosSelected({bool cleaned = false}) async {
+
+    // Primero borramos visualmente para el usuario.
+    var files = List<XFile?>.from(ftsGest).toList();
+
+    // Borramos los paths existentes en el campo fotos.
+    List<String> currents = [];
+    if(campos.containsKey(Campos.rFotos)) {
+      currents = List<String>.from(campos[Campos.rFotos]);
+    }
+
+    ftsGest.clear();
+    List<XFile> inCache = [];
+    List<int> filesD = [];
+    if(cleaned) {
+      for (var i = 0; i < files.length; i++) {
+        filesD.add(i);
+      }
+    }else{
+      filesD = List<int>.from(_ftsGestDel).toList();
+      filesD.sort(); 
+    }
+
+    for (var i = 0; i < filesD.length; i++) {
+      try {
+        inCache.add(files[filesD[i]]!);
+      } catch (_) {}
+      try {
+
+        files[filesD[i]] = null;
+      } catch (_) {}
+    }
+    
+    files = files.where((element) => element != null).toList();
+    if(files.isNotEmpty) {
+      ftsGest = List<XFile>.from(files).toList();
+    }else{
+      ftsGest = [];
+    }
+
+    ftsGestRefresh = !ftsGestRefresh;
+    // Ahora limpiamos la lista de fotos para borrar
+    ftsGestDel = [];
+
+    // Ahora borramos de cache las imagenes.
+    for (var i = 0; i < inCache.length; i++) {
+      File fo = File(inCache[i].path);
+      if(fo.existsSync()) {
+        fo.deleteSync();
+        currents.removeWhere((element) => element == inCache[i].path);
+      }
+    }
+    if(campos.containsKey(Campos.rFotos)) {
+      campos[Campos.rFotos] = List<String>.from(currents);
+    }
+  }
+
   /// Mensajes para los compos cuando se esta cotizando.
   String _msgCampos = '...';
   String get msgCampos => _msgCampos;
@@ -101,6 +239,17 @@ class GestDataProvider with ChangeNotifier {
     _msgs.addAll(messages);
   }
 
+  /// La info. recuperada para atrapar al cotizador y no dejarlo salir del estanque
+  Map<String, dynamic> carnada = {};
+  // Es la info. necesaria para poder recuperar la carnada
+  Map<String, dynamic> ansuelo = {};
+  String _callFrom = '';
+  String get callFrom => _callFrom;
+  set callFrom(String callF) {
+    _callFrom = callF;
+    notifyListeners();
+  }
+
   /// Agregamos y revisamos las respuestas del usuario
   void addMsgs(ChatEntity msg) async {
 
@@ -114,33 +263,51 @@ class GestDataProvider with ChangeNotifier {
         msgErr = await _isValidData(msg);
         if(msgErr == null) {
 
-          // es correcto tomar el siguiente campo,
+          // Es correcto tomar el siguiente campo,
           reviciones = 0;
           if(currentCampo == Campos.rFotos) {
 
+            imgTmps++;
             if(campos[Campos.rFotos].length < Constantes.cantFotos) {
-              showAlertFotos();
-            }else{
-              imgTmps++;
+              if(imgTmps == campos[Campos.rFotos].length) {
+
+                final hasErr = _msgs.indexWhere(
+                  (chat) => chat.from == ChatFrom.anet && chat.campo == ChatKey.rFotos
+                );
+
+                if(hasErr != -1) {
+                  _msgs.removeAt(hasErr);
+                }
+                showAlertFotos();
+              }
             }
           }
 
           if(currentCampo == Campos.rFotos && campos[Campos.isValidFotos]) {
-            changeCampoToDetalles();
-          }
-
-          if(currentCampo == Campos.rDeta && campos[Campos.isValidDeta]) {
-            _changeCampoToCosto();
+            if(isAccEdit) {
+              _changeCampoToCheckData();
+            }else{
+              _changeCampoToCosto();
+            }
           }
 
           if(currentCampo == Campos.rCosto && campos[Campos.isValidCosto]) {
+            if(isAccEdit) {
+              _changeCampoToCheckData();
+            }else{
+              changeCampoToDetalles();
+            }
+          }
+
+          if(currentCampo == Campos.rDeta && campos[Campos.isValidDeta]) {
             _changeCampoToCheckData();
           }
         }
       }
 
-      final msgsTmp = List<ChatEntity>.from(_msgs);
+      final msgsTmp = List<ChatEntity>.from(_msgs).toList();
       _msgs.clear();
+
       msgsTmp.add(msg);
       if(msgErr != null) {
         msgsTmp.add(msgErr);
@@ -154,18 +321,23 @@ class GestDataProvider with ChangeNotifier {
     }
   }
 
-    ///
+  ///
   void editMsgs(ChatEntity msg) async {
 
-    int msgEditIndex = msgs.indexWhere((m) => m.campo == msg.campo);
+    _msgs.removeWhere((element) => element.from == ChatFrom.anet);
+    int msgEditIndex = _msgs.indexWhere((m) => m.campo == msg.campo);
     if(msgEditIndex != -1) {
 
-      msgs.removeAt(msgEditIndex);
+      isAccEdit = true;
+      _msgs.removeAt(msgEditIndex);
+
       if(msg.campo == Campos.rFotos) {
         
         Map<String, dynamic> removeFoto = {};
         if(campos[Campos.rFotos].isNotEmpty) {
-          for(var f=0; f<campos[Campos.rFotos].length; f++) {
+
+          imgTmps = campos[Campos.rFotos].length;
+          for(var f=0; f < campos[Campos.rFotos].length; f++) {
 
             if(campos[Campos.rFotos][f] == msg.value) {
               campos[Campos.rFotos].removeAt(f);
@@ -192,9 +364,7 @@ class GestDataProvider with ChangeNotifier {
             currentCampo = Campos.rFotos;
           }
 
-          await Future.delayed(const Duration(milliseconds: 350));
           if(campos[Campos.rFotos].length < Constantes.cantFotos) {
-
             campos[Campos.isValidFotos] = false;
             if(!onCheckFotos) {
               showAlertFotos();
@@ -202,6 +372,12 @@ class GestDataProvider with ChangeNotifier {
           }
         }
       }
+
+      for (var i = 0; i < _msgs.length; i++) {
+        _msgs[i].id = i+1;
+      }
+      msgs = List<ChatEntity>.from(_msgs);
+      
       if(msg.campo == Campos.rDeta) {
         campos[Campos.rDeta] = '';
         campos[Campos.isValidDeta] = false;
@@ -215,49 +391,45 @@ class GestDataProvider with ChangeNotifier {
     }
   }
 
+  /// HAcemos la ultima revision de los datos antes de enviar la cotizacion.
+  Future<bool> isValidData() async {
+
+    campos[Campos.isValidFotos] = false;
+    _checkValidezCantFotos(isOnlyCheck: true);
+    if(!campos[Campos.isValidFotos]) {
+      currentCampo = Campos.rFotos;
+      showAlertFotos();
+      return false;
+    }
+
+    return true;
+  }
+
   ///
-  void _checkValidezCantFotos() {
+  void _changeCampoToCosto() async {
 
-    int imgScreen = 0;
-    for(var f = 0; f < msgs.length; f++) {
-      if(msgs[f].tipo == ChatTip.image) {
-        imgScreen++;
-      }
-    }
-
-    if(imgScreen > imgTmps) {
-      imgTmps = imgScreen;
-    }
-
-    if(imgTmps == Constantes.cantFotos) {
-      campos[Campos.isValidFotos] = true;
-      changeCampoToDetalles();
+    imgTmps = 0;
+    currentCampo = Campos.rCosto;
+    final msg = await GetAnet.msg(ChatKey.putCosto, id: msgs.length+1, modo: modoCot);
+    if(msg != null) {
+      msg.campo = currentCampo;
+      addMsgs(msg);
+      changeKeyboard = 'num';
+      _initProcesarImgs();
     }
   }
 
   ///
   void changeCampoToDetalles() async {
 
-    imgTmps = 0;
     currentCampo = Campos.rDeta;
-    final msg = await GetAnet.msg(ChatKey.putDeta, id: msgs.length+1, modo: modoDialog);
-    if(msg != null) {
-      _initProcesarImgs();
-      msg.campo = currentCampo;
-      addMsgs(msg);
-    }
-  }
-
-  ///
-  void _changeCampoToCosto() async {
-
-    currentCampo = Campos.rCosto;
-    final msg = await GetAnet.msg(ChatKey.putCosto, id: msgs.length+1, modo: modoDialog);
+    final msg = await GetAnet.msg(ChatKey.putDeta, id: msgs.length+1, modo: modoCot);
     if(msg != null) {
       msg.campo = currentCampo;
       addMsgs(msg);
+      _buildCarnadaAndSetRegSee();
     }
-    changeKeyboard = 'num';
+    changeKeyboard = 'txt';
   }
 
   ///
@@ -265,9 +437,10 @@ class GestDataProvider with ChangeNotifier {
 
     currentCampo = Campos.isCheckData;
     var msg = await GetAnet.msg(
-      ChatKey.checkData, id: msgs.length+1, modo: modoDialog,
+      ChatKey.checkData, id: msgs.length+1, modo: modoCot,
       params: [campos[Campos.rDeta], campos[Campos.rCosto]]
     );
+    isAccEdit = false;
     if(msg != null) {
       msg.campo = currentCampo;
       addMsgs(msg);
@@ -282,20 +455,34 @@ class GestDataProvider with ChangeNotifier {
       case ChatKey.estasListo:
         if(res['res']) {
 
-          ChatEntity? msg = await GetAnet.msg(ChatKey.getAlertFotosLogos, id: msgs.length+1, modo: modoDialog);
+          ChatEntity? msg = await GetAnet.msg(ChatKey.getAlertFotosLogos, id: msgs.length+1, modo: modoCot);
           if(msg != null) {
             showMsgEstasListo = false;
             currentCampo = Campos.rFotos;
             msg.campo = currentCampo;
             _msgs.clear();
             addMsgs(msg);
-            msg = await GetAnet.msg(msgs.last.key, id: msgs.length+1, modo: modoDialog);
+            msg = await GetAnet.msg(msgs.last.key, id: msgs.length+1, modo: modoCot);
             if(msg != null) {
               msg.campo = currentCampo;
               addMsgs(msg);
             }
           }
         }else{
+
+          // Salir de cotizar al iniciar, antes de fotos.
+          if(ansuelo.isNotEmpty) {
+
+            bool withPush = true;
+            if(carnada.isNotEmpty) {
+              withPush = false;
+              launchCarnada();
+            }
+            _fetchCarnadaFiltrosAndSee(
+              launchPush: withPush, hizoCot: false, setFiltro: false
+            );
+          }
+
           clean();
           if(res.containsKey('backUri')) {
             context.go(res['backUri']);
@@ -305,6 +492,9 @@ class GestDataProvider with ChangeNotifier {
             if(_globals.histUri.isNotEmpty) {
               goBack = _globals.getBack();
             }
+            if(goBack == '/home') {
+
+            }
             context.go(goBack);
           }
         }
@@ -312,9 +502,15 @@ class GestDataProvider with ChangeNotifier {
       case ChatKey.errAwaitFotos:
 
         if(res['res']) {
-          
-          campos[Campos.isValidFotos] = true;
-          changeCampoToDetalles();
+
+          campos[Campos.isValidFotos] = false;
+          _checkValidezCantFotos(isOnlyCheck: true);
+          if(!campos[Campos.isValidFotos]) {
+            currentCampo = Campos.rFotos;
+            showAlertFotos();
+            return;
+          }
+          _changeCampoToCosto();
         }
         break;
       default:
@@ -322,7 +518,7 @@ class GestDataProvider with ChangeNotifier {
   }
 
   /// Validamos la info dada por el usuario
-  /// Retornamos NULL en caso de que no exista errores.
+  /// Retornamos NULL en caso exito.
   Future<ChatEntity?> _isValidData(ChatEntity msg) async {
 
     ChatEntity? resp = ChatEntity(
@@ -379,6 +575,7 @@ class GestDataProvider with ChangeNotifier {
         resp.key = ChatKey.know;
         resp.value = 'UPSS!!, repite tu mensaje, ocurrio un error inesperado.';
     }
+
     return (resp.value.isEmpty) ? null : resp;
   }
 
@@ -397,18 +594,125 @@ class GestDataProvider with ChangeNotifier {
   }
 
   ///
+  void _checkValidezCantFotos({bool isOnlyCheck = false}) {
+
+    int imgScreen = 0;
+    for(var f = 0; f < msgs.length; f++) {
+      if(msgs[f].tipo == ChatTip.image) {
+        imgScreen++;
+      }
+    }
+
+    if(imgScreen > imgTmps) {
+      imgTmps = imgScreen;
+    }
+
+    if(imgTmps == Constantes.cantFotos) {
+      campos[Campos.isValidFotos] = true;
+      if(!isOnlyCheck) {
+        _changeCampoToCosto();
+      }
+    }
+    if(isOnlyCheck) {
+      if(imgTmps > 0) {
+        campos[Campos.isValidFotos] = true;
+      }
+    }
+  }
+
+  /// Cada ves que abrimos la galeria o la camara eliminamos del chat todos los
+  /// mensajes previos de alertas y errores acerca de las fotos, con la finalidad
+  /// de agrupar todas las imagenes una a otra.
+  Future<void> cleanMsgsAnetInFotos() async {
+    
+    // Borramos del chat todos los mensajes que sean las fotos que ya se
+    // tomaron para mostrarlas en el carrucel, y a su ves, borramos todos
+    // los mensajes de error.
+    final msgsTmp = List<ChatEntity>.from(msgs).toList();
+    for (var i = 0; i < msgs.length; i++) {
+      msgsTmp.removeWhere((chat){
+        return msgs[i].from == ChatFrom.anet && msgs[i].campo == Campos.rFotos;
+      });
+    }
+
+    if(campos.containsKey(Campos.rFotos)) {
+      final lstPaths = List<String>.from(campos[Campos.rFotos]);
+      // Proceguimos con las imagenes...
+      if(lstPaths.isNotEmpty) {
+        for (var i = 0; i < lstPaths.length; i++) {
+          msgsTmp.removeWhere((chat) => chat.value == lstPaths[i]);
+        }
+      }
+    }
+
+    msgs = List<ChatEntity>.from(msgsTmp).toList();
+    msgsTmp.clear();
+  }
+
+  ///
   void showAlertFotos() async {
 
-    msgCampos = 'Autoparnet te informa...';
+    msgCampos = 'AutoparNet te informa...';
     
     onCheckFotos = false;
-    ChatEntity? msg = await GetAnet.msg(ChatKey.getAwaitFotos, id: msgs.length+1, modo: modoDialog);
+    ChatEntity? msg = await GetAnet.msg(ChatKey.getAwaitFotos, id: msgs.length+1, modo: modoCot);
     if(msg != null) {
       imgTmps = campos[Campos.rFotos].length;
       msg.campo = currentCampo;
       addMsgs(msg);
     }
   }
+
+  ///
+  void launchCarnada() {
+
+    if(carnada.isNotEmpty) {
+      _pushs.makePushInterno( PushInEntity()..fromServer(carnada) );
+      carnada = {};
+    }
+  }
+
+  /// [CARNADA] Recuperamos la siguiente orden para cotizar desde el servidor
+  /// [REG SEE] y/o guardamos el registro de atendido, solo si viene desde HOME
+  void _buildCarnadaAndSetRegSee() {
+
+    if(_globals.idOrdenCurrent != 0 && ansuelo.isNotEmpty) {
+      bool setFiltro = true;
+      if(ansuelo.containsKey('setF')) {
+        setFiltro = ansuelo['setF'];
+      }
+      _fetchCarnadaFiltrosAndSee(setFiltro: setFiltro);
+    }
+  }
+
+  ///
+  void _fetchCarnadaFiltrosAndSee(
+    {bool launchPush = false, bool hizoCot = true, bool setFiltro = true})
+  {
+
+    ansuelo['setF'] = setFiltro;
+    compute(fetchCarnadaFiltrosAndSee, ansuelo).then((resp) {
+      
+      if(!resp['abort']) {
+
+        if(launchPush) {
+          launchCarnada();
+          return;
+        }else{
+          final body = resp['body'];
+          if(body.isNotEmpty) {
+            if(body.runtimeType == List) {
+              carnada = Map<String, dynamic>.from(body.first);
+            }else{
+              carnada = Map<String, dynamic>.from(body);
+            }
+          }
+        }
+      }
+    });
+  }
+
+  // ------------------------- FOTOS ----------------------------------
 
   bool isFinishProcessImage = false;
   // Los datos que se guardaran como inventario en la app
@@ -478,7 +782,6 @@ class GestDataProvider with ChangeNotifier {
       final pathSave = await MyIm.saveImageInApp(nameF, result['data']);
       if(pathSave.isNotEmpty) {
 
-        // Guardamos en DRIVE.
         Map<String, dynamic> save = {
           'path': pathSave, 'kb': result['kb'],
           'name': nameF, 'absolute': _imgProcessCurrent
@@ -488,6 +791,7 @@ class GestDataProvider with ChangeNotifier {
         _imgsListas.add(_imgProcessCurrent);
       }
     }
+    
     _imgProcessCurrent = '';
   }
 

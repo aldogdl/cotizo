@@ -178,13 +178,13 @@ class SoliEm {
   }
 
   ///
-  Future<void> setNoTengo(int idOrd, int idPza) async {
+  Future<void> setNoTengo(int idOrd, int idPza, int idUser, {String fileSee = ''}) async {
     
-    final nt = NoTengoEntity();
-    nt.idOrd = idOrd;
-    nt.idCot = await _usEm.getIdUser();
-    nt.idPza = idPza;
-    await _ntEm.setBoxNoTengo(nt);
+    final nt = NoTengoEntity()
+    ..idCot = idUser
+    ..idOrd = idOrd
+    ..idPza = idPza;
+    await _ntEm.setBoxNoTengo(nt, fileSee: fileSee);
   }
 
   /// [COTIZADAS] Revisamos cada pieza de la orden para ver si existe en el inventario
@@ -358,4 +358,6 @@ class SoliEm {
   ///
   Future<InventarioEntity> getInvById(int id) async => await _iem.getInventarioById(id);
 
+  ///
+  Future<int> getIdUser() async => _usEm.getIdUser();
 }

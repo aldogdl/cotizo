@@ -60,13 +60,10 @@ class _EscribirLongState extends State<EscribirLong> {
         children: [
           IconButton(
             padding: const EdgeInsets.all(0),
-            constraints: const BoxConstraints(
-              maxWidth: 20
-            ),
+            visualDensity: VisualDensity.compact,
             onPressed: () async => widget.onClose(null),
             icon: Icon(Icons.close, color: _globals.txtOnsecMainLigth),
           ),
-          const SizedBox(width: 10),
           Expanded(
             child: Selector<GestDataProvider, String>(
               selector: (_, provi) => provi.changeKeyboard,

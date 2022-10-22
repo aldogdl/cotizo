@@ -1,5 +1,3 @@
-import 'package:cotizo/api/push_msg.dart';
-import 'package:firebase_messaging/firebase_messaging.dart' show AuthorizationStatus;
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -7,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../config/sngs_manager.dart';
 import '../services/my_get.dart';
 import '../vars/globals.dart';
+import '../widgets/app_barr_icon_action.dart';
 import '../widgets/show_dialogs.dart';
 
 class AscaffoldMain extends StatelessWidget {
@@ -28,23 +27,7 @@ class AscaffoldMain extends StatelessWidget {
   Widget build(BuildContext context) {
 
     final size = MediaQuery.of(context).size;
-    final push = getIt<PushMsg>();
-    late IconData icono;
 
-    switch(push.authPush) {
-      case AuthorizationStatus.denied:
-        icono = Icons.notifications_off_outlined;
-        break;
-      case AuthorizationStatus.notDetermined:
-        icono = Icons.notification_important_outlined;
-        break;
-      case AuthorizationStatus.provisional:
-        icono = Icons.notifications_paused_rounded;
-        break;
-      default:
-        icono = Icons.notifications_active;
-    }
-    
     return SafeArea(
       child: WillPopScope(
         onWillPop: () => _onWill(context),
@@ -53,45 +36,7 @@ class AscaffoldMain extends StatelessWidget {
           appBar: AppBar(
             backgroundColor: _globals.secMain,
             elevation: 0,
-            title: Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text.rich(
-                  TextSpan(
-                    text: 'AutoparNet ',
-                    style: GoogleFonts.comfortaa(
-                      color: Colors.green,
-                      fontSize: 19,
-                      fontWeight: FontWeight.bold
-                    ),
-                    children: const [
-                      TextSpan(
-                        text: 'COTIZO',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold
-                        ),
-                      ),
-                    ]
-                  ),
-                  textScaleFactor: 1,
-                ),
-                const Spacer(),
-                Text(
-                  _globals.version,
-                  style: TextStyle(
-                    color: _globals.txtComent,
-                    fontSize: 11.5,
-                    fontWeight: FontWeight.bold
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Icon(
-                  icono, color: const Color.fromARGB(255, 107, 107, 107), size: 18,
-                )
-              ],
-            ),
+            title: _tituloApp(),
             bottom: bottom,
           ),
           body: SizedBox(
@@ -104,6 +49,48 @@ class AscaffoldMain extends StatelessWidget {
     );
   }
 
+  ///
+  Widget _tituloApp() {
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        Text.rich(
+          TextSpan(
+            text: 'AutoparNet ',
+            style: GoogleFonts.comfortaa(
+              color: Colors.green,
+              fontSize: 19,
+              fontWeight: FontWeight.bold
+            ),
+            children: const [
+              TextSpan(
+                text: 'COTIZO',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold
+                ),
+              ),
+            ]
+          ),
+          textScaleFactor: 1,
+        ),
+        const Spacer(),
+        Text(
+          _globals.version,
+          style: TextStyle(
+            color: _globals.txtComent,
+            fontSize: 11.5,
+            fontWeight: FontWeight.bold
+          ),
+        ),
+        const SizedBox(width: 8),
+        const AppBarIconAction()
+      ],
+    );
+  }
+  
   ///
   Future<bool> _onWill(BuildContext context) async {
 
@@ -134,7 +121,8 @@ class AscaffoldMain extends StatelessWidget {
       nav.go('/home');
       return Future.value(false);
     }else{
-      nav.go(_globals.getBack());
+      final goBack = _globals.getBack();
+      nav.go(goBack);
       return Future.value(false);
     }
   }

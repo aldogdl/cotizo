@@ -40,7 +40,9 @@ class _GestDataPageState extends State<GestDataPage> {
   OrdenEntity _orden = OrdenEntity();
 
   bool _isInit = false;
-  
+  bool _showOnlyMyMsgs = false;
+  final List<int> _piezasForCot = [];
+
   @override
   void initState() {
     WidgetsBinding.instance.addPostFrameCallback(_initWidget);
@@ -101,13 +103,7 @@ class _GestDataPageState extends State<GestDataPage> {
         ),
         Selector<GestDataProvider, Campos>(
           selector: (_, provi) => provi.currentCampo,
-          builder: (_, campoActual, __) {
-
-            return Padding(
-              padding: const EdgeInsets.only(top: 16),
-              child: _determinarFoot()
-            );
-          }
+          builder: (_, campoActual, __) => _determinarFoot()
         )
       ]
     );
@@ -203,9 +199,12 @@ class _GestDataPageState extends State<GestDataPage> {
     switch (_prov.currentCampo) {
 
       case Campos.rFotos:
-        return FootFotos(
-          onSend: (ChatEntity msg) async => _prov.addMsgs(msg),
-          onClose: (_) async => await _salirCot()
+        return Padding(
+          padding: const EdgeInsets.only(top: 16),
+          child: FootFotos(
+            onSend: (ChatEntity msg) async => _prov.addMsgs(msg),
+            onClose: (_) async => await _salirCot(),
+          )
         );
       case Campos.isCheckData:
         return _accionesFinal();
@@ -213,9 +212,12 @@ class _GestDataPageState extends State<GestDataPage> {
         if(_prov.currentCampo == Campos.none) {
           return const SizedBox();
         }
-        return EscribirLong(
-          onSend: (ChatEntity msg) => _prov.addMsgs(msg),
-          onClose: (_) async => await _salirCot()
+        return Padding(
+          padding: const EdgeInsets.only(top: 3),
+          child: EscribirLong(
+            onSend: (ChatEntity msg) => _prov.addMsgs(msg),
+            onClose: (_) async => await _salirCot(),
+          ),
         );
     }
   }
@@ -225,11 +227,10 @@ class _GestDataPageState extends State<GestDataPage> {
 
     return Container(
       width: MediaQuery.of(context).size.width,
-      height: MediaQuery.of(context).size.height * 0.28,
-      margin: const EdgeInsets.only(bottom: 10),
+      margin: const EdgeInsets.only(bottom: 1),
       padding: const EdgeInsets.all(15),
       decoration: BoxDecoration(
-        color: _globals.secMain,
+        color: const Color.fromARGB(255, 13, 21, 26),
         borderRadius: BorderRadius.circular(5)
       ),
       child: Column(
@@ -251,13 +252,15 @@ class _GestDataPageState extends State<GestDataPage> {
             'DESCARTAR COTIZACIÓN', ico: Icons.do_disturb_alt_sharp,
             fnc: () async => await _salirCot()
           ),
-          _linkFinal(
-            'VER SOLO TUS MENSAJES', ico: Icons.reset_tv_rounded,
-            fnc: () async {
-              await _prov.showResumen();
-              setState(() {});
-            }
-          ),
+          if(!_showOnlyMyMsgs)
+            _linkFinal(
+              'VER SOLO TUS MENSAJES', ico: Icons.reset_tv_rounded,
+              fnc: () async {
+                await _prov.showResumen();
+                _showOnlyMyMsgs = true;
+                setState(() {});
+              }
+            ),
           _linkFinal(
             'TERMINAR Y ENVIAR', ico: Icons.check_circle_sharp,
             fnc: () async => await _terminarAndSend()
@@ -289,11 +292,14 @@ class _GestDataPageState extends State<GestDataPage> {
   ///
   Future<void> _initWidget(_) async {
 
+    _prov.ansuelo = {};
+    _prov.carnada = {};
+
     if(_prov.msgs.isEmpty) {
 
-      if(_prov.showMsgEstasListo) {
+      if(_prov.showMsgEstasListo && _prov.modoCot <= 1) {
 
-        ChatEntity? msg = await GetAnet.msg(ChatKey.none, id: 1, modo: _prov.modoDialog);
+        ChatEntity? msg = await GetAnet.msg(ChatKey.none, id: 1, modo: _prov.modoCot);
         if(msg != null) {
           msg.campo = _prov.currentCampo;
           _prov.addMsgs(msg);
@@ -302,26 +308,92 @@ class _GestDataPageState extends State<GestDataPage> {
 
       }else{
 
-        ChatEntity? msg = await GetAnet.msg(ChatKey.getAlertFotosLogos, id: 1, modo: _prov.modoDialog);
-        if(msg != null) {
-          msg.campo = _prov.currentCampo;
-          _prov.addMsgs(msg);
+        if(_prov.modoCot < 3) {
+
+          ChatEntity? msg = await GetAnet.msg(ChatKey.getAlertFotosLogos, id: 1, modo: _prov.modoCot);
+          if(msg != null) {
+            msg.campo = _prov.currentCampo;
+            _prov.addMsgs(msg);
+          }
+          getNextMsg(msg);
+          _prov.currentCampo = Campos.rFotos;
+        }else{
+          _prov.initCamAuto = true;
+          _prov.currentCampo = Campos.rFotos;
         }
-        getNextMsg(msg);
-        _prov.currentCampo = Campos.rFotos;
       }
     }
-    
   }
 
   ///
   Future<void> _getOrden() async {
 
     if(_orden.id == 0) {
+
       _orden = _ordProv.items().firstWhere(
         (element) => element.id == _globals.idOrdenCurrent, 
         orElse: () => OrdenEntity()
       );
+
+      // Se recaba la información necesaria para ir por la siguiente cotizacion
+      // esta info es llamada el ANSUELO.
+      // vamos al servidor por background para mostrarla despues de que el
+      // cotizador termine de cotizar la pieza actual.
+      final auto = await _ordProv.solEm.getAutoById(_orden.auto);
+      if(auto != null) {
+
+        int user = await _ordProv.solEm.getIdUser();
+        // Tomamos los ides de las piezas, para saber al finalizar que esta
+        // orden cuneta con mas piezas, y redirigir al user al estanque
+        _orden.piezas.map((e) {
+          if(e.id != widget.idP) {
+            _piezasForCot.add(e.id);
+          }
+        }).toList();
+
+        String from = 'cth';
+        bool makeRegSee = true;
+        if(_globals.idsFromLinkCurrent.isNotEmpty) {
+          makeRegSee = false;
+          // Pagina llamada desde el link, pero que link?
+          if(!_globals.idsFromLinkCurrent.contains('pin')) {
+            // Si el link contiene el sufix pin, es desde un push interno
+            from = '';
+            // Si dejamos vacio el from, es que viene de Whatsapp
+          }
+        }
+
+        // Antes de buscar en el servidor observamos si hay mas ordenes en
+        // cache, para tomar la orden que se mostrará como push al:
+        // a) Final de cotizar,
+        // b) Si cancela por algun medio la cotizacion en curso.
+        _prov.carnada = {};
+        _prov.ansuelo = _orden.buildAnsuelo(user, from, {
+          'idOrdCurrent': _orden.id, 'user': user, 'mk': auto.marca 
+        });
+        _prov.ansuelo['setF'] = makeRegSee;
+        
+        final hasMore = _ordProv.items().where((element) => element.id != _orden.id);
+
+        if(hasMore.isNotEmpty) {
+          
+          if(_piezasForCot.isEmpty) {
+            // Si en cache no es vacio, buscamos la carnada en cache
+            _prov.carnada = await _ordProv.fetchCarnada(
+              auto: {'mk':auto.marca, 'md': auto.modelo, 'a':auto.anio},
+              idOrdCurrent: _orden.id, user: user
+            );
+          }else {
+            // Si la orden cuenta con mas de una pieza, tomamos la misma
+            //orden siguiente pieza
+            _prov.carnada = await _ordProv.fetchCarnadaSameOrden(
+              idPCurrent: widget.idP, idOrdCurrent: _orden.id, user: user
+            );
+          }
+        }else{
+          _prov.ansuelo['at']['ido'] = _orden.id;
+        }
+      }
     }
   }
 
@@ -329,7 +401,7 @@ class _GestDataPageState extends State<GestDataPage> {
   void getNextMsg(ChatEntity? msg) async {
 
     if(_prov.msgs.isNotEmpty) {
-      msg = await GetAnet.msg(_prov.msgs.last.key, id: _prov.msgs.length+1, modo: _prov.modoDialog);
+      msg = await GetAnet.msg(_prov.msgs.last.key, id: _prov.msgs.length+1, modo: _prov.modoCot);
       if(msg != null) {
         msg.campo = _prov.currentCampo;
         _prov.addMsgs(msg);
@@ -338,41 +410,10 @@ class _GestDataPageState extends State<GestDataPage> {
   }
 
   ///
-  Future<void> _salirCot() async {
-    
-    bool alertar = false;
-    _prov.campos.forEach((key, value) {
-      if(value.runtimeType != bool) {
-        if(value.isNotEmpty) { alertar = true; }
-      }
-    });
-
-    String goBack = '/';
-    if(_globals.histUri.isNotEmpty) {
-      goBack = _globals.getBack();
-    }
-    if(!alertar) {
-      _prov.clean();
-      context.go(goBack);
-      return;
-    }
-
-    ShowDialogs.alert(
-      context, 'exitCot',
-      hasActions: true,
-      labelNot: 'CONTINUAR',
-      labelOk: 'SÍ, SALIR'
-    ).then((res) {
-      res = (res == null) ? false : res;
-      if(res) {
-        _prov.clean();
-        context.go(goBack);
-      }
-    });
-  }
-
-  ///
   Future<void> _terminarAndSend() async {
+
+    bool isOk =  await _prov.isValidData();
+    if(!isOk){ return; }
 
     await showModalBottomSheet(
       context: context,
@@ -383,17 +424,71 @@ class _GestDataPageState extends State<GestDataPage> {
         onWillPop: () => Future.value(false),
         child: SendRespuesta(
           tiempo: DateTime.now(),
-          prov: _prov, globals: _globals,
+          globals: _globals,
           orden: _orden, idPieza: widget.idP,
-          onFinish: (_) async {
-            _prov.clean();
-            Navigator.of(context).pop();
-            await Future.delayed(const Duration(milliseconds: 250));
-            _salirCot();
-          }
+          onFinish: (_) async => await _salirCot(isFinish: true)
         ),
       )
     );
+  }
+
+  ///
+  Future<void> _salirCot({bool isFinish = false}) async {
+    
+    bool alertar = false;
+    if(!isFinish) {
+      _prov.campos.forEach((key, value) {
+        if(value.runtimeType != bool) {
+          if(value.isNotEmpty) { alertar = true; }
+        }
+      });
+    }
+
+    if(!alertar) {
+      _okExit(isFinish);
+      return;
+    }
+
+    ShowDialogs.alert(
+      context, 'exitCot',
+      hasActions: true,
+      labelNot: 'CONTINUAR AQUÍ',
+      labelOk: 'SÍ, SALIR'
+    ).then((res) {
+      res = (res == null) ? false : res;
+      if(res) {
+        _okExit(isFinish);
+      }
+    });
+  }
+
+  ///
+  void _okExit(bool isFinish) {
+
+    if(_prov.currentCampo == Campos.none){ return; }
+
+    String goBack = '/';
+    if(isFinish) {
+      if(_prov.carnada.isNotEmpty) {
+        goBack = '/cotizo/${_prov.carnada['link']}';
+        _ordProv.showAviso = true;
+        if(_prov.carnada.containsKey('findedIn')) {
+          _ordProv.avisoFrom = _prov.carnada['findedIn'];
+        }
+      }
+    }
+
+    if(goBack == '/') {
+      if(_globals.histUri.isNotEmpty) {
+        goBack = _globals.getBack();
+      }
+    }
+    if(!goBack.contains('/cotizo/')) {
+      _prov.launchCarnada();
+    }
+    _piezasForCot.clear();
+    _prov.clean();
+    context.go(goBack);
   }
 
   ///

@@ -24,7 +24,7 @@ class AutosRepository {
   ///
   Future<void> openBox() async {
 
-    if(!Hive.isAdapterRegistered(2)) {
+    if(!Hive.isAdapterRegistered(autosHT)) {
       Hive.registerAdapter<AutosEntity>(AutosEntityAdapter());
     }
 

@@ -8,7 +8,7 @@ part of 'modelo_entity.dart';
 
 class ModeloEntityAdapter extends TypeAdapter<ModeloEntity> {
   @override
-  final int typeId = 7;
+  final int typeId = 6;
 
   @override
   ModeloEntity read(BinaryReader reader) {

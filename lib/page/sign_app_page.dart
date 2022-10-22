@@ -216,9 +216,16 @@ class _SignAppPageState extends State<SignAppPage> {
   ///
   Widget _btnLogin(String msg) {
 
+    Color bgBtn  = _globals.colorGreen;
+    Color txtCol = Colors.black;
+    if(_isAbsorb) {
+      bgBtn  = Colors.black;
+      txtCol = _globals.colorGreen;
+    }
+    
     return ElevatedButton(
       style: ButtonStyle(
-        backgroundColor: MaterialStateProperty.all(_globals.colorGreen)
+        backgroundColor: MaterialStateProperty.all(bgBtn)
       ),
       onPressed: () async {
         FocusManager.instance.primaryFocus?.unfocus();
@@ -227,9 +234,10 @@ class _SignAppPageState extends State<SignAppPage> {
       child: Text(
         msg,
         textScaleFactor: 1,
-        style: const TextStyle(
+        textAlign: TextAlign.center,
+        style: TextStyle(
           fontSize: 20,
-          color: Colors.black,
+          color: txtCol,
           fontWeight: FontWeight.bold
         ),
       )

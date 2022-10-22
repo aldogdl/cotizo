@@ -38,7 +38,7 @@ class BurbujaDialog extends StatelessWidget {
     }
 
     return Dismissible(
-      key: Key('${msg.id}'),
+      key: UniqueKey(),
       confirmDismiss: (direcc) => Future.value(true),
       onDismissed: (direcc) {
         context.read<GestDataProvider>().editMsgs(msg);

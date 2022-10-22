@@ -24,7 +24,7 @@ class BurbujaImage extends StatelessWidget {
   Widget build(BuildContext context) {
 
     return Dismissible(
-      key: Key('${msg.id}'),
+      key: UniqueKey(),
       confirmDismiss: (direcc) => Future.value(true),
       onDismissed: (direcc) {
         context.read<GestDataProvider>().editMsgs(msg);

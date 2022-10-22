@@ -5,7 +5,7 @@ import '../config/sngs_manager.dart';
 import '../entity/account_entity.dart';
 import '../services/my_http.dart';
 import '../vars/enums.dart';
-import '../vars/my_paths.dart';
+import '../services/my_paths.dart';
 
 class AcountUserRepository {
 
@@ -23,7 +23,7 @@ class AcountUserRepository {
   ///
   Future<void> openBox() async {
 
-    if(!Hive.isAdapterRegistered(10)) {
+    if(!Hive.isAdapterRegistered(accountHT)) {
       Hive.registerAdapter<AccountEntity>(AccountEntityAdapter());
     }
 

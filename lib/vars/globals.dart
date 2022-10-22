@@ -3,24 +3,38 @@ import 'package:flutter/material.dart' show Color;
 
 class Globals {
 
-  String version = '1.4.0';
+  String version = '1.4.1';
   
   int idOrdenCurrent = 0;
   String idsFromLinkCurrent = '';
   String idCampaingCurrent = '';
   bool isFromWhatsapp = false;
+  
+  // Si es mayor a 3, mostrar la accion de cotizar mas rapido, sin mensajes.
+  int cantInv = 0;
   List<String> histUri = [];
   void setHistUri(String uri) {
     if(!histUri.contains(uri)) {
-      histUri.add(uri);
+      final inx = histUri.indexWhere((e) => e.contains('cotizo/'));
+      if(inx != -1) {
+        histUri[inx] = uri;
+      }else{
+        histUri.add(uri);
+      }
     }
   }
+
+  ///
   String getBack() {
 
     String uri = '';
     if(histUri.length > 2) {
       histUri.removeLast();
-      uri = histUri.removeLast();
+      if(histUri.isEmpty) {
+        uri = '/home';
+      }else{
+        uri = histUri.removeLast();
+      }
     }else{
       uri = histUri.first;
       histUri = [];

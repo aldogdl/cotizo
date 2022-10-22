@@ -1,8 +1,9 @@
 import 'package:hive/hive.dart';
 
+import '../vars/enums.dart';
 part 'autos_entity.g.dart';
 
-@HiveType(typeId: 2)
+@HiveType(typeId: autosHT)
 class AutosEntity extends HiveObject {
 
   @HiveField(0)

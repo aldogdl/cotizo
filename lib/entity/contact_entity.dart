@@ -1,8 +1,9 @@
 import 'package:hive/hive.dart';
 
+import '../vars/enums.dart';
 part 'contact_entity.g.dart';
 
-@HiveType(typeId: 4)
+@HiveType(typeId: contactHT)
 class ContactEntity extends HiveObject {
 
   @HiveField(0)

@@ -18,7 +18,7 @@ class PiezasRepository {
   ///
   Future<void> openBox() async {
 
-    if(!Hive.isAdapterRegistered(9)) {
+    if(!Hive.isAdapterRegistered(piezaHT)) {
       Hive.registerAdapter<PiezaEntity>(PiezaEntityAdapter());
     }
 

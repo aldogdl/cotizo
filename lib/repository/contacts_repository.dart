@@ -19,7 +19,7 @@ class ContactsRepository {
   ///
   Future<void> openBox() async {
 
-    if(!Hive.isAdapterRegistered(4)) {
+    if(!Hive.isAdapterRegistered(contactHT)) {
       Hive.registerAdapter<ContactEntity>(ContactEntityAdapter());
     }
 

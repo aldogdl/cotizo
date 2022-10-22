@@ -143,9 +143,19 @@ class MyIm {
   static Future<File?> getImageByPath(String nameFile) async {
 
     Directory appDocDir = await getApplicationDocumentsDirectory();
-    
     final file = File('${appDocDir.path}$nameFile');
     if(file.existsSync()) { return file; }
+    return null;
+  }
+
+  ///
+  static Future<XFile?> getXFileByPath(String nameFile) async {
+
+    Directory appDocDir = await getApplicationDocumentsDirectory();
+    try {
+      final file = XFile('${appDocDir.path}$nameFile');
+      return file;
+    } catch (_) {}
     return null;
   }
 

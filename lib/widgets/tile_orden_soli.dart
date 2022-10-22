@@ -7,7 +7,7 @@ import '../entity/share_data_orden.dart';
 import '../entity/orden_entity.dart';
 import '../providers/gest_data_provider.dart';
 import '../services/my_get.dart';
-import '../vars/my_paths.dart';
+import '../services/my_paths.dart';
 
 class TileOrdenSoli extends StatelessWidget {
 

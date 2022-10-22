@@ -1,8 +1,9 @@
 import 'package:hive/hive.dart';
 
+import '../vars/enums.dart';
 part 'pieza_entity.g.dart';
 
-@HiveType(typeId: 9)
+@HiveType(typeId: piezaHT)
 class PiezaEntity extends HiveObject {
 
   @HiveField(0)

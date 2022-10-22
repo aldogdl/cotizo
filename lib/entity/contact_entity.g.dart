@@ -8,7 +8,7 @@ part of 'contact_entity.dart';
 
 class ContactEntityAdapter extends TypeAdapter<ContactEntity> {
   @override
-  final int typeId = 4;
+  final int typeId = 3;
 
   @override
   ContactEntity read(BinaryReader reader) {

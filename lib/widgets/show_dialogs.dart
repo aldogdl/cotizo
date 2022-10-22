@@ -33,6 +33,7 @@ class ShowDialogs {
     String labelNot = '',
     String labelOk = ''}) async
   {
+
     return await showDialog(
       context: context,
       builder: (_) => AlertDialog(
@@ -76,13 +77,19 @@ class ShowDialogs {
   ///
   static _msgs(String tipo) {
 
-    String lado = (tipo == 'fotosCant') ? 'los lados.' : 'la derecha.';
     String fotos = '¡Por el momento ya cuentas con ${Constantes.cantFotos} fotos!\n\n'
-      'Si deseas agregar otra, puedes eliminar la que menos te agrade deslizandola '
-      'hacia ';
+      'Si deseas agregar otra, elimina cualquiera de la lista dejandola presionada para seleccionarla.';
     final msg = {
-      'fotosCant': '$fotos $lado',
-      'fotosCantCam': '$fotos $lado',
+      'fotosCant': fotos,
+      'fotosCantCam': fotos,
+      'fotosCantCamClose': 'CANCELANDO OPERACIÓN\n\n'
+        'Estas saliendo de la cámara sin confirmar los cambios, esto borrará todos tus '
+        'cambios y eliminará fotos de la cache.\n\n'
+        '¿Estás segur@ de cancelar?',
+      'errCam': '¡UPS!, ERROR al iniciar la Cámara\n\n'
+        'Sucedio un error inesperado, por favor, intenta nuevamente entrar a '
+        'esta sección.\n\n'
+        'Sentimos el inconveniente.',
       'exitCot': '¿Estás seguro de querer abandonar la cotización en curso?\n\n'
         'Esto provocará que todos los datos actualmente capturados se borren de '
         'memoria, los cuales no podrán ser recuperados.\n\n'
@@ -94,14 +101,14 @@ class ShowDialogs {
       'noTengo': 'AGRADECEMOS TU AVISO\n\n'
         'Esta pieza en automático desaparecerá '
         'del listado de solicitudes.\n\n¿Estás segur@ de continuar?',
-      'errCam': '¡UPS!, ERROR al iniciar la Cámara\n\n'
-        'Sucedio un error inesperado, por favor, intenta nuevamente entrar a '
-        'esta sección.\n\n'
-        'Sentimos el inconveniente.',
       'deleteInv': 'Se eliminará esta autoparte del sistema con la finalidad de '
         'no ocupar espacio de almacenamiento inecesario y mantener tu sistema lo más '
         'limpio y organizado posible.\n\n¿Estás de acuardo en continuar con la operación?.',
-      'exitApp': '¿Realmente deseas salir de la aplicación de AutoparNet?'
+      'exitApp': '¿Realmente deseas salir de la aplicación de AutoparNet?',
+      'pushTest': 'PRUEBA DE NOTIFICACIONES\n\n'
+        'Se realizará una prueba para corroborar que tus notificaciones estén '
+        'configuradas correctamente, por favor, selecciona el tipo de pueba que '
+        'deseas hacer.\n\nToca la pantalla para CANCELAR.'
     };
     return msg[tipo];
   }

@@ -46,8 +46,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     
     SystemChrome.setPreferredOrientations([
-      DeviceOrientation.portraitUp,
-      DeviceOrientation.portraitDown
+      DeviceOrientation.portraitUp
     ]);
 
     SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
@@ -56,6 +55,12 @@ class MyApp extends StatelessWidget {
       systemNavigationBarColor: Color.fromARGB(255, 13, 21, 26),
       systemNavigationBarIconBrightness: Brightness.light
     ));
+
+    SystemChrome.setEnabledSystemUIMode(
+      SystemUiMode.manual, overlays: [
+        SystemUiOverlay.top, SystemUiOverlay.bottom
+      ]
+    );
 
     return MaterialApp.router(
       title: 'Autoparnet Cotizo',
@@ -69,9 +74,8 @@ class MyApp extends StatelessWidget {
         GlobalCupertinoLocalizations.delegate
       ],
       supportedLocales: const[Locale('es', 'ES_MX')],
-      routeInformationProvider: MyRutas.rutas.routeInformationProvider,
-      routeInformationParser: MyRutas.rutas.routeInformationParser,
-      routerDelegate: MyRutas.rutas.routerDelegate,
+      routerConfig: MyRutas.rutas,
     );
   }
+
 }

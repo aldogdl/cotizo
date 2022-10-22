@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:cotizo/config/sngs_manager.dart';
 import 'package:cotizo/services/my_image/my_im.dart';
-import 'package:cotizo/vars/my_paths.dart';
+import 'package:cotizo/services/my_paths.dart';
 import 'package:flutter/material.dart';
 import 'package:blur/blur.dart';
 import 'package:extended_image/extended_image.dart';
@@ -41,6 +41,7 @@ class _ViewFotosState extends State<ViewFotos> {
   void initState() {
 
     fotos = List<String>.from(widget.fotosList);
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       
       if(widget.jumpTo > 0) {

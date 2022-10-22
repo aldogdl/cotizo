@@ -3,7 +3,7 @@ import 'package:hive/hive.dart';
 import '../entity/inventario_entity.dart';
 import '../services/my_http.dart';
 import '../services/my_image/my_im.dart';
-import '../vars/my_paths.dart';
+import '../services/my_paths.dart';
 import '../vars/enums.dart';
 
 class InventarioRepository {
@@ -17,7 +17,7 @@ class InventarioRepository {
   ///
   Future<void> openBox() async {
 
-    if(!Hive.isAdapterRegistered(5)) {
+    if(!Hive.isAdapterRegistered(inventarioHT)) {
       Hive.registerAdapter<InventarioEntity>(InventarioEntityAdapter());
     }
 
@@ -69,6 +69,16 @@ class InventarioRepository {
     Uri uri = MyPath.getUri('set_resp', '');
     await _http.post(uri, data: json);
     return _http.result;
+  }
+
+  ///
+  Future<int> getInventarioCount() async {
+
+    await openBox();
+    if(_boxInv != null) {
+      return List<InventarioEntity>.from(_boxInv!.values).length;
+    }
+    return 0;
   }
 
   /// 

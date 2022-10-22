@@ -7,7 +7,7 @@ import '../entity/share_data_orden.dart';
 import '../entity/orden_entity.dart';
 import '../providers/gest_data_provider.dart';
 import '../services/my_get.dart';
-import '../vars/my_paths.dart';
+import '../services/my_paths.dart';
 
 class TileOrdenPzaMsg extends StatelessWidget {
 
@@ -116,8 +116,8 @@ class TileOrdenPzaMsg extends StatelessWidget {
         Text(
           '${box.modelo!.nombre} ${box.auto!.anio} -> ${(box.auto!.isNac) ? "NACIONAL" : "IMPORTADO"}',
           textScaleFactor: 1,
-          style: TextStyle(
-            color: Colors.white.withOpacity(0.5),
+          style: const TextStyle(
+            color: Colors.green,
             fontSize: 14
           ),
         ),
@@ -153,8 +153,8 @@ class TileOrdenPzaMsg extends StatelessWidget {
         Text(
           'Marca: ${box.marca!.nombre}',
           textScaleFactor: 1,
-          style: TextStyle(
-            color: Colors.white.withOpacity(0.5),
+          style: const TextStyle(
+            color: Colors.greenAccent,
             fontSize: 14
           ),
         ),

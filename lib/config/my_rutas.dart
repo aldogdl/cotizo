@@ -40,18 +40,24 @@ class MyRutas {
         path: '/cotizo/:ids',
         builder: (context, state) => LstPiezasByOrden(ids: '${state.params['ids']}'),
       ),
+      GoRoute(
+        name: 'lstPiezasByOrdenRefresh',
+        path: '/cot/:ids',
+        builder: (context, state) => LstPiezasByOrden(ids: '${state.params['ids']}'),
+      ),
     ],
-    urlPathStrategy: UrlPathStrategy.path,
     initialLocation: '/',
     // refreshListenable: _prov,
-    redirect: (state) {
+    redirect: (_, state) {
 
       if(globals.histUri.contains(state.location)){
         globals.histUri.remove(state.location);
       }
       if(state.location != '/') {
         if(state.location != '/login') {
-          globals.histUri.add(state.location);
+          if(!state.location.contains('/gest-data/')) {
+            globals.histUri.add(state.location);
+          }
         }
       }
       // if (!_prov.isLogin) return (state.subloc == '/login') ? null : '/login';

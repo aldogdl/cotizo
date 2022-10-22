@@ -1,5 +1,5 @@
 import '../services/my_http.dart';
-import '../vars/my_paths.dart';
+import '../services/my_paths.dart';
 
 class OrdenesRepository {
 
@@ -46,4 +46,5 @@ class OrdenesRepository {
     await http.upFileByData(uri, metas: data);
     return http.result;
   }
+
 }

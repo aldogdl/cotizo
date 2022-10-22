@@ -3,8 +3,6 @@ import 'package:cotizo/services/utils_services.dart';
 
 import '../../vars/constantes.dart';
 
-enum ModoDialog {dummy, expert}
-
 class DialogsOf {
 
   ///
@@ -24,43 +22,51 @@ class DialogsOf {
   }
 
   ///
-  static String getTime({ModoDialog modo = ModoDialog.dummy}) {
+  static String getTime({required int modo}) {
 
-    Map<ModoDialog, List<String>> df = {
-      ModoDialog.dummy: [
+    modo = (modo == 0) ? 1 : modo;
+    Map<int, List<String>> df = {
+      1: [
         '${icon('bell')} Gracias por atender esta solicitud de cotización. '
         'En tan sólo 3 pasos estará lista PARA VENDER.\n\n'
         '${icon('brav')} Recuerda que premiamos tu atención y por cada vez que nos cotizas '
         'te ${icon('reg')} regalamos espacio de almacenamiento para tu ${icon('sabe')} INVENTARIO DIGITAL.'
       ],
-      ModoDialog.expert: [
+      2: [
         '${icon('apaz')} ¡AutoparNet te desea el mejor de los éxitos para hoy, gracias por tu '
         'tiempo y dedicación en responder a esta cotización.'
+      ],
+      3: [
+        '${icon('apaz')} ¡AutoparNet te desea éxito en tus ventas.'
       ]
     };
     return df[modo]!.first;
   }
 
   ///
-  static String estasListo({ModoDialog modo = ModoDialog.dummy}) {
+  static String estasListo() {
 
     return '${icon('bell')} -EL ÉXITO de tu venta- radica en la calidad y costo '
     'de tus *AUTOPARTES*, te deseamos éxito en tus ventas del día.\n\n+¿Estás Listo?+';
   }
 
   ///
-  static String fotos({ModoDialog modo = ModoDialog.dummy}) {
+  static String fotos({required int modo}) {
 
-    Map<ModoDialog, List<String>> df = {
-      ModoDialog.dummy: [
+    modo = (modo == 0) ? 1 : modo;
+    Map<int, List<String>> df = {
+      1: [
         '${icon('play')} Paso 1 de ${Constantes.pasosCot}.\n\n'
         '${icon('cel')} -AGREGA FOTOGRAFÍAS-. \n\n'
         '${icon('cam')} Recuerda que una buena foto *AYUDA AL CLIENTE* al momento '
         'de ver la refacción, por ello debe ser tomada lo más fiel a la realidad '
         'para no generar -expectativas falsas-.'
       ],
-      ModoDialog.expert: [
-        '${icon('play')} -Agrega tus ${Constantes.cantFotos} FOTOGRAFIAS-...'
+      2: [
+        '${icon('play')} -Agrega de 1 a ${Constantes.cantFotos} FOTOGRAFIAS-...'
+      ],
+      3: [
+        '${icon('play')} -De 1 a ${Constantes.cantFotos} FOTOS-...'
       ]
     };
 
@@ -68,17 +74,21 @@ class DialogsOf {
   }
 
   ///
-  static String detalles({ModoDialog modo = ModoDialog.dummy}) {
+  static String detalles({required int modo}) {
 
-    Map<ModoDialog, List<String>> df = {
-      ModoDialog.dummy: [
-        '${icon('play')} Paso 2 de ${Constantes.pasosCot}.\n\n'
-        '${icon('obs')} -Agrega OBSERVACIONES-. \n\n'
+    modo = (modo == 0) ? 1 : modo;
+    Map<int, List<String>> df = {
+      1: [
+        '${icon('play')} Paso 3 de ${Constantes.pasosCot}.\n\n'
+        '${icon('obs')} -Agrega DETALLES u OBSERVACIONES-. \n\n'
         'Escribe todo aquel detalle y condiciones en el que se '
         'encuentra la refacción.'
       ],
-      ModoDialog.expert: [
+      2: [
         '${icon('play')} -Agrega DETALLES u OBSERVACIONES-...'
+      ],
+      3: [
+        '${icon('play')} -DETALLES u OBSERVACIONES-...'
       ]
     };
 
@@ -86,17 +96,21 @@ class DialogsOf {
   }
 
   ///
-  static String costo({ModoDialog modo = ModoDialog.dummy}) {
+  static String costo({required int modo}) {
     
-    Map<ModoDialog, List<String>> df = {
-      ModoDialog.dummy: [
-        '${icon('play')} Paso 3 de ${Constantes.pasosCot}.\n\n'
+    modo = (modo == 0) ? 1 : modo;
+    Map<int, List<String>> df = {
+      1: [
+        '${icon('play')} Paso 2 de ${Constantes.pasosCot}.\n\n'
         '${icon('ok')} -Agrega tu MEJOR COSTO-. \n\n'
         'Este es un factor importante para el éxito de tu venta.\n'
         '_Recuerda que los clientes siempre buscan oportunidades de compra.'
       ],
-      ModoDialog.expert: [
+      2: [
         '${icon('play')} -Agrega tu MEJOR COSTO-...'
+      ],
+      3: [
+        '${icon('play')} -TU MEJOR COSTO?-...'
       ]
     };
 
@@ -105,25 +119,28 @@ class DialogsOf {
 
   ///
   static String checkData({
-    ModoDialog modo = ModoDialog.dummy, List<String> params = const []})
+    required int modo, List<String> params = const []})
   {
-    
-    String msgFin = '${icon('obs')} +RESUMEN:+.\n\n'
+    modo = (modo == 0) ? 1 : modo;
+
+    String msgFin = '${icon('obs')} +RESÚMEN:+.\n\n'
     '_Observaciones y/o Detalles_:\n'
     '${params[0].toUpperCase()}.\n\n'
     '_Costo para AutoparNet_:\n'
-    '${UtilServices.toFormat(params[1].toUpperCase())}.\n\n'
-    '-PARA EDITAR UN DATO.-\n'
-    'Sólo deslizalo hacia los lados y éste será cambiado.\n\n'
-    '_GRACIAS POR TU ATENCIÓN._\n'
-    '${icon('play')} Encontrarás esta pieza en tu inventario.\n';
+    '${UtilServices.toFormat(params[1].toUpperCase())}.\n\n';
 
-    Map<ModoDialog, List<String>> df = {
-      ModoDialog.dummy: [msgFin],
-      ModoDialog.expert: [msgFin]
-    };
+    if(modo < 3) {
+      msgFin = '$msgFin'
+      '-PARA EDITAR UN DATO.-\n'
+      'Sólo deslizalo hacia los lados y éste será cambiado.\n\n'
+      '_GRACIAS POR TU ATENCIÓN._\n'
+      '${icon('cel')} Esta pieza ya esta en tu inventario Digital.\n';
+    }else{
+      msgFin = '$msgFin'
+      '${icon('fel')} GRACIAS POR TODO.\n';
+    }
 
-    return df[modo]!.first;
+    return msgFin;
   }
 
   ///
@@ -134,7 +151,9 @@ class DialogsOf {
   }
 
   ///
-  static String errAwaitFotos({ModoDialog modo = ModoDialog.dummy}) {
+  static String errAwaitFotos({required int modo}) {
+
+    modo = (modo == 0) ? 1 : modo;
 
     final msgs = [
       'Puedes agregar hasta ${Constantes.cantFotos} fotos.',
@@ -142,16 +161,13 @@ class DialogsOf {
       'Entre más fotos, mejor para tu cliente. ${icon('fel')}',
       'Puedes usar la cámara si en tu galería no cuentas con más fotografías ${icon('ok')}.',
     ];
-    Map<ModoDialog, dynamic> df = {
-      ModoDialog.dummy: msgs, ModoDialog.expert: msgs
-    };
 
-    if(df[modo].length == 0) { return ''; }
-    return df[modo][_getRan(df[modo].length)];
+    if(modo == 3) { return '¿Deseas agregar más?'; }
+    return msgs[_getRan(msgs.length)];
   }
 
   ///
-  static String errAwaitFotosOk({ModoDialog modo = ModoDialog.dummy}) {
+  static String errAwaitFotosOk() {
 
     final msgs = [
       'En lugar de una en una puedes agregar las restantes de una sola vez.',
@@ -159,12 +175,8 @@ class DialogsOf {
       '¡Buena elección!, sabes que una imagen vende más que mil palabras.',
       'Perfecto mil gracias...',
     ];
-    Map<ModoDialog, dynamic> df = {
-      ModoDialog.dummy: msgs, ModoDialog.expert: msgs
-    };
 
-    if(df[modo].length == 0) { return ''; }
-    return df[modo][_getRan(df[modo].length)];
+    return msgs[_getRan(msgs.length)];
   }
 
   ///

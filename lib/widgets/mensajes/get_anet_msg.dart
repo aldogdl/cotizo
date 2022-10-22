@@ -8,7 +8,7 @@ class GetAnet {
   /// Revisamos si el ultimo mensaje en pantalla es necesario realizar una
   /// respuesta automatica.
   static Future<ChatEntity?> msg(ChatKey lastkey, {
-    required int id, required ModoDialog modo,
+    required int id, required int modo,
     List<String> params = const []
   }) async {
 
@@ -27,7 +27,7 @@ class GetAnet {
         chat.tipo = ChatTip.msg;
         break;
       case ChatKey.getTime:
-        chat.value= DialogsOf.estasListo(modo: modo);
+        chat.value= DialogsOf.estasListo();
         chat.key  = ChatKey.estasListo;
         chat.tipo = ChatTip.interactive;
         break;
@@ -70,6 +70,6 @@ class GetAnet {
 
   ///
   static Future<void> _wait() async => await Future.delayed(
-    const Duration(milliseconds: 600)
+    const Duration(milliseconds: 300)
   );
 }

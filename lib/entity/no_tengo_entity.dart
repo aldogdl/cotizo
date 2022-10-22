@@ -1,8 +1,9 @@
 import 'package:hive/hive.dart';
 
+import '../vars/enums.dart';
 part 'no_tengo_entity.g.dart';
 
-@HiveType(typeId: 11)
+@HiveType(typeId: noTengoHT)
 class NoTengoEntity extends HiveObject {
 
   @HiveField(0)

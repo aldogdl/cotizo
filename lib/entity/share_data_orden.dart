@@ -1,5 +1,5 @@
-import 'package:cotizo/entity/inventario_entity.dart';
 
+import 'inventario_entity.dart';
 import 'autos_entity.dart';
 import 'marca_entity.dart';
 import 'modelo_entity.dart';

@@ -10,4 +10,5 @@ class Constantes {
   static const double fontSizeMin = 13.5;
   static const double heightTxt = 1.25;
   static const List<String> codesTxt = ['*','_','-', '+'];
+
 }

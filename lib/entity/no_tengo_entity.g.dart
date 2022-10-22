@@ -8,7 +8,7 @@ part of 'no_tengo_entity.dart';
 
 class NoTengoEntityAdapter extends TypeAdapter<NoTengoEntity> {
   @override
-  final int typeId = 11;
+  final int typeId = 9;
 
   @override
   NoTengoEntity read(BinaryReader reader) {

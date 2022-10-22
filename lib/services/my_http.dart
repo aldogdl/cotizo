@@ -1,9 +1,10 @@
 import 'dart:convert';
+import 'dart:typed_data';
 import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 
-import '../vars/my_paths.dart';
+import 'my_paths.dart';
 
 class MyHttp {
 
@@ -14,6 +15,16 @@ class MyHttp {
   ///
   void cleanResult() {
     result = {'abort':false, 'msg':'ok', 'body':[]};
+  }
+
+  ///
+  static Future<Uint8List> getImagePzaFromServer(String url) async {
+
+    final http.Response response = await http.get(Uri.parse('https://autoparnet.com/to_orden_tmp/$url'));
+    if(response.statusCode == 200) {
+      return response.bodyBytes;
+    }
+    return Uint8List.fromList([]);
   }
 
   ///
@@ -69,7 +80,7 @@ class MyHttp {
 
     } catch (e) {
 
-      result = {'abort':true, 'msg': e.toString(), 'body':'ERROR, Sin conexión al servidor, intentalo nuevamente.'};
+      result = {'abort':true, 'msg': e.toString(), 'body':'ERROR, Sin conexión al servidor, inténtalo nuevamente.'};
       return;
     }
   }
@@ -195,7 +206,7 @@ class MyHttp {
     if(result['msg'] == 'amor') {
       result['abort']= true;
       result['msg']  = 'Error';
-      result['body'] = 'Error desconocido, contacta al Asesor.';
+      result['body'] = 'Error, CONTACTA AL ASESOR.';
     }
 
     var res = {};

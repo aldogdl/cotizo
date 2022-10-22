@@ -8,7 +8,7 @@ part of 'pieza_entity.dart';
 
 class PiezaEntityAdapter extends TypeAdapter<PiezaEntity> {
   @override
-  final int typeId = 9;
+  final int typeId = 7;
 
   @override
   PiezaEntity read(BinaryReader reader) {

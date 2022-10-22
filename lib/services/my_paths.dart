@@ -1,8 +1,8 @@
 class MyPath {
 
-  static const env = 'prod';
+  static const env = 'dev';
   static const baseProd = 'autoparnet.com';
-  static const baseDev  = '192.168.1.74';
+  static const baseDev  = '192.168.1.72';
 
   ///
   static String getUriFotoPieza(String foto) {
@@ -15,6 +15,11 @@ class MyPath {
   static Uri getUri(String uri, String params, {Map<String, dynamic>? querys}) {
 
     String url = _getPathUri(uri, params);
+    if(!url.endsWith('/')) {
+      if(!url.contains('secure')) {
+        url = '$url/';
+      }
+    }
     if(env == 'dev') {
       return Uri.http(baseDev, url, querys);
     }
@@ -36,6 +41,7 @@ class MyPath {
       'api_is_token_caducado' : 'is-token-caducado',
       'get_orden_and_pieza': 'get-orden-and-pieza',
       'get_ordenes_and_piezas': 'get-ordenes-and-piezas',
+      'fetch_next_ordto_cot': 'fetch-next-ordto-cot',
       'upload_img_rsp': 'upload-img',
       'set_resp': 'set-resp',
       'set_no_tengo': 'set-no-tengo',
@@ -45,6 +51,10 @@ class MyPath {
     };
 
     if(uri.startsWith('login_')) {
+      if(env == 'dev') {
+        subBase = subBase.replaceFirst('/cotizo/', '/');
+        return '$subBase${map[uri]!}';
+      }
       return map[uri]!;
     }
 

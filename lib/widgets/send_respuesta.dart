@@ -1,7 +1,8 @@
+import 'package:cotizo/providers/ordenes_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import 'counter_load.dart';
+import 'mensajes/dialogs.dart';
 import '../entity/pieza_entity.dart';
 import '../entity/orden_entity.dart';
 import '../entity/inventario_entity.dart';
@@ -10,6 +11,7 @@ import '../providers/gest_data_provider.dart';
 import '../providers/signin_provider.dart';
 import '../repository/piezas_repository.dart';
 import '../repository/inventario_repository.dart';
+import '../repository/config_app_repository.dart';
 import '../vars/globals.dart';
 import '../vars/enums.dart';
 
@@ -18,12 +20,10 @@ class SendRespuesta extends StatefulWidget {
   final int idPieza;
   final Globals globals;
   final OrdenEntity orden;
-  final GestDataProvider prov;
   final DateTime tiempo;
   final ValueChanged<void> onFinish;
   const SendRespuesta({
     Key? key,
-    required this.prov,
     required this.globals,
     required this.orden,
     required this.idPieza,
@@ -42,7 +42,7 @@ class _SendRespuestaState extends State<SendRespuesta> {
 
     return Container(
       width: MediaQuery.of(context).size.width,
-      height: MediaQuery.of(context).size.height * 0.7,
+      height: MediaQuery.of(context).size.height * 0.37,
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
@@ -59,24 +59,37 @@ class _SendRespuestaState extends State<SendRespuesta> {
             width: MediaQuery.of(context).size.width,
             height: 3,
             color: Colors.green,
+            child: const LinearProgressIndicator(),
           ),
-          const Padding(
-            padding: EdgeInsets.only(bottom: 30, top: 30),
-            child: CounterLoad()
+          Padding(
+            padding: const EdgeInsets.only(bottom: 15, top: 15),
+            child: Stack(
+              children: [
+                SizedBox(
+                  width: MediaQuery.of(context).size.width * 0.9,
+                  child: const Image(
+                    image: AssetImage('assets/images/logo_only.png')
+                  ),
+                )
+              ],
+            )
           ),
           StreamBuilder<String>(
             stream: _send(context),
             builder: (_, AsyncSnapshot snap) {
 
+              String txt = snap.data;
               if(snap.data.toString().startsWith('Listo')) {
-                Future.delayed(const Duration(milliseconds: 1000), (){
+                txt = '¡COTIZACIÓN LISTA! ${DialogsOf.icon('fel')}';
+                Future.delayed(const Duration(milliseconds: 150), (){
                   widget.onFinish(_);
                 });
               }
+
               return Column(
                 children: [
                   Text(
-                    snap.data,
+                    txt,
                     textScaleFactor: 1,
                     textAlign: TextAlign.center,
                     style: const TextStyle(
@@ -85,8 +98,8 @@ class _SendRespuestaState extends State<SendRespuesta> {
                       fontWeight: FontWeight.bold
                     ),
                   ),
-                  const SizedBox(height: 20),
-                  if(snap.data.toString().startsWith('ERROR'))
+                  const SizedBox(height: 10),
+                  if(txt.toString().startsWith('ERROR'))
                     ElevatedButton(
                       onPressed: () => setState(() {}),
                       child: const Text(
@@ -117,8 +130,14 @@ class _SendRespuestaState extends State<SendRespuesta> {
     final share = SharedDataOrden(); 
     final invEm = InventarioRepository();
     final pzaEm = PiezasRepository();
-    final data  = widget.prov.getData();
+    final cnfEm = ConfigAppRepository();
+    final prov  = context.read<GestDataProvider>();
+    final ordP  = context.read<OrdenesProvider>();
     final own   = await context.read<SignInProvider>().getIdUser();
+
+    Map<String, dynamic> data = prov.getData();
+    if(data.isEmpty){ return; }
+    if(data['costo'].isEmpty){ return; }
 
     share.auto  =  await share.solEm.getAutoById(widget.orden.auto);
     final pzaS  =  widget.orden.piezas.firstWhere(
@@ -142,22 +161,20 @@ class _SendRespuestaState extends State<SendRespuesta> {
     inv.deta    = data['deta'];
     inv.created = widget.tiempo.toIso8601String();
 
-    await Future.delayed(const Duration(milliseconds: 250));
-
     yield 'Revisando procesos de Imágenes';
-    await Future.delayed(const Duration(milliseconds: 250));
-    if(!widget.prov.isFinishProcessImage) {
+
+    if(!prov.isFinishProcessImage) {
       
-      while (!widget.prov.isFinishProcessImage) {
+      while (!prov.isFinishProcessImage) {
         
-        final sub = widget.prov.dataSaveImg.length;
-        final tot = widget.prov.campos[Campos.rFotos].length;
+        final sub = prov.dataSaveImg.length;
+        final tot = prov.campos[Campos.rFotos].length;
         yield 'Guardadas $sub de $tot fotos [EN PROCESO]';
         await Future.delayed(const Duration(milliseconds: 250));
       }
     }
 
-    inv.fotos = widget.prov.dataSaveImg;
+    inv.fotos = prov.dataSaveImg;
 
     yield 'Imágenes Listas!!';
     await Future.delayed(const Duration(milliseconds: 250));
@@ -169,20 +186,28 @@ class _SendRespuestaState extends State<SendRespuesta> {
     
     Map<String, dynamic> dataSend = inv.toServer();
     dataSend['idCamp'] = widget.globals.idCampaingCurrent;
-    dataSend['idsFromLink'] = widget.globals.idsFromLinkCurrent;
+    dataSend['idsFromLink'] = (widget.globals.idsFromLinkCurrent.isEmpty)
+      ? 'home' : widget.globals.idsFromLinkCurrent;
     dataSend['own'] = own;
-    await Future.delayed(const Duration(milliseconds: 250));
-
+    
     yield 'Enviando Datos de Cotización';
     final result = await invEm.setRespToServer(dataSend);
 
     if(!result['abort']) {
+      
       if(widget.globals.invFilter.containsKey(widget.orden.id)) {
         widget.globals.invFilter[widget.orden.id]!.add(widget.idPieza);
       }else{
         widget.globals.invFilter.putIfAbsent(widget.orden.id, () => [widget.idPieza]);
       }
+      
+      // De la cache tambien tengo que borrar la pieza de la orden cotizada.
+      OrdenEntity gestOrd = widget.orden;
+      gestOrd.piezas.removeWhere((element) => element.id == widget.idPieza);
+      ordP.items().removeWhere((element) => element.id == widget.orden.id);
+      ordP.items().insert(0, gestOrd);
 
+      await cnfEm.setNextModoCotiza();
       yield 'Listo, Redirigiendo...';
     }else{
       yield 'ERROR!, ${result['body']}';

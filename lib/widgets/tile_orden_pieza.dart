@@ -1,21 +1,21 @@
-
 import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
-import 'package:cached_network_image/cached_network_image.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:image_picker/image_picker.dart' show XFile;
+import 'package:cached_network_image/cached_network_image.dart';
 
 import '../entity/pieza_entity.dart';
 import '../entity/share_data_orden.dart';
 import '../providers/signin_provider.dart';
 import '../repository/acount_user_repository.dart';
 import '../services/my_get.dart';
+import '../services/my_paths.dart';
 import '../services/my_image/my_im.dart';
-import '../vars/my_paths.dart';
+import '../services/utils_services.dart';
 import '../vars/globals.dart';
 import '../widgets/show_dialogs.dart';
 import '../widgets/view_fotos.dart';
@@ -110,13 +110,10 @@ class TileOrdenPieza extends StatelessWidget {
   ///
   Widget _detallesPza() {
 
-    String req = (requerimientos.length > 225)
-      ? '${requerimientos.substring(0, 225)}...' : requerimientos;
-
-    req = (req == '0' || req.isEmpty) ? 'En las mejores condiciones.' : req;
+    String req = UtilServices.getRequerimientos(requerimientos);
 
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 10),
+      padding: const EdgeInsets.only(top: 8, right: 10, bottom: 3, left: 10),
       child: Text.rich(
         TextSpan(
           text: 'NOTAS: ',
@@ -125,7 +122,8 @@ class TileOrdenPieza extends StatelessWidget {
             TextSpan(
               text: req,
               style: const TextStyle(
-                color: Colors.grey
+                color: Colors.grey,
+                height: 1.2
               )
             )
           ]
@@ -276,7 +274,11 @@ class TileOrdenPieza extends StatelessWidget {
   Widget _dataPza() {
 
     final fecha = '${created.day}/${created.month}/${created.year}';
-
+    String nombrePza = (pieza.id == 0) ? 'SIN NOMBRE' : pieza.piezaName;
+    if(nombrePza.length > 28){
+      nombrePza = '${nombrePza.substring(0, 25).trim()}...';
+    }
+    
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10),
       child: Column(
@@ -285,8 +287,7 @@ class TileOrdenPieza extends StatelessWidget {
           Row(
             children: [
               Text(
-                (pieza.id == 0)
-                ? 'SIN NOMBRE' : pieza.piezaName,
+                nombrePza,
                 textScaleFactor: 1,
                 style: const TextStyle(
                   color: Colors.white,
@@ -353,8 +354,9 @@ class TileOrdenPieza extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 4),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        mainAxisAlignment: MainAxisAlignment.start,
         children: [
+          const SizedBox(width: 5),
           _btnNot(Icons.no_stroller_rounded, 'NO LA TENGO', () async {
 
             _showDialogNt(context).then((acc) async {
@@ -368,39 +370,38 @@ class TileOrdenPieza extends StatelessWidget {
               }
             });
           }),
+          const Spacer(),
           Selector<SignInProvider, bool>(
             selector: (_, prov) => prov.isLogin,
             builder: (_, val, __) {
 
-              return Padding(
-                padding: const EdgeInsets.only(right: 8.0),
-                child: ElevatedButton.icon(
-                  style: ButtonStyle(
-                    backgroundColor: (val) 
-                      ? MaterialStateProperty.all(Colors.green)
-                      : MaterialStateProperty.all(const Color.fromARGB(255, 81, 169, 133))
-                  ),
-                  onPressed: () async => (isInv != 0) ? null : _gestionarDatos(context),
-                  icon: const Icon(Icons.monetization_on_outlined, color: Colors.black),
-                  label: const Text(
-                    'COTIZAR',
-                    textScaleFactor: 1,
-                    style: TextStyle(
-                      fontSize: 15,
-                      letterSpacing: 1.1,
-                      fontWeight: FontWeight.bold,
-                      shadows: [
-                        BoxShadow(
-                          color: Colors.black,
-                          offset: Offset(1,1)
-                        )
-                      ]
-                    ),
-                  )
+              return ElevatedButton.icon(
+                style: ButtonStyle(
+                  backgroundColor: (val) 
+                    ? MaterialStateProperty.all(Colors.green)
+                    : MaterialStateProperty.all(const Color.fromARGB(255, 81, 169, 133))
                 ),
+                onPressed: () async => (isInv != 0) ? null : _gestionarDatos(context),
+                icon: const Icon(Icons.monetization_on_outlined, color: Colors.black),
+                label: const Text(
+                  'COTIZAR',
+                  textScaleFactor: 1,
+                  style: TextStyle(
+                    fontSize: 15,
+                    letterSpacing: 1.1,
+                    fontWeight: FontWeight.bold,
+                    shadows: [
+                      BoxShadow(
+                        color: Colors.black,
+                        offset: Offset(1,1)
+                      )
+                    ]
+                  ),
+                )
               );
             },
-          )
+          ),
+          const SizedBox(width: 5),
         ],
       ),
     );
@@ -413,6 +414,7 @@ class TileOrdenPieza extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 4),
       child: Row(
         children: [
+          const SizedBox(width: 8),
           _btnNot(Icons.remove_shopping_cart, 'ELIMINAR', () => onDelete!(isInv)),
           const Spacer(),
           _btnNot(Icons.share, 'COMPARTIR', () async => await _compartir()),
@@ -425,13 +427,13 @@ class TileOrdenPieza extends StatelessWidget {
   ///
   Widget _btnNot(IconData icono, String label, Function fnc) {
 
-    Color color = Colors.white;
+    Color color = Colors.green;
     final globals = Globals();
     if(icono == Icons.share) {
       color = const Color.fromARGB(255, 235, 155, 6);
     }
-    
-    Color txtC = const Color(0xFF798892);
+
+    Color txtC = const Color.fromARGB(255, 207, 207, 207);
     if(label.startsWith('COMPARTIR')) {
       txtC = globals.colorGreen;
     }
@@ -444,7 +446,10 @@ class TileOrdenPieza extends StatelessWidget {
       }
     }
 
-    return TextButton.icon(
+    return ElevatedButton.icon(
+      style: ButtonStyle(
+        backgroundColor: MaterialStateProperty.all(const Color.fromARGB(255, 51, 67, 77)),
+      ),
       onPressed: () => fnc(),
       icon: Icon(icono, color: color, size: 15,),
       label: Text(
@@ -489,7 +494,7 @@ class TileOrdenPieza extends StatelessWidget {
         Mget.globals.idCampaingCurrent = '';
       }
     }
-  
+    
     final isGo = await _isAuthorized(context);
     if(isGo) {
       nav.go('/gest-data/${pieza.id}');
@@ -564,22 +569,17 @@ class TileOrdenPieza extends StatelessWidget {
   ///
   Future<void> _compartir() async {
 
-    List<String> send = [];
-    List<File> delets = [];
+    List<XFile> send = [];
     for (var i = 0; i < fotos.length; i++) {
-      File? path = await MyIm.getImageByPath(fotos[i]);
-      Directory dir = await getTemporaryDirectory();
-      File otro = await path!.copy('${dir.path}${fotos[i]}');
-      send.add(otro.path);
-      delets.add(otro);
+      XFile? file = await MyIm.getXFileByPath(fotos[i]);
+      if(file != null) {
+        send.add(file);
+      }
     }
-    Clipboard.setData(ClipboardData(text: getMessage()));
-    await Share.shareFiles(send);
-
-    for (var i = 0; i < delets.length; i++) {
-      delets[i].deleteSync();
+    if(send.isNotEmpty) {
+      Clipboard.setData(ClipboardData(text: getMessage()));
+      await Share.shareXFiles(send);
     }
-
   }
 
   ///
@@ -599,6 +599,5 @@ class TileOrdenPieza extends StatelessWidget {
     '\n'
     'Id: *$isInv*';
   }
-
 
 }

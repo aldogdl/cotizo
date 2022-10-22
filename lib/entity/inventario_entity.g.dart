@@ -8,7 +8,7 @@ part of 'inventario_entity.dart';
 
 class InventarioEntityAdapter extends TypeAdapter<InventarioEntity> {
   @override
-  final int typeId = 5;
+  final int typeId = 4;
 
   @override
   InventarioEntity read(BinaryReader reader) {

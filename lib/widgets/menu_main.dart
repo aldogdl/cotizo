@@ -1,17 +1,22 @@
+import 'package:cotizo/api/push_msg.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import 'camara/my_camera.dart';
 import '../config/sngs_manager.dart';
 import '../entity/account_entity.dart';
 import '../providers/signin_provider.dart';
+import '../providers/ordenes_provider.dart';
 import '../vars/globals.dart';
 import '../widgets/cuotas_storage.dart';
+import '../widgets/menu_main_staful.dart';
+import '../widgets/show_dialogs.dart';
 
 class MenuMain extends StatelessWidget {
 
   MenuMain({Key? key}) : super(key: key);
 
-  final Globals _globals = getIt<Globals>();
+  final _globals = getIt<Globals>();
 
   @override
   Widget build(BuildContext context) {
@@ -22,15 +27,43 @@ class MenuMain extends StatelessWidget {
       padding: const EdgeInsets.all(10),
       child: ListView(
         children: [
-          Center(
-            child: SizedBox(
-              width: MediaQuery.of(context).size.width * 0.6,
-              child: const Image(
-                image: AssetImage('assets/images/logo_only.png'),
-              ),
-            ),
+          _item(
+            icono: Icons.linked_camera_outlined, label: 'Cámara Test',
+            fnc: () async {
+              
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => MyCamera(
+                    isTest: true,
+                    onFinish: (fotos){},
+                    fromGaleria: (acc){}
+                  )
+                ),
+              );
+            }
           ),
-          Divider(color: _globals.txtOnsecMainDark),
+          _item(
+            icono: Icons.notification_important_outlined, label: 'Notificaciones Test',
+            fnc: () async {
+
+              ShowDialogs.alert(
+                context, 'pushTest',
+                hasActions: true,
+                labelNot: 'GLOBAL',
+                labelOk: 'PERSONALIZADA',
+              ).then((acc) async {
+                if(acc != null) {
+                  if(acc) {
+                    await _makePushPersonal(context);
+                  }else{
+                    await _makePushGlobal();
+                  }
+                }
+              });
+            }
+          ),
+          const MenuMainStaful(),
           _item(
             icono: Icons.unpublished_rounded, label: 'Cerrar Sesión',
             fnc: () async {
@@ -53,6 +86,14 @@ class MenuMain extends StatelessWidget {
               }
               return _dataAccount(null);
             }
+          ),
+          Center(
+            child: SizedBox(
+              width: MediaQuery.of(context).size.width * 0.6,
+              child: const Image(
+                image: AssetImage('assets/images/logo_only.png'),
+              ),
+            ),
           ),
         ],
       ),
@@ -82,10 +123,11 @@ class MenuMain extends StatelessWidget {
       ),
     );
   }
+  
   ///
   Widget _dataAccount(AccountEntity? account) {
 
-    String curc  = 'Sin Registro';
+    String curc = 'ANETC0E0';
     String iDMsg = 'Sin Id de Mensajería';
     String dDSrv = 'Sin Token de Servidor';
     
@@ -117,8 +159,7 @@ class MenuMain extends StatelessWidget {
       child: Column(
         children: [
           _row('IDMsg:', iDMsg),
-          _row('IDSrv:', dDSrv),
-          _row('CURC:', curc.toUpperCase()),
+          _row('CURC: $curc ... IDSrv:', dDSrv),
         ],
       ),
     );
@@ -131,18 +172,23 @@ class MenuMain extends StatelessWidget {
     required Function fnc}) 
   {
 
+    Color txtC = Colors.grey;
+    if(label.startsWith('Cerrar')) {
+      txtC = const Color.fromARGB(255, 255, 106, 106);
+    }
+
     return TextButton(
       onPressed: () => fnc(),
       child: Row(
         children: [
+          Icon(
+            icono, size: 22, color: _globals.txtOnsecMainDark,
+          ),
+          _texto(' $label', sz: 16, cl: txtC),
+          const Spacer(),
           const Icon(
             Icons.arrow_forward_ios_rounded, size: 15, color: Colors.blue,
           ),
-          _texto(' $label'),
-          const Spacer(),
-          Icon(
-            icono, size: 22, color: _globals.txtOnsecMainDark,
-          )
         ],
       )
     );
@@ -156,12 +202,12 @@ class MenuMain extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _texto(data, cl: _globals.txtOnsecMainLigth),
-          Divider(height: 2, color: _globals.txtOnsecMainDark),
+          _texto(data, cl: _globals.txtOnsecMainLigth, sz: 16),
+          Divider(height: 4, color: _globals.txtOnsecMainDark),
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
-              _texto(label, sz: 12, cl: Colors.grey)
+              _texto(label, sz: 13, cl: Colors.grey)
             ],
           ),
         ],
@@ -173,17 +219,29 @@ class MenuMain extends StatelessWidget {
   Widget _texto(String label, {
     double sz = 17, Color cl = const Color.fromARGB(255, 246, 247, 248)}) 
   {
-
     return Text(
       label,
       textScaleFactor: 1,
       style: TextStyle(
-        fontSize: 17,
+        fontSize: sz,
         letterSpacing: 1.1,
         color: cl
       ),
     );
   }
 
+  ///
+  Future<void> _makePushPersonal(BuildContext context) async {
 
+    final push = getIt<PushMsg>();
+    final prov = context.read<OrdenesProvider>();
+    final orden = await prov.getParaNotificFromRange();
+    
+    push.makePushInt(orden);
+  }
+
+  ///
+  Future<void> _makePushGlobal() async {
+
+  }
 }

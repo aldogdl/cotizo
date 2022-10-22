@@ -1,8 +1,9 @@
 import 'package:hive/hive.dart';
 
+import '../vars/enums.dart';
 part 'account_entity.g.dart';
 
-@HiveType(typeId: 10)
+@HiveType(typeId: accountHT)
 class AccountEntity extends HiveObject {
 
   // flutter packages pub run build_runner build

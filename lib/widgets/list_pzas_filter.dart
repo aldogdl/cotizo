@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show compute;
 import 'package:flutter_svg/svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import 'mensajes/dialogs.dart';
 import 'tile_orden_pieza.dart';
 import '../config/sngs_manager.dart';
 import '../entity/share_data_orden.dart';
 import '../entity/orden_entity.dart';
 import '../providers/ordenes_provider.dart';
 import '../repository/soli_em.dart';
+import '../services/isolates/task_server_isolate.dart';
 import '../vars/globals.dart';
 import '../widgets/bg_img_pzas.dart';
 import '../widgets/empty_list_indicator.dart';
@@ -28,16 +31,18 @@ class ListPzasFilter extends StatefulWidget {
 class _ListPzasFilterState extends State<ListPzasFilter> {
 
   final _globals = getIt<Globals>();
-  final SoliEm _solEm = SoliEm();
-  final ScrollController _scrollCtr = ScrollController();
-  final ValueNotifier<String> _msgLoad = ValueNotifier<String>('...');
+  final _solEm = SoliEm();
+  final _scrollCtr = ScrollController();
   final _ds = SharedDataOrden();
+
+  final _msgLoad = ValueNotifier<String>('...');
+  final _showAviso = ValueNotifier<bool>(false);
+  late Future _getData;
 
   OrdenesProvider? _ordProv;
   OrdenEntity? _orden;
-  late Future _getData;
-  
   int _idOrd = 0;
+  int _user = 0;
 
   @override
   void initState() {
@@ -57,6 +62,7 @@ class _ListPzasFilterState extends State<ListPzasFilter> {
   void dispose() {
     _scrollCtr.dispose();
     _msgLoad.dispose();
+    _showAviso.dispose();
     super.dispose();
   }
 
@@ -80,9 +86,9 @@ class _ListPzasFilterState extends State<ListPzasFilter> {
               }
             }
           }
-          
+
           if(snap.data == 'redirec') {
-            Future.delayed(const Duration(milliseconds: 1500), (){
+            Future.delayed(const Duration(milliseconds: 1000), (){
               nav.go('/home');
             });
             return const EmptyListIndicator();
@@ -272,6 +278,10 @@ class _ListPzasFilterState extends State<ListPzasFilter> {
               ],
             ),
           ),
+          ValueListenableBuilder(
+            valueListenable: _showAviso,
+            builder: (_, show, __) => _avisoCotizaTmp()
+          ),
           Expanded(
             child: ListView.separated(
               controller: _scrollCtr,
@@ -313,21 +323,70 @@ class _ListPzasFilterState extends State<ListPzasFilter> {
         requerimientos: _orden!.obs[idPza]!,
         box: _ds,
         idsFromLink: widget.ids,
-        onNt: (int idP) async {
-          
-          final nav = GoRouter.of(context);
-          await _ordProv!.setNoTengo(_orden!.id, idP);
-          _orden!.piezas.removeAt(indexPza);
-          if(_orden!.piezas.isEmpty) {
-            nav.go('/home');
-          }else{
-            setState(() {});
-          }
-        },
+        onNt: (int idP) async => await _markNoTengo(idP, indexPza),
       );
     }
 
     return const SizedBox();
+  }
+
+  ///
+  Widget _avisoCotizaTmp() {
+
+    if(!_showAviso.value) { return const SizedBox(); }
+
+    String aviso = 'Encontramos piezas para un auto ';
+    const sub = 'similar al que acabas de cotizar';
+
+    if(_ordProv != null) {
+      switch (_ordProv!.avisoFrom) {
+        case 'Marca':
+          aviso = '$aviso de una ${ _ordProv!.avisoFrom } $sub.';
+          break;
+        case 'Modelo':
+          aviso = '$aviso de un ${ _ordProv!.avisoFrom } $sub.';
+          break;
+        case 'Orden':
+          aviso = 'Encontramos piezas para la misma ORDEN ID: $_idOrd.';
+          break;
+        default:
+          aviso = '$aviso que posiblemente también tengas.';
+      }
+    }
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
+      child: Container(
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: _globals.secMain,
+          border: Border.all(color: _globals.colorBurbbleResp),
+          borderRadius: BorderRadius.circular(10)
+        ),
+        child: Column(
+          children: [
+            Text(
+              '¡Aprovecha y vende más...! ${DialogsOf.icon('fine')}',
+              textScaleFactor: 1,
+              style: const TextStyle(
+                color: Colors.green,
+                fontSize: 20
+              ),
+            ),
+            const Divider(color: Colors.grey),
+            Text(
+              aviso,
+              textScaleFactor: 1,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: Colors.grey,
+                fontSize: 17
+              ),
+            )
+          ],
+        ),
+      ),
+    );
   }
 
   ///
@@ -336,9 +395,20 @@ class _ListPzasFilterState extends State<ListPzasFilter> {
     if (!mounted) { return 'none'; }
 
     _ordProv = context.read<OrdenesProvider>();
-    _msgLoad.value = 'Recuperando la Orde # $_idOrd';
-    await Future.delayed(const Duration(microseconds: 200));
-    
+    if(_ordProv != null) {
+      
+      if(_ordProv!.showAviso) {
+        _showAviso.value = _ordProv!.showAviso;
+        _ordProv!.showAviso = false;
+      }
+    }else{
+      return 'redirec';
+    }
+
+    _msgLoad.value = 'Recuperando Solicitud # $_idOrd';
+    await Future.delayed(const Duration(microseconds: 150));
+    _ordProv!.items().clear();
+
     final hasOrdInCache = _ordProv!.items().where(
       (element) => element.id == _idOrd
     ).toList();
@@ -347,31 +417,49 @@ class _ListPzasFilterState extends State<ListPzasFilter> {
 
       _globals.isFromWhatsapp = false;
       _orden = hasOrdInCache.first;
-      if(_orden!.piezas.isEmpty) {
-        return 'redirec';
+      if(_orden!.piezas.isEmpty) { return 'redirec'; }
+
+      final auto = await _solEm.getAutoById(_orden!.id);
+      _user = await _solEm.getIdUser();
+      if(auto != null) {
+        _ordProv!.carnada = await _ordProv!.fetchCarnada(
+          auto: auto.toJson(), idOrdCurrent: _idOrd, user: _user
+        );
+
+        final fileReg = _orden!.buildFileSee(_user, 'pch');
+        compute(setRegistroSee, fileReg);
       }
 
-    }else{
-      
-      final fileReg = '${widget.ids}-${DateTime.now().microsecondsSinceEpoch}.see';
+    } else {
+
+      final fileReg = OrdenEntity().buildFileSee(-1, widget.ids);
       final result = await _solEm.oem.getAOrdenAndPieza(_idOrd, fileReg);
 
       _solEm.oem.cleanResult();
       _globals.isFromWhatsapp = true;
 
       if(result.isNotEmpty) {
-        
+
+        final laOrden = (result.containsKey('orden'))
+          ? Map<String, dynamic>.from(result['orden']) : <String, dynamic>{};
+
         _msgLoad.value = 'Hidratando Modelos';
         await Future.delayed(const Duration(microseconds: 200));
-        _orden = await _solEm.hidratarOrdenFull(result, _ordProv!.items());
-        
+        _orden = await _solEm.hidratarOrdenFull(laOrden, _ordProv!.items());
+        if(_orden == null) { return 'redirec'; }
+        if(_orden!.piezas.isEmpty) { return 'redirec'; }
+
+        _ordProv!.carnada = (result.containsKey('carnada'))
+          ? Map<String, dynamic>.from(result['carnada']) : <String, dynamic>{};
+
         if( _solEm.addToList ){
           if(_orden != null) {
             _ordProv!.addItem = _orden!;
+            if(_orden!.piezas.isEmpty) { return 'redirec'; }
           }
         }else{
           _msgLoad.value = 'Parece ser que ya haz cotizado todas las '
-          'piezas de esta orden, por favor, selecciona cualquier otra.';  
+          'piezas de esta orden, por favor, selecciona cualquier otra.';
         }
       }else{
         _msgLoad.value = 'No se logró recuperar la orden, inténtalo nuevamente por favor';
@@ -382,5 +470,27 @@ class _ListPzasFilterState extends State<ListPzasFilter> {
     return 'show';
   }
 
+  ///
+  Future<void> _markNoTengo(int idP, int indexPza) async {
 
+    final nav = GoRouter.of(context);
+
+    await _ordProv!.setNoTengo(_orden!.id, idP, _user);
+    _orden!.piezas.removeAt(indexPza);
+    if(_orden!.piezas.isEmpty) {
+      if(_ordProv!.carnada.isNotEmpty) {
+        _ordProv!.showAviso = true;
+        _ordProv!.avisoFrom = _ordProv!.carnada['findedIn'];
+        if(nav.location.contains('/cot/')) {
+          nav.go('/cotizo/${_ordProv!.carnada['link']}');
+        }else{
+          nav.go('/cot/${_ordProv!.carnada['link']}');
+        }
+      }else{
+        nav.go('/home');
+      }
+    }else{
+      setState(() {});
+    }
+  }
 }

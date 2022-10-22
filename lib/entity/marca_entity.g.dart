@@ -8,7 +8,7 @@ part of 'marca_entity.dart';
 
 class MarcaEntityAdapter extends TypeAdapter<MarcaEntity> {
   @override
-  final int typeId = 6;
+  final int typeId = 5;
 
   @override
   MarcaEntity read(BinaryReader reader) {

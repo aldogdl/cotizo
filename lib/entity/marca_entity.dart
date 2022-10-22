@@ -1,8 +1,9 @@
 import 'package:hive/hive.dart';
 
+import '../vars/enums.dart';
 part 'marca_entity.g.dart';
 
-@HiveType(typeId: 6)
+@HiveType(typeId: marcaHT)
 class MarcaEntity extends HiveObject {
 
   @HiveField(0)

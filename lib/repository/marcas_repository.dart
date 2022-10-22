@@ -18,7 +18,7 @@ class MarcasRepository {
   ///
   Future<void> openBox() async {
 
-    if(!Hive.isAdapterRegistered(6)) {
+    if(!Hive.isAdapterRegistered(marcaHT)) {
       Hive.registerAdapter<MarcaEntity>(MarcaEntityAdapter());
     }
 

@@ -1,13 +1,14 @@
-import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:camera/camera.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:provider/provider.dart';
 
 import '../api/push_msg.dart';
 import '../config/sngs_manager.dart';
 import '../entity/account_entity.dart';
 import '../providers/signin_provider.dart';
+import '../repository/config_app_repository.dart';
 import '../repository/acount_user_repository.dart';
 import '../repository/no_tengo_repository.dart';
 import '../repository/inventario_repository.dart';
@@ -24,6 +25,7 @@ class SplashPage extends StatefulWidget {
 class _SplashPageState extends State<SplashPage> {
 
   final ValueNotifier<String> _msgs = ValueNotifier<String>('Inicializando...');
+  final _cngEm   = ConfigAppRepository();
   final _invEm   = InventarioRepository();
   final _ntgEm   = NoTengoRepository();
   final _userEm  = AcountUserRepository();
@@ -97,6 +99,10 @@ class _SplashPageState extends State<SplashPage> {
 
     final nav = GoRouter.of(context);
 
+    final cameras = await availableCameras();
+    _globals.firstCamera = cameras.first;
+    _globals.cantInv = await _invEm.getInventarioCount();
+
     bool isOk = await _revisandoCredenciales();
     if(!isOk) { return; }
 
@@ -110,19 +116,15 @@ class _SplashPageState extends State<SplashPage> {
     if(ntgIds.isNotEmpty) {
       _ntgEm.cleanAlmacenNtFromServer(ntgIds);
     }
-    
+
     _msgs.value = 'Inicializando Mensajería';
     await Future.delayed(const Duration(milliseconds: 250));
     await pushMsg.init();
-    
-    _msgs.value = 'Configurando Aplicación';
-    await Future.delayed(const Duration(milliseconds: 250));
-      
-    final cameras = await availableCameras();
-    _globals.firstCamera = cameras.first;
 
     _msgs.value = 'Bienvenido a\nCOTIZO de AutoparNet';
-    await Future.delayed(const Duration(milliseconds: 500));
+    await Future.delayed(const Duration(milliseconds: 250));
+    await _cngEm.updateIfNotEmpty();
+
     nav.go('/home');
   }
 
@@ -131,24 +133,47 @@ class _SplashPageState extends State<SplashPage> {
 
     final nav = GoRouter.of(context);
     final siging = context.read<SignInProvider>();
-    
+    siging.yaCheckApp = false;
     _msgs.value = 'Verificando Identidad';
-    await Future.delayed(const Duration(milliseconds: 250));
     user = await _userEm.getDataUserInLocal();
 
     if(user!.id == 0) {
 
       _msgs.value = 'Autenticate por favor.';
+      siging.isFirstIniApp = true;
       Future.delayed(const Duration(milliseconds: 1500), (){
         nav.go('/login');
       });
       return false;
 
     }else{
-
-      _msgs.value = 'Bienvenido: ${user!.curc.toUpperCase()}';
-      await _userEm.isTokenCaducado();
       
+      /// Revisamos que halla una inicialización previa
+      DateTime? hasd = await _cngEm.hasData();
+      final hoy = DateTime.now();
+      if(hasd != null) {
+        
+        _msgs.value = 'BIENVENIDO DE NUEVO';
+        siging.goForData = false;
+        final diff = hoy.difference(hasd);
+        if(diff.inSeconds > 28000) {
+          siging.goForData = true;
+        }
+        final valid = await _cngEm.isValidToken();
+        
+        if(valid) {
+          siging.isLogin = true;
+          Future.delayed(const Duration(milliseconds: 100), (){
+            nav.go('/home');
+          });
+          return false;
+        }
+      }
+
+      _msgs.value = 'HOLA! ${user!.curc.toUpperCase()}';
+      await Future.delayed(const Duration(milliseconds: 250));
+      await _userEm.isTokenCaducado();
+
       if(_userEm.result['abort']) {
         _msgs.value = 'Actualizando Credenciales';
         await Future.delayed(const Duration(milliseconds: 250));
@@ -170,5 +195,5 @@ class _SplashPageState extends State<SplashPage> {
     siging.isLogin = true;
     return true;
   }
-  
+
 }

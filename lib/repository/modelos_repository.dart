@@ -18,7 +18,7 @@ class ModelosRepository {
   ///
   Future<void> openBox() async {
 
-    if(!Hive.isAdapterRegistered(7)) {
+    if(!Hive.isAdapterRegistered(modeloHT)) {
       Hive.registerAdapter<ModeloEntity>(ModeloEntityAdapter());
     }
 

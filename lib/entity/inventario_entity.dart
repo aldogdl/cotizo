@@ -1,8 +1,9 @@
 import 'package:hive/hive.dart';
 
+import '../vars/enums.dart';
 part 'inventario_entity.g.dart';
 
-@HiveType(typeId: 5)
+@HiveType(typeId: inventarioHT)
 class InventarioEntity extends HiveObject {
 
   @HiveField(0)

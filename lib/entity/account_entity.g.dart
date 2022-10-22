@@ -8,7 +8,7 @@ part of 'account_entity.dart';
 
 class AccountEntityAdapter extends TypeAdapter<AccountEntity> {
   @override
-  final int typeId = 10;
+  final int typeId = 8;
 
   @override
   AccountEntity read(BinaryReader reader) {

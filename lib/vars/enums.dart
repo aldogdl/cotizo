@@ -8,5 +8,16 @@ enum ChatKey {
   rFotos, getAwaitFotos, errAwaitFotos, putDeta, rDeta, putCosto, rCosto, checkData
 }
 enum HiveBoxs {
-  account, autos, chat, contact, inventario, marca, modelo, pieza, noTengo
+  account, autos, chat, contact, inventario, marca, modelo, pieza, noTengo,
+  configapp
 }
+
+const configappHT = 1;
+const autosHT = 2;
+const contactHT = 3;
+const inventarioHT = 4;
+const marcaHT = 5;
+const modeloHT = 6;
+const piezaHT = 7;
+const accountHT = 8;
+const noTengoHT = 9;
