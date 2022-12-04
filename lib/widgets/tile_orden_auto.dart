@@ -41,7 +41,9 @@ class TileOrdenAuto extends StatelessWidget {
               ),
               child: Center(
                 child: Text(
-                  _getInitialMrk(item['marca']),
+                  _getInitialMrk(
+                    (tipo == 'mdl') ? item['modelo'] : item['marca']
+                  ),
                   textScaleFactor: 1,
                   style: const TextStyle(
                     fontSize: 30, fontWeight: FontWeight.w800,

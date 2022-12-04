@@ -21,13 +21,15 @@ class ConfigAppAdapter extends TypeAdapter<ConfigApp> {
       ..modoCot = fields[1] as int
       ..inLast = fields[2] as String
       ..invalidToken = fields[3] as bool
-      ..desaPushInt = fields[4] as bool;
+      ..desaPushInt = fields[4] as bool
+      ..lastCheckNt = fields[5] as String
+      ..showAvisoAparta = fields[6] as bool;
   }
 
   @override
   void write(BinaryWriter writer, ConfigApp obj) {
     writer
-      ..writeByte(5)
+      ..writeByte(7)
       ..writeByte(0)
       ..write(obj.isInit)
       ..writeByte(1)
@@ -37,7 +39,11 @@ class ConfigAppAdapter extends TypeAdapter<ConfigApp> {
       ..writeByte(3)
       ..write(obj.invalidToken)
       ..writeByte(4)
-      ..write(obj.desaPushInt);
+      ..write(obj.desaPushInt)
+      ..writeByte(5)
+      ..write(obj.lastCheckNt)
+      ..writeByte(6)
+      ..write(obj.showAvisoAparta);
   }
 
   @override

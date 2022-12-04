@@ -1,14 +1,16 @@
+import 'package:cotizo/widgets/pesta_apartados.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import 'apartados_page.dart';
 import 'inventario_page.dart';
+import 'home_pzas_page.dart';
 import '../config/sngs_manager.dart';
+import '../providers/ordenes_provider.dart';
 import '../providers/signin_provider.dart';
 import '../vars/globals.dart';
 import '../widgets/ascaffold_main.dart';
-import '../widgets/menu_main.dart';
-import '../widgets/my_infinity_list.dart';
 
 class HomePage extends StatefulWidget {
   
@@ -22,7 +24,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
 
   final _globals = getIt<Globals>();
   late final TabController _tab;
-  final List<String> _seccs = ['MENÚ', 'SOLICITUDES', 'INVENTARIO'];
+  final List<String> _seccs = ['INVENTARIO', 'POR PIEZAS', 'APARTADOS'];
   final List<Widget> _misPages= [];
 
   @override
@@ -32,14 +34,14 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     _seccs.map((tab) {
 
       switch (tab) {
-        case 'MENÚ':
-          _misPages.add(MenuMain());
+        case 'INVENTARIO':
+          _misPages.add(const InventarioPage());
           break;
-        case 'SOLICITUDES':
-          _misPages.add(const MyInfinityList());
+        case 'POR PIEZAS':
+          _misPages.add(const HomePzasPage());
           break;
         default:
-          _misPages.add(const InventarioPage());
+          _misPages.add(const ApartadosPage());
       }
     }).toList();
 
@@ -114,26 +116,41 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
       );
     }
 
-    if(tab == 'MENÚ') {
+    if(tab == 'APARTADOS') {
 
       return Tab(
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.menu),
-            const SizedBox(width: 5),
-            Text(
-              tab,
-              textScaleFactor: 1,
-              style: const TextStyle(
-                fontSize: 15
-              ),
-            )
-          ],
+        child: PestaApartados(
+          tab: tab,
+          onAnimate: (page) => _tab.animateTo(page)
         )
       );
-      
+
     }else{
+
+      if(tab == 'SOLICITUDES') {
+
+        return Tab(
+          child: Selector<OrdenesProvider, int>(
+            selector: (_, prov) => prov.changeToSeccion,
+            builder: (_, secc, __) {
+              // es un escucha para ver si el usuario presiono el btn back device
+              final oP = context.read<OrdenesProvider>();
+              if(secc != oP.lastChangeToSeccion) {
+                oP.lastChangeToSeccion = secc;
+                Future.delayed(const Duration(milliseconds: 250), (){
+                  _tab.animateTo(1);
+                });
+              }
+
+              return Text(
+                tab,
+                textScaleFactor: textScaleFactor,
+                style: styleText,
+              );
+            },
+          )
+        );
+      }
 
       return Tab(
         child: Text(

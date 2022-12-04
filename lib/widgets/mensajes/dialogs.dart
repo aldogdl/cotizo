@@ -15,10 +15,37 @@ class DialogsOf {
       'bell':'🔔', 'fine': '👍🏻',
       'sabe': '📲', 'chk': '☑️',
       'reg': '🎁', 'fel': '😃',
-      'brav': '👏🏻',
+      'brav': '👏🏻', 'hir': '☝️',
       'play': '▶️'
     };
     return icos[tipo];
+  }
+
+  ///
+  static String getTituloAtencion() {
+
+    final List<String> msgs = [
+      'TU ATENCIÓN ES MUY IMPORTANTE', 'ATIÉNDENOS POR FAVOR', 'MI BUEN AMIG@...',
+      'MUY IMPORTANTE TU ATENCIÓN', '¡ESPERAMOS TU RESPUESTA!', 'AGRADECEMOS TU ATENCIÓN',
+      'TU RESPUESTA LO ES TODO', 'COTIZA AHORA O...'
+    ];
+    final ran = Random();
+    return '${icon('hir')} ${msgs[ran.nextInt(msgs.length)]} ${icon('hir')}';
+  }
+
+  ///
+  static String getMsgAtencion() {
+
+    final List<String> msgs = [
+      'Si no cuentas con la pieza, te pedimos de la manera más atenta ${icon('fel')} que presiones el botón de [NO LA TENGO].',
+      '${icon('fine')} Tu COTIZACIÓN es muy importante para nosotros, pero si no tienes la pieza presiona [NO LA TENGO].',
+      '${icon('ok')} ${icon('apaz')} Recuerda que al presionar\n[NO LA TENGO], tu aplicación siempre estará limpia de solicitudes que por el momento no cuentas.',
+      '${icon('fel')} Para mantener limpia tu lista de solicitudes, si prefieres no cotizar esta pieza, por favor presiona [NO LA TENGO].',
+      '${icon('brav')} SI COTIZAS, mil gracias, pero si no, por favor, presiona el botón de\n[NO LA TENGO].',
+      '${icon('apaz')} Amigo, te agradecemos mucho tu tiempo, si no deseas cotizar, podrías por favor presionar el botón de\n[NO LA TENGO].'
+    ];
+    final ran = Random();
+    return msgs[ran.nextInt(msgs.length)];
   }
 
   ///
@@ -123,7 +150,7 @@ class DialogsOf {
   {
     modo = (modo == 0) ? 1 : modo;
 
-    String msgFin = '${icon('obs')} +RESÚMEN:+.\n\n'
+    String msgFin = '${icon('obs')} +TUS RESPUESTAS:+.\n\n'
     '_Observaciones y/o Detalles_:\n'
     '${params[0].toUpperCase()}.\n\n'
     '_Costo para AutoparNet_:\n'
@@ -131,10 +158,10 @@ class DialogsOf {
 
     if(modo < 3) {
       msgFin = '$msgFin'
-      '-PARA EDITAR UN DATO.-\n'
-      'Sólo deslizalo hacia los lados y éste será cambiado.\n\n'
+      '-NOTA: PARA EDITAR UN DATO.-\n'
+      'Desliza hacia los lados y podrás cambiarlo.\n\n'
       '_GRACIAS POR TU ATENCIÓN._\n'
-      '${icon('cel')} Esta pieza ya esta en tu inventario Digital.\n';
+      '${icon('cel')} Al Terminar de enviar esta pieza ya estará en tu Inventario Digital.\n';
     }else{
       msgFin = '$msgFin'
       '${icon('fel')} GRACIAS POR TODO.\n';

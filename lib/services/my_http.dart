@@ -20,7 +20,7 @@ class MyHttp {
   ///
   static Future<Uint8List> getImagePzaFromServer(String url) async {
 
-    final http.Response response = await http.get(Uri.parse('https://autoparnet.com/to_orden_tmp/$url'));
+    final http.Response response = await http.get(Uri.parse(url));
     if(response.statusCode == 200) {
       return response.bodyBytes;
     }

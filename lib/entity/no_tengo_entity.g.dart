@@ -17,21 +17,18 @@ class NoTengoEntityAdapter extends TypeAdapter<NoTengoEntity> {
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
     return NoTengoEntity()
-      ..idCot = fields[0] as int
-      ..idPza = fields[1] as int
-      ..idOrd = fields[2] as int;
+      ..idOrd = fields[0] as int
+      ..idPza = (fields[1] as List).cast<int>();
   }
 
   @override
   void write(BinaryWriter writer, NoTengoEntity obj) {
     writer
-      ..writeByte(3)
-      ..writeByte(0)
-      ..write(obj.idCot)
-      ..writeByte(1)
-      ..write(obj.idPza)
       ..writeByte(2)
-      ..write(obj.idOrd);
+      ..writeByte(0)
+      ..write(obj.idOrd)
+      ..writeByte(1)
+      ..write(obj.idPza);
   }
 
   @override

@@ -30,24 +30,7 @@ class _MenuMainStafulState extends State<MenuMainStaful> {
     return Column(
       mainAxisAlignment: MainAxisAlignment.start,
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Selector<SignInProvider, bool>(
-          selector: (_, prov) => prov.desablePushInt,
-          builder: (cntx, valP, __) {
-            
-            final txt = (valP) ? 'Deshabilitar' : 'Habilitar';
-            return _row(
-              ic: Icons.notifications_active, label: '$txt Notificaciones',
-              child: Switch(
-                onChanged: (val) async => await _saveSttPush(val),
-                value: valP,
-                inactiveTrackColor: Colors.grey,
-                activeColor: Colors.blue,
-              )
-            );
-          },
-        ),
-        const SizedBox(height: 8),
+      children: [        
         Selector<GestDataProvider, int>(
           selector: (_, prov) => prov.modoCot,
           builder: (cntx, valP, __) {
@@ -75,6 +58,23 @@ class _MenuMainStafulState extends State<MenuMainStaful> {
                   const Spacer(),
                   _texto(txt, sz: 16),
                 ],
+              )
+            );
+          },
+        ),
+        const SizedBox(height: 8),
+        Selector<SignInProvider, bool>(
+          selector: (_, prov) => prov.desablePushInt,
+          builder: (cntx, valP, __) {
+            
+            final txt = (valP) ? 'Habilitar' : 'Deshabilitar';
+            return _row(
+              ic: Icons.notifications_active, label: '$txt Notificaciones',
+              child: Switch(
+                onChanged: (val) async => await _saveSttPush(val),
+                value: valP,
+                inactiveTrackColor: Colors.grey,
+                activeColor: Colors.blue,
               )
             );
           },

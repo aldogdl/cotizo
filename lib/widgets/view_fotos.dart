@@ -81,8 +81,8 @@ class _ViewFotosState extends State<ViewFotos> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                if(widget.bySrc != 'network')
-                  _delete(currentIndex),
+                // if(widget.bySrc != 'network')
+                //   _delete(currentIndex),
                 const Spacer(),
                 _flecha('back'),
                 const SizedBox(width: 5),
@@ -98,33 +98,6 @@ class _ViewFotosState extends State<ViewFotos> {
           )
         ],
       ),
-    );
-  }
-
-  ///
-  Widget _delete(int indexFoto) {
-
-    bool active = (widget.bySrc == 'network') ? false : true;
-
-    return IconButton(
-      padding: const EdgeInsets.all(0),
-      onPressed: () {
-        if(active) {
-          if(fotosDel.contains(indexFoto)) {
-            fotosDel.remove(indexFoto);
-          }else{
-            fotosDel.add(indexFoto);
-          }
-          widget.onDelete!(fotosDel);
-          setState(() {});
-        }
-      },
-      icon: Icon(
-        (fotosDel.contains(indexFoto))
-          ? Icons.delete_outline
-          : Icons.delete_sharp,
-        color: Colors.green.withOpacity(0.8), size: 35
-      )
     );
   }
 

@@ -5,13 +5,14 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:image_picker/image_picker.dart' show XFile;
 import 'package:cached_network_image/cached_network_image.dart';
 
+import 'mensajes/dialogs.dart';
 import '../entity/pieza_entity.dart';
 import '../entity/share_data_orden.dart';
 import '../providers/signin_provider.dart';
 import '../repository/acount_user_repository.dart';
+import '../repository/config_app_repository.dart';
 import '../services/my_get.dart';
 import '../services/my_paths.dart';
 import '../services/my_image/my_im.dart';
@@ -29,10 +30,11 @@ class TileOrdenPieza extends StatelessWidget {
   final List<String> fotos;
   final String requerimientos;
   final SharedDataOrden box;
-  final String idsFromLink;
   final int isInv;
   final ValueChanged<int>? onDelete;
-  final ValueChanged<int>? onNt;
+  final ValueChanged<int> onNtg;
+  final ValueChanged<int> onCot;
+  final ValueChanged<int>? onApartar;
   const TileOrdenPieza({
     Key? key,
     required this.pieza,
@@ -42,10 +44,11 @@ class TileOrdenPieza extends StatelessWidget {
     required this.fotos,
     required this.requerimientos,
     required this.box,
-    this.idsFromLink = '',
+    required this.onNtg,
+    required this.onCot,
+    this.onApartar,
     this.isInv = 0,
     this.onDelete,
-    this.onNt,
   }) : super(key: key);
 
   @override
@@ -63,7 +66,7 @@ class TileOrdenPieza extends StatelessWidget {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(5),
         color: Mget.globals.secMain,
-        border: Border.all(color: const Color.fromARGB(255, 75, 75, 75)),
+        border: Border.all(color: const Color.fromARGB(255, 112, 112, 112)),
       ),
       child: FutureBuilder(
         future: _getDatos(),
@@ -88,16 +91,13 @@ class TileOrdenPieza extends StatelessWidget {
                   child: _foto(),
                 ),
               ),
-              InkWell(
-                onTap: () async => (isInv != 0) ? null : _gestionarDatos(context),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _dataItem(),
-                    _detallesPza(),
-                  ],
-                ),
-              )
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _dataItem(context),
+                  _detallesPza(),
+                ],
+              ),
             ],
           )
         ),
@@ -113,7 +113,7 @@ class TileOrdenPieza extends StatelessWidget {
     String req = UtilServices.getRequerimientos(requerimientos);
 
     return Padding(
-      padding: const EdgeInsets.only(top: 8, right: 10, bottom: 3, left: 10),
+      padding: const EdgeInsets.only(top: 0, right: 10, bottom: 3, left: 10),
       child: Text.rich(
         TextSpan(
           text: 'NOTAS: ',
@@ -144,7 +144,8 @@ class TileOrdenPieza extends StatelessWidget {
       auto = '${box.marca!.nombre} ${box.modelo!.nombre}';
     }
     final globals = Globals();
-
+    final fecha = '${created.day}/${created.month}/${created.year}';
+    
     return SizedBox(
       width: Mget.size.width,
       child: Stack(
@@ -198,9 +199,45 @@ class TileOrdenPieza extends StatelessWidget {
                   bottomLeft: Radius.circular(15),
                 )
               ),
-              child: const Padding(
-                padding: EdgeInsets.all(6),
-                child: Icon(Icons.zoom_out_map, color: Colors.white),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 10),
+                child: Row(
+                  children: [
+                    if(isInv == 0)
+                    ...[
+                      Text(
+                        'ID: $idOrden',
+                        textScaleFactor: 1,
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.7),
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold
+                        ),
+                      ),
+                      const SizedBox(width: 5),
+                      const Icon(Icons.date_range, color: Colors.white, size: 18),
+                      const SizedBox(width: 5),
+                      Text(
+                        fecha,
+                        textScaleFactor: 1,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 12
+                        ),
+                      ),
+                    ]
+                  else
+                    Text(
+                      (box.inv == null)
+                        ? 'Inventario' : 'ID: [ ${box.inv!.id} ]',
+                      textScaleFactor: 1,
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.7),
+                        fontSize: 12
+                      ),
+                    ),
+                  ],
+                )
               ),
             )
           )
@@ -217,9 +254,9 @@ class TileOrdenPieza extends StatelessWidget {
         child: Icon(Icons.no_photography_outlined, size: 100, color: Colors.grey)
       );
     }
-    
+
     return CachedNetworkImage(
-      imageUrl: MyPath.getUriFotoPieza(fotos.first),
+      imageUrl: MyPath.getUriFotoPieza(fotos.first, isThubm: true),
       fit: BoxFit.cover,
       alignment: Alignment.center,
       placeholder: (_, data) => const Center(
@@ -254,7 +291,7 @@ class TileOrdenPieza extends StatelessWidget {
   }
 
   ///
-  Widget _dataItem() {
+  Widget _dataItem(BuildContext context) {
 
     return Container(
       width: Mget.size.width,
@@ -263,7 +300,7 @@ class TileOrdenPieza extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.start,
         children: [
           Expanded(
-            child: _dataPza()
+            child: _dataPza(context)
           ),
         ],
       ),
@@ -271,80 +308,114 @@ class TileOrdenPieza extends StatelessWidget {
   }
 
   ///
-  Widget _dataPza() {
+  Widget _dataPza(BuildContext context) {
 
-    final fecha = '${created.day}/${created.month}/${created.year}';
     String nombrePza = (pieza.id == 0) ? 'SIN NOMBRE' : pieza.piezaName;
     if(nombrePza.length > 28){
       nombrePza = '${nombrePza.substring(0, 25).trim()}...';
     }
-    
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          Row(
-            children: [
-              Text(
-                nombrePza,
-                textScaleFactor: 1,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 17
-                ),
-              ),
-              const Spacer(),
-              Text(
-                fecha,
-                textScaleFactor: 1,
-                style: TextStyle(
-                  color: Colors.white.withOpacity(0.5),
-                  fontSize: 12
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 5),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            mainAxisSize: MainAxisSize.max,
-            children: [
-              Text(
-                (pieza.id == 0)
-                  ? 'LADO Y POSICIÓN'
-                  : '${pieza.lado} ${pieza.posicion}',
-                textScaleFactor: 1,
-                style: TextStyle(
-                  color: Colors.white.withOpacity(0.5),
-                  fontSize: 14
-                ),
-              ),
-              if(isInv == 0)
-                ...[
-                  Text(
-                    'No. Orden $idOrden',
-                    textScaleFactor: 1,
-                    style: TextStyle(
-                      color: Colors.white.withOpacity(0.7),
-                      fontSize: 12
-                    ),
-                  ),
-                ]
-              else
+          InkWell(
+            onTap: () async => (isInv != 0) ? null : onCot(pieza.id),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
                 Text(
-                  (box.inv == null)
-                    ? 'Inventario' : 'ID: [ ${box.inv!.id} ]',
+                  nombrePza,
+                  textScaleFactor: 1,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 17
+                  ),
+                ),
+                const SizedBox(height: 5),
+                Text(
+                  (pieza.id == 0)
+                    ? 'LADO Y POSICIÓN'
+                    : '${pieza.lado} ${pieza.posicion}',
                   textScaleFactor: 1,
                   style: TextStyle(
-                    color: Colors.white.withOpacity(0.7),
-                    fontSize: 12
+                    color: Colors.white.withOpacity(0.5),
+                    fontSize: 14
                   ),
                 ),
-            ],
-          )
+              ],
+            ),
+          ),
+          const Spacer(),
+          if(onApartar != null)
+            _btnApartar(context)
+          else
+            if(isInv == 0)
+              Container(
+                margin: const EdgeInsets.only(top: 5),
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(35),
+                  border: Border.all(color: Colors.grey.withOpacity(0.5))
+                ),
+                child: const Icon(Icons.check, color: Colors.green, size: 18),
+              )
+            else
+              Container(
+                margin: const EdgeInsets.only(top: 5),
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(35),
+                  border: Border.all(color: Colors.grey.withOpacity(0.5))
+                ),
+                child: const Icon(Icons.date_range, color: Color.fromARGB(255, 104, 104, 104), size: 18),
+              )
         ],
+      )
+    );
+  }
+
+  ///
+  Widget _btnApartar(BuildContext context) {
+
+    final cfg = ConfigAppRepository();
+
+    return TextButton(
+      style: ButtonStyle(
+        padding: MaterialStateProperty.all(const EdgeInsets.all(0))
       ),
+      onPressed: () async {
+        // await cfg.setShowDialogApartar(true);
+        bool? acc = (await cfg.getShowDialogApartar())
+          ? await _showDialogApartar(context, cfg)
+          : true;
+        acc = (acc == null) ? false : acc;
+        if(acc) { onApartar!(pieza.id); }
+      },
+      child: Column(
+        children: [
+          Container(
+            margin: const EdgeInsets.only(top: 5),
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(35),
+              border: Border.all(color: Colors.green)
+            ),
+            child: const Icon(Icons.favorite, color: Color.fromARGB(255, 235, 137, 80), size: 18),
+          ),
+          const SizedBox(height: 5),
+          Text(
+            'APARTAR',
+            textScaleFactor: 1,
+            style: TextStyle(
+              color: Colors.white.withOpacity(0.7),
+              fontSize: 10,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 1.05
+            ),
+          ),
+        ],
+      )
     );
   }
 
@@ -365,7 +436,7 @@ class TileOrdenPieza extends StatelessWidget {
               if(acc) {
                 final isGo = await _isAuthorized(context);
                 if(isGo) {
-                  onNt!(pieza.id);
+                  onNtg(pieza.id);
                 }
               }
             });
@@ -381,7 +452,7 @@ class TileOrdenPieza extends StatelessWidget {
                     ? MaterialStateProperty.all(Colors.green)
                     : MaterialStateProperty.all(const Color.fromARGB(255, 81, 169, 133))
                 ),
-                onPressed: () async => (isInv != 0) ? null : _gestionarDatos(context),
+                onPressed: () async => (isInv != 0) ? null : onCot(pieza.id),
                 icon: const Icon(Icons.monetization_on_outlined, color: Colors.black),
                 label: const Text(
                   'COTIZAR',
@@ -465,6 +536,75 @@ class TileOrdenPieza extends StatelessWidget {
   }
 
   ///
+  Widget _widgetForDialogApartar(bool isCheck, {required ValueChanged<bool> onCheck}) {
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      mainAxisAlignment: MainAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        const Text(
+          'Podrás cotizarlas más tarde',
+          textScaleFactor: 1,
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: Colors.grey,
+            fontSize: 18
+          ),
+        ),
+        const Divider(color: Colors.green),
+        Text(
+          'Recorre la lista de solicitudes y ve APARTANDO '
+          'piezas con las que cuentas en tu inventario físico.',
+          textScaleFactor: 1,
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: Colors.white.withOpacity(0.7)
+          ),
+        ),
+        const SizedBox(height: 8),
+        const Text(
+          'Podrás visualizar la autopartes en la sección de APARTADOS, '
+          'donde podrás fácilmente eliminarlas posteriormente.',
+          textScaleFactor: 1,
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: Colors.greenAccent
+          ),
+        ),
+        const Divider(color: Colors.green),
+        Center(
+          child: CheckboxListTile(
+            dense: true,
+            contentPadding: const EdgeInsets.all(0),
+            checkColor: Colors.white,
+            activeColor: Colors.blueAccent,
+            side: const BorderSide(color: Colors.white),
+            title: const Text(
+              'NO MOSTRAR',
+              textScaleFactor: 1,
+              style: TextStyle(
+                color: Colors.grey,
+                fontSize: 17
+              ),
+            ),
+            subtitle: const Text(
+              'nuevamente este aviso',
+              textScaleFactor: 1,
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 14
+              ),
+            ),
+            value: isCheck,
+            onChanged: (val) => onCheck(val ?? false)
+          ),
+        )
+      ],
+    );
+  }
+
+  ///
   void _visor(BuildContext context) async {
 
     await showDialog(
@@ -476,29 +616,6 @@ class TileOrdenPieza extends StatelessWidget {
         )
       )
     );
-  }
-
-  ///
-  void _gestionarDatos(BuildContext context) async {
-    
-    final nav = GoRouter.of(context);
-
-    Mget.globals.idOrdenCurrent = idOrden;
-    if(idsFromLink.isNotEmpty) {
-      final partes = idsFromLink.split('-');
-      if(partes.length > 3) {
-        Mget.globals.idsFromLinkCurrent = idsFromLink;
-        Mget.globals.idCampaingCurrent = partes[3];
-      }else{
-        Mget.globals.idsFromLinkCurrent = '';
-        Mget.globals.idCampaingCurrent = '';
-      }
-    }
-    
-    final isGo = await _isAuthorized(context);
-    if(isGo) {
-      nav.go('/gest-data/${pieza.id}');
-    }
   }
 
   ///
@@ -548,17 +665,80 @@ class TileOrdenPieza extends StatelessWidget {
   }
 
   ///
+  Future<bool?> _showDialogApartar(BuildContext context, ConfigAppRepository c) async {
+
+    bool showDialogApartar = false;
+
+    return await showDialog(
+      context: context,
+      barrierColor: Colors.black.withOpacity(0.8),
+      builder: (_) => AlertDialog(
+        backgroundColor: Globals().bgMain,
+        insetPadding: const EdgeInsets.symmetric(horizontal: 20),
+        title: Text(
+          'APARTAR PIEZA ${ DialogsOf.icon('fine') }',
+          textScaleFactor: 1,
+          textAlign: TextAlign.center,
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 20,
+            color: Colors.blueAccent
+          ),
+        ),
+        content: StatefulBuilder(
+          builder: (_, StateSetter setState) {
+
+            return _widgetForDialogApartar(
+              showDialogApartar,
+              onCheck: (bool val) async {
+                await c.setShowDialogApartar(!val);
+                setState((){ showDialogApartar = val; });
+              }
+            );
+          }
+        ),
+        actionsAlignment: MainAxisAlignment.spaceAround,
+        actions: [
+          ElevatedButton(
+            style: ButtonStyle(
+              backgroundColor: MaterialStateProperty.all(Colors.white)
+            ),
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text(
+              'CANCELAR',
+              textScaleFactor: 1,
+              style: TextStyle(
+                color: Colors.green,
+                fontWeight: FontWeight.bold
+              ),
+            )
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text(
+              'APARTAR',
+              textScaleFactor: 1,
+              style: TextStyle(
+                fontWeight: FontWeight.bold
+              ),
+            )
+          )
+        ],
+      ),
+    );
+  }
+
+  ///
   Future<void> _getDatos() async {
 
     final em = box.solEm;
-    if(box.auto == null) {
-      // Iniciamos todas las cajas necesarias
-      await box.solEm.initBoxes();
-      box.auto = await em.getAutoById(idAuto);
-      if(box.auto != null) {
-        box.marca = await em.getMarcaById(box.auto!.marca);
-        box.modelo = await em.getModeloById(box.auto!.modelo);
-      }
+    
+    // Iniciamos todas las cajas necesarias
+    await box.solEm.initBoxes();
+    box.auto = await em.getAutoById(idAuto);
+    if(box.auto != null) {
+      box.marca = await em.getMarcaById(box.auto!.marca);
+      box.modelo = await em.getModeloById(box.auto!.modelo);
     }
     
     if(isInv != 0) {
@@ -599,5 +779,6 @@ class TileOrdenPieza extends StatelessWidget {
     '\n'
     'Id: *$isInv*';
   }
+
 
 }

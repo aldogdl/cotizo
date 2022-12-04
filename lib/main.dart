@@ -1,3 +1,4 @@
+import 'package:cotizo/vars/globals.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -48,11 +49,11 @@ class MyApp extends StatelessWidget {
     SystemChrome.setPreferredOrientations([
       DeviceOrientation.portraitUp
     ]);
-
-    SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
-      statusBarColor: Color(0xFF202c33),
+    final globals = Globals();
+    SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
+      statusBarColor: globals.bgAppBar,
       statusBarIconBrightness: Brightness.dark,
-      systemNavigationBarColor: Color.fromARGB(255, 13, 21, 26),
+      systemNavigationBarColor: globals.bgAppBar,
       systemNavigationBarIconBrightness: Brightness.light
     ));
 

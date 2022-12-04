@@ -31,8 +31,9 @@ class _FootFotosState extends State<FootFotos>{
   final ValueNotifier<bool> _showCamera = ValueNotifier<bool>(true);
 
   late final GestDataProvider _prov;
-  final Globals _globals = getIt<Globals>();
+  final _globals = getIt<Globals>();
 
+  List<String> imgPaths = [];
   bool _isInit = false;
   bool _showGaleriFromCamera = false;
 
@@ -171,16 +172,14 @@ class _FootFotosState extends State<FootFotos>{
         MaterialPageRoute(
           builder: (context) => MyCamera(
             onFinish: (fotos) async {
-              await _sendFotosToMessage(fotos);
-            },
-            fromGaleria: (acc) async {
-              if(acc) {
-                setState(() {
-                  _showGaleriFromCamera = true;
-                });
-              }
               final nav = Navigator.of(context);
+              _showGaleriFromCamera = false;
+              await _processImage(fotos);
               nav.pop();
+            },
+            fromGaleria: (fotos) async {
+              _showGaleriFromCamera = true;
+              await _processImage(fotos);
             }
           )
         ),
@@ -191,71 +190,78 @@ class _FootFotosState extends State<FootFotos>{
   ///
   Future<void> _getFotoFromGalery() async {
     
+    if(_showGaleriFromCamera) { Navigator.of(context).pop(); }
+    _showGaleriFromCamera = false;
     _preGetFotos().then((_) async {
-      await _sendFotosToMessage( await MyIm.galeria() );
+      await _processImage( await MyIm.galeria() );
     });
   }
 
   ///
-  Future<void> _sendFotosToMessage(List<XFile>? imgs) async {
+  Future<void> _processImage(List<XFile>? imgs) async {
 
-    if(imgs != null) {
+    bool hasFotos = false;
+    if(imgs != null && imgs.isNotEmpty) {
       
-      if(imgs.isNotEmpty) {
-
-        _prov.imgTmps = 0;
-        List<String> imgPaths = [];
-        final pathsCurrent = List<String>.from(_prov.campos[Campos.rFotos]).toList();
-        _prov.campos[Campos.rFotos] = [];
-
-        for(var i = 0; i < imgs.length; i++) {
-          if((pathsCurrent.length + imgPaths.length) < Constantes.cantFotos) {
+      hasFotos = true;
+      _prov.imgTmps = 0;
+      final pathsCurrent = List<String>.from(_prov.campos[Campos.rFotos]).toList().length;
+      // Metemos todas las fotos nuevas que nos mandan por parametro
+      for(var i = 0; i < imgs.length; i++) {
+        if((pathsCurrent + imgPaths.length) < Constantes.cantFotos) {
+          if(!imgPaths.contains(imgs[i].path)) {
             imgPaths.add(imgs[i].path);
-            _prov.campos[Campos.rFotos].add(imgs[i].path);
           }
         }
- 
-        if(pathsCurrent.isNotEmpty) {
-          for (var i = 0; i < pathsCurrent.length; i++) {
-            final has = imgPaths.where((pic) => pic == pathsCurrent[i]);
-            if(has.isEmpty) {
-              imgPaths.add(pathsCurrent[i]);
-              _prov.campos[Campos.rFotos].add(pathsCurrent[i]);
-            }
-          }
-        }
+      }
+    }
 
-        if(imgPaths.isNotEmpty) {
-
-          imgPaths = imgPaths.reversed.toList();
-
-          for(var i = 0; i < imgPaths.length; i++) {
-            widget.onSend(
-              ChatEntity(
-                id: _prov.msgs.length+1,
-                from: ChatFrom.user,
-                key: ChatKey.userRes,
-                campo: _prov.currentCampo,
-                tipo: ChatTip.image,
-                value: imgPaths[i],
-              )
-            );
-            await Future.delayed(const Duration(milliseconds: 150));
-          }
-          imgPaths = [];
-        }
-
-        if(_showGaleriFromCamera) {
-          _showGaleriFromCamera = false;
-          Future.delayed(const Duration(milliseconds: 300), () async {
-            await _getFotoFromGalery();
-          });
-        }
-        return;
+    if(_showGaleriFromCamera) {
+      await _getFotoFromGalery();
+      return;
+    }else{
+      if(hasFotos) {
+        _sendFotosToMessage();
+      }else{
+        Navigator.of(context).pop();
       }
     }
 
     _prov.msgCampos = ':-) Al menos coloca una FOTO';
+  }
+
+  /// Enviamos todas las fotos para colocar en pantalla
+  void _sendFotosToMessage() async {
+
+    final pathsCurrent = List<String>.from(_prov.campos[Campos.rFotos]).toList();
+    _prov.campos[Campos.rFotos] = [];
+
+    // Metemos todas las fotos que ya teniamos a las nuevas.
+    for (var i = 0; i < pathsCurrent.length; i++) {
+      if(!imgPaths.contains(pathsCurrent[i])) {
+        imgPaths.insert(0, pathsCurrent[i]);
+      }
+    }
+
+    _prov.campos[Campos.rFotos] = List<String>.from(imgPaths);
+
+    if(imgPaths.isNotEmpty) {
+
+      for(var i = 0; i < imgPaths.length; i++) {
+        widget.onSend(
+          ChatEntity(
+            id: _prov.msgs.length+1,
+            from: ChatFrom.user,
+            key: ChatKey.userRes,
+            campo: _prov.currentCampo,
+            tipo: ChatTip.image,
+            value: imgPaths[i],
+          )
+        );
+        await Future.delayed(const Duration(milliseconds: 150));
+      }
+      imgPaths = [];
+    }
   }
 
   ///

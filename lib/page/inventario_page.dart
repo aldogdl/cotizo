@@ -1,15 +1,17 @@
-import 'package:cotizo/widgets/filtrar_dialog.dart';
+import 'package:cotizo/providers/ordenes_provider.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
 
 import '../entity/inventario_entity.dart';
 import '../entity/share_data_orden.dart';
 import '../repository/piezas_repository.dart';
 import '../repository/inventario_repository.dart';
-import '../widgets/show_dialogs.dart';
-import '../widgets/tile_orden_pieza.dart';
 import '../services/my_get.dart';
 import '../providers/gest_data_provider.dart';
+import '../widgets/show_dialogs.dart';
+import '../widgets/tile_orden_pieza.dart';
+import '../widgets/filtrar_dialog.dart';
 
 class InventarioPage extends StatefulWidget {
 
@@ -28,10 +30,12 @@ class _InventarioPageState extends State<InventarioPage> {
   final _icoAcc = ValueNotifier<IconData>(Icons.search);
 
   late Future<void> _getPiezas;
+  late OrdenesProvider _ordProv;
   List<InventarioEntity> _lstPzas = [];
   String _filTo = '';
 
   int page = 1;
+  bool _isInit = false;
 
   @override
   void initState() {
@@ -83,35 +87,124 @@ class _InventarioPageState extends State<InventarioPage> {
   ///
   Widget _sinData() {
 
-    IconData ico = Icons.extension_off;
-    String msg = 'Sin piezas en tu Inventario';
+    const String assetName = 'assets/svgs/inbox_1.svg';
+    final double radio = MediaQuery.of(context).size.width * 0.4;
 
-    if(_icoAcc.value == Icons.close) {
-      ico = Icons.search_off;
-      msg = 'No se encotraron resultados con el criterio solicitado.';
-    }
-
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      crossAxisAlignment: CrossAxisAlignment.center,
-      mainAxisSize: MainAxisSize.max,
-      children: [
-        Icon(ico, size: 150, color: Mget.globals.secMain),
-        const SizedBox(height: 20),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 10),
-          child: Text(
-            msg,
-            textAlign: TextAlign.center,
-            textScaleFactor: 1,
-            style: const TextStyle(
-              color: Colors.grey,
-              fontSize: 25,
-              fontWeight: FontWeight.w200
-            ),
-          )
+    return SizedBox.expand(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 10),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.only(top: 25),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            mainAxisSize: MainAxisSize.max,
+            children: [
+              Container(
+                width: radio,
+                height: radio,
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(radio)
+                ),
+                child: SvgPicture.asset(
+                  assetName, semanticsLabel: 'Apartados'
+                ),
+              ),
+              const SizedBox(height: 40),
+              const Text(
+                'Tu Inventario Digital',
+                textScaleFactor: 1,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 25,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white
+                ),
+              ),
+              const SizedBox(height: 10),
+              const Text(
+                'Tu Tiempo y Atención no son en vano. '
+                'Cada vez que nos cotizas una pieza, ésta se coloca automáticamente '
+                'en tu inventario digital, donde podrás...',
+                textScaleFactor: 1,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 19,
+                  color: Colors.grey,
+                  height: 1.3
+                ),
+              ),
+              const SizedBox(height: 20),
+              Row(
+                children: [
+                  const SizedBox(width: 30),
+                  const Icon(Icons.check_box_outlined, color: Color.fromARGB(255, 81, 169, 133), size: 25),
+                  const SizedBox(width: 10),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: const [
+                      Text(
+                        'Compartirla con facilidad',
+                        textScaleFactor: 1,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 19,
+                          color: Color.fromARGB(255, 81, 169, 133),
+                          height: 1.3
+                        ),
+                      ),
+                      Text(
+                        'Evita trabajar doble.',
+                        textScaleFactor: 1,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 17,
+                          color: Colors.white70,
+                          height: 1.3
+                        ),
+                      ),
+                    ],
+                  )
+                ],
+              ),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  const SizedBox(width: 30),
+                  const Icon(Icons.check_box_outlined, color: Color.fromARGB(255, 81, 169, 133), size: 25),
+                  const SizedBox(width: 10),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: const [
+                      Text(
+                        'Buscar tus piezas rápidamente',
+                        textScaleFactor: 1,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 19,
+                          color: Color.fromARGB(255, 81, 169, 133),
+                          height: 1.3
+                        ),
+                      ),
+                      Text(
+                        'Por marca, modelos o nombre.',
+                        textScaleFactor: 1,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 17,
+                          color: Colors.white70,
+                          height: 1.3
+                        ),
+                      ),
+                    ],
+                  )
+                ],
+              )
+            ],
+          ),
         ),
-      ],
+      )
     );
   }
 
@@ -137,6 +230,9 @@ class _InventarioPageState extends State<InventarioPage> {
           requerimientos: _lstPzas[index].deta,
           box: SharedDataOrden(),
           isInv: _lstPzas[index].id,
+          onCot: (_){},
+          onNtg: (_){},
+          onApartar: null,
           onDelete: (id) async {
             bool? res = await _dialogEliminar();
             res = (res == null) ? false : res;
@@ -234,7 +330,6 @@ class _InventarioPageState extends State<InventarioPage> {
       )
     );
   }
-
 
   ///
   Widget _load() {
@@ -369,7 +464,14 @@ class _InventarioPageState extends State<InventarioPage> {
 
   ///
   Future<void> _recoveryPzas() async {
-    _pzaEm.openBox();
+
+    if(!_isInit) {
+      _isInit = true;
+      _ordProv = context.read<OrdenesProvider>();
+    }
+    _ordProv.currentSeccion = 'inventario';
+
+    await _pzaEm.openBox();
     _lstPzas = await _invEm.getInventario(page);
   }
 

@@ -64,10 +64,7 @@ class _FiltradoPorMrksState extends State<FiltradoPorMrks> {
         }
 
         return const Center(
-          child: SizedBox(
-            width: 40, height: 40,
-            child: CircularProgressIndicator(),
-          ),
+          child: Icon(Icons.time_to_leave_rounded, size: 150, color: Color.fromARGB(255, 58, 58, 58)),
         );
       },
     );
@@ -83,7 +80,8 @@ class _FiltradoPorMrksState extends State<FiltradoPorMrks> {
         tipo: 'mrk',
         onPress: (item) {
           _ords.filterBySols = item;
-          _ords.typeFilter = 'marcas';
+          _ords.typeFilter['current'] = 'marcas';
+          _ords.typeFilter['select']  = 'marcas';
           widget.onPress(null);
           Navigator.of(context).pop();
         },
@@ -101,8 +99,7 @@ class _FiltradoPorMrksState extends State<FiltradoPorMrks> {
       _ords = context.read<OrdenesProvider>();
     }
 
-    final ordenes = await _ords.getRange();
-    final res = await _solEm.sortPerMark(ordenes);
+    final res = await _solEm.sortPerMark(_ords.items());
     return res;
   }
 

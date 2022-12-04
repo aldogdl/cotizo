@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:cached_network_image/cached_network_image.dart';
-import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 import '../entity/share_data_orden.dart';
 import '../entity/orden_entity.dart';
@@ -14,10 +13,12 @@ class TileOrdenSoli extends StatelessWidget {
   final OrdenEntity item;
   final SharedDataOrden box;
   final bool withRouting;
+  final ValueChanged<void> onTap;
   const TileOrdenSoli({
     Key? key,
     required this.item,
     required this.box,
+    required this.onTap,
     this.withRouting = true
   }) : super(key: key);
 
@@ -32,12 +33,10 @@ class TileOrdenSoli extends StatelessWidget {
 
         if(snap.connectionState == ConnectionState.done) {
 
+          if(item.est == item.itemFecha) { return const SizedBox(); }
+
           return InkWell(
-            onTap: () {
-              if(withRouting) {
-                context.go('/cotizo/${item.id}');
-              }
-            },
+            onTap: () => (withRouting) ? onTap(item.id) : null,
             child: Container(
               width: MediaQuery.of(Mget.ctx!).size.width,
               padding: const EdgeInsets.symmetric(horizontal: 10),
@@ -120,7 +119,8 @@ class TileOrdenSoli extends StatelessWidget {
   ///
   Widget _pzasAndId() {
 
-    final sufix = (item.piezas.length > 1) ? 'Pzas.' : 'Pza.';
+    final cp = item.piezas.where((p) => p.piezaName != p.avAt);
+    final sufix = (cp.length > 1) ? 'Pzas.' : 'Pza.';
 
     return Column(
       children: [
@@ -133,7 +133,7 @@ class TileOrdenSoli extends StatelessWidget {
                 color: const Color(0xFF51a985)
               ),
               child: Text(
-                '${item.piezas.length}',
+                '${cp.length}',
                 textScaleFactor: 1,
                 style: const TextStyle(
                   color: Colors.black,

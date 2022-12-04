@@ -1,8 +1,8 @@
-import 'package:cotizo/api/push_msg.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'camara/my_camera.dart';
+import '../api/push_msg.dart';
 import '../config/sngs_manager.dart';
 import '../entity/account_entity.dart';
 import '../providers/signin_provider.dart';
@@ -27,6 +27,28 @@ class MenuMain extends StatelessWidget {
       padding: const EdgeInsets.all(10),
       child: ListView(
         children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: SizedBox(
+                  width: MediaQuery.of(context).size.width * 0.5,
+                  child: const Image(
+                    image: AssetImage('assets/images/logo_only.png'),
+                  ),
+                ),
+              ),
+              const Spacer(),
+              IconButton(
+                onPressed: () => Navigator.of(context).pop(),
+                icon: const CircleAvatar(
+                  backgroundColor: Colors.red,
+                  child: Icon(Icons.close, color: Colors.white),
+                )
+              )
+            ],
+          ),
           _item(
             icono: Icons.linked_camera_outlined, label: 'Cámara Test',
             fnc: () async {
@@ -36,7 +58,9 @@ class MenuMain extends StatelessWidget {
                 MaterialPageRoute(
                   builder: (context) => MyCamera(
                     isTest: true,
-                    onFinish: (fotos){},
+                    onFinish: (fotos){
+                      Navigator.of(context).pop();
+                    },
                     fromGaleria: (acc){}
                   )
                 ),
@@ -63,7 +87,6 @@ class MenuMain extends StatelessWidget {
               });
             }
           ),
-          const MenuMainStaful(),
           _item(
             icono: Icons.unpublished_rounded, label: 'Cerrar Sesión',
             fnc: () async {
@@ -87,14 +110,7 @@ class MenuMain extends StatelessWidget {
               return _dataAccount(null);
             }
           ),
-          Center(
-            child: SizedBox(
-              width: MediaQuery.of(context).size.width * 0.6,
-              child: const Image(
-                image: AssetImage('assets/images/logo_only.png'),
-              ),
-            ),
-          ),
+          const MenuMainStaful(),
         ],
       ),
     );
@@ -233,11 +249,13 @@ class MenuMain extends StatelessWidget {
   ///
   Future<void> _makePushPersonal(BuildContext context) async {
 
-    final push = getIt<PushMsg>();
-    final prov = context.read<OrdenesProvider>();
-    final orden = await prov.getParaNotificFromRange();
-    
-    push.makePushInt(orden);
+    if(!context.read<SignInProvider>().desablePushInt) {
+      final push = getIt<PushMsg>();
+      final prov = context.read<OrdenesProvider>();
+      final orden = await prov.getParaNotificFromRange();
+      
+      push.makePushInt(orden);
+    }
   }
 
   ///

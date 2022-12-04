@@ -1,15 +1,16 @@
 import 'dart:io' show Platform;
 
+import 'package:go_router/go_router.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_ringtone_player/flutter_ringtone_player.dart';
-import 'package:go_router/go_router.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
-import 'package:cotizo/config/my_rutas.dart';
-import 'package:cotizo/entity/push_in_entity.dart';
+import '../config/my_rutas.dart';
+import '../entity/push_in_entity.dart';
 import '../entity/orden_entity.dart';
 import '../services/my_http.dart';
+import '../services/my_paths.dart';
 import '../repository/acount_user_repository.dart';
 import '../firebase_options.dart';
 
@@ -34,6 +35,17 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   FlutterRingtonePlayer.playNotification();
 }
 
+/// Funcion de alto nivel para la recepción de mensajes locales en background
+@pragma('vm:entry-point')
+Future<void> notifOnBGHandler(NotificationResponse notificationResponse) async {
+
+  String pay = notificationResponse.payload.toString();
+  if(pay.startsWith('https')) {
+    pay = pay.replaceAll('https://autoparnet.com', '').trim();
+  }
+  FlutterRingtonePlayer.playNotification();
+}
+
 ///
 @pragma('vm:entry-point')
 void _showNotiff(RemoteMessage message) {
@@ -44,6 +56,15 @@ void _showNotiff(RemoteMessage message) {
     titulo = message.notification!.title;
     descripcion = message.notification!.body;        
   }
+  
+  print('-----------------------------');
+  print(message.from);
+  print(message.data);
+  print(message.notification!.toMap());
+  print('-----------------------------');
+
+  final ctx = MyRutas.rutas.routerDelegate.navigatorKey.currentContext;
+  print(ctx.runtimeType);
 
   var pay = 'from local'; 
   if(descripcion!.contains('cod:')) {
@@ -116,10 +137,32 @@ class PushMsg {
   /// Recibiendo mensajes en foreground
   void _listenerOnMessage() async {
 
+    // Get any messages which caused the application to open from
+    // a terminated state.
+    RemoteMessage? initialMessage =
+      await FirebaseMessaging.instance.getInitialMessage();
+
+    // If the message also contains a data property with a "type" of "chat",
+    // navigate to a chat screen
+    if (initialMessage != null) {
+      _handleMessage(initialMessage);
+    }
+
+    // Also handle any interaction when the app is in the background via a
+    // Stream listener
+    FirebaseMessaging.onMessageOpenedApp.listen(_handleMessage);
+
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
       _showNotiff(message);
       FlutterRingtonePlayer.playNotification();
     });
+  }
+
+  /// Manejador de mensajes.
+  void _handleMessage(RemoteMessage message) {
+    print('aca en _handleMessage');
+    print(message.data);
+    print(message.notification);
   }
 
   /// Recibiendo mensajes en foreground
@@ -141,7 +184,8 @@ class PushMsg {
       );
       await flnp!.initialize(
         initSettings,
-        onDidReceiveNotificationResponse: notifOnResumeHandler
+        onDidReceiveNotificationResponse: notifOnResumeHandler,
+        onDidReceiveBackgroundNotificationResponse: notifOnBGHandler
       );
 
       await flnp!.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
@@ -159,7 +203,7 @@ class PushMsg {
 
     StyleInformation? pic;
     if(url.isNotEmpty) {
-
+      
       final bitmap = await MyHttp.getImagePzaFromServer(url);
       if(bitmap.isNotEmpty) {
         pic = BigPictureStyleInformation(
@@ -184,7 +228,7 @@ class PushMsg {
     return NotificationDetails(android: androidDetail);
   }
 
-  ///
+  /// Para crear un push interno de prueba
   Future<void> makePushInt(OrdenEntity? orden) async {
 
     late NotificationDetails detalles;
@@ -194,7 +238,11 @@ class PushMsg {
     if(orden != null) {
       id = orden.id;
       final pza = orden.piezas.first;
-      detalles = await getDetails(url: orden.fotos[pza.id]!.first);
+      if(orden.fotos[pza.id]!.first.isNotEmpty) {
+        detalles = await getDetails(
+          url: MyPath.getUriFotoPieza(orden.fotos[pza.id]!.first)
+        );
+      }
       titulo = '${pza.piezaName} ${pza.posicion}';
       subtitulo = '¿Tendrás esta pieza para vender?';
     }else{
@@ -235,7 +283,11 @@ class PushMsg {
     if(notificationResponse.payload != null) {
       if(!notificationResponse.payload!.contains('cache')) {
         if(ctx != null) {
-          ctx.go('/cotizo/${notificationResponse.payload}');
+          String pay = notificationResponse.payload.toString();
+          if(pay.startsWith('https')) {
+            pay = pay.replaceAll('https://autoparnet.com', '').trim();
+          }
+          ctx.go(pay);
         }
       }
     }

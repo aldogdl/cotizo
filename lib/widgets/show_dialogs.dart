@@ -48,6 +48,7 @@ class ShowDialogs {
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 19,
+                height: 1.2,
                 color: _globals.txtComent
               ),
             ),
@@ -108,7 +109,11 @@ class ShowDialogs {
       'pushTest': 'PRUEBA DE NOTIFICACIONES\n\n'
         'Se realizará una prueba para corroborar que tus notificaciones estén '
         'configuradas correctamente, por favor, selecciona el tipo de pueba que '
-        'deseas hacer.\n\nToca la pantalla para CANCELAR.'
+        'deseas hacer.\n\nToca la pantalla para CANCELAR.',
+      'aparta': 'APARTANDO PIEZA\n\n'
+        'Esta misma Marca, Modelo y Año, cuenta con más piezas que puedes '
+        'aprovechar para vender.\n\n'
+        '¿DESEAS APARTAR TODAS LAS DEMÁS PIEZAS?.'
     };
     return msg[tipo];
   }
@@ -139,9 +144,14 @@ class ShowDialogs {
   static Widget _btnActionOk
     (BuildContext context, String label, {IconData ico = Icons.done})
   {
-    return _btnAction(
-      ico, label, _globals.colorGreen, () => Navigator.of(context).pop(true)
-    );
+    final nav = Navigator.of(context);
+    try {
+      return _btnAction(
+        ico, label, _globals.colorGreen, () => nav.pop(true)
+      );
+    } catch (e) {
+      return const SizedBox();
+    }
   }
 
   ///

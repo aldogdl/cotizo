@@ -90,6 +90,10 @@ class TileOrdenPzaMsg extends StatelessWidget {
     if(p.id != 0) {
       pieza = p.piezaName;
     }
+    String pos = p.posicion;
+    if(pos.length > 3) {
+      pos = p.posicion.substring(0, 3);
+    }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -102,7 +106,7 @@ class TileOrdenPzaMsg extends StatelessWidget {
             ),
             children: [
               TextSpan(
-                text: ' ${p.lado} ${p.posicion.substring(0, 3)}.',
+                text: ' ${p.lado} $pos.',
                 style: TextStyle(
                   color: Colors.white.withOpacity(0.8),
                   fontSize: 12

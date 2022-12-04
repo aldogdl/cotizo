@@ -26,7 +26,15 @@ class ConfigApp extends HiveObject {
 
   /// Desabilitamos los push internos.
   @HiveField(4)
-  bool desaPushInt = true;
+  bool desaPushInt = false;
+
+  /// Desabilitamos los push internos.
+  @HiveField(5)
+  String lastCheckNt = '';
+
+  /// Desabilitamos los push internos.
+  @HiveField(6)
+  bool showAvisoAparta = true;
 
   ///
   Map<String, dynamic> toJson() {
@@ -36,6 +44,8 @@ class ConfigApp extends HiveObject {
       'inLast': inLast,
       'invalidToken': invalidToken,
       'desaPushInt': desaPushInt,
+      'lastCheckNt': lastCheckNt,
+      'showAvisoAparta': showAvisoAparta,
     };
   }
 }

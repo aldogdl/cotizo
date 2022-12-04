@@ -6,6 +6,8 @@ part 'pieza_entity.g.dart';
 @HiveType(typeId: piezaHT)
 class PiezaEntity extends HiveObject {
 
+  final String avAt = 'aviso_atencion';
+
   @HiveField(0)
   int id = 0;
 
@@ -49,5 +51,10 @@ class PiezaEntity extends HiveObject {
     };
   }
 
-
+  ///
+  PiezaEntity avisoAtencion() {
+    id = -1;
+    piezaName = avAt;
+    return this;
+  }
 }

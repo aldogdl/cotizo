@@ -20,7 +20,7 @@ import '../../widgets/camara/portrait_cam.dart';
 class MyCamera extends StatefulWidget {
 
   final ValueChanged<List<XFile>> onFinish;
-  final ValueChanged<bool> fromGaleria;
+  final ValueChanged<List<XFile>> fromGaleria;
   final bool isTest;
   const MyCamera({
     Key? key,
@@ -37,17 +37,18 @@ class _MyCameraState extends State<MyCamera> with WidgetsBindingObserver{
 
   final _globals = getIt<Globals>();
   final _errorCamera = ValueNotifier<String>('');
-  late final ValueNotifier<bool> _showMsg;
   final _currentZoomLevel = ValueNotifier<double>(1.0);
   final _isCameraInitialized = ValueNotifier<bool>(false);
   
+  late final ValueNotifier<bool> _showMsg;
   late GestDataProvider _provG;
+
   DeviceOrientation _oriCurrent = DeviceOrientation.portraitUp;
   CameraController? _controller;
   bool _isInit = false;
-  double _maxAvailableZoom = 1.0;
   double _minAvailableZoom = 1.0;
   bool _showPrepareExit = false;
+  // double _maxAvailableZoom = 1.0;
 
   @override
   void initState() {
@@ -108,8 +109,11 @@ class _MyCameraState extends State<MyCamera> with WidgetsBindingObserver{
           child: (!_showPrepareExit) 
           ? NativeDeviceOrientedWidget(
               useSensor: true,
+              portrait: (context) => _diseVertical(DeviceOrientation.portraitUp),
+              portraitDown: (context) => _diseVertical(DeviceOrientation.portraitUp),
               portraitUp: (context) => _diseVertical(DeviceOrientation.portraitUp),
               landscapeLeft: (context) => _diseVertical(DeviceOrientation.landscapeLeft),
+              landscape: (context) => _diseVertical(DeviceOrientation.landscapeLeft),
               landscapeRight: (context) => _diseVertical(DeviceOrientation.landscapeRight),
               fallback: (context) => _disUnknow(),
             )
@@ -125,7 +129,7 @@ class _MyCameraState extends State<MyCamera> with WidgetsBindingObserver{
   }
 
   ///
-  Widget _disUnknow({String txt = 'Coloca tu Dispositivo en HORIZONTAL'}) {
+  Widget _disUnknow({String txt = 'Coloca tu Dispositivo en Posición Vertical'}) {
     
     return Center(
       child: Text(
@@ -176,64 +180,6 @@ class _MyCameraState extends State<MyCamera> with WidgetsBindingObserver{
           ),
         )
       ],
-    );
-  }
-
-  ///
-  Widget _controlesUi() {
-
-    return Container(
-      color: Colors.black,
-      constraints: const BoxConstraints.expand(),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.start,
-        children: [
-          const Spacer(),
-          _btnCircle(icono: Icons.arrow_circle_up, fnc: () async {
-            if(_currentZoomLevel.value > _minAvailableZoom) {
-              _currentZoomLevel.value--;
-              await _controller!.setZoomLevel(_currentZoomLevel.value);
-            }
-          }),
-          const SizedBox(height: 10),
-          _indicatorBy(
-            ValueListenableBuilder<double>(
-              valueListenable: _currentZoomLevel,
-              builder: (_, txtV, __) => Text(
-                '${txtV.toStringAsFixed(1)}x',
-                textScaleFactor: 1,
-                style: TextStyle(color: _globals.bgMain),
-              ),
-            )
-          ),
-          const SizedBox(height: 10),
-          _btnCircle(icono: Icons.arrow_circle_down, fnc: () async {
-            if(_currentZoomLevel.value < _maxAvailableZoom) {
-              _currentZoomLevel.value++;
-              await _controller!.setZoomLevel(_currentZoomLevel.value);
-            }
-          }),
-        ],
-      ),
-    );
-  }
-
-  ///
-  Widget _btnCircle({
-    required IconData icono, required Function fnc}) 
-  {
-
-    return CircleAvatar(
-      radius: 26,
-      backgroundColor: _globals.secMain,
-      child: IconButton(
-        onPressed: () => fnc(),
-        icon: Icon(icono),
-        iconSize: 40,
-        color: _globals.txtOnsecMainDark,
-        padding: const EdgeInsets.all(0),
-        visualDensity: VisualDensity.compact,
-      )
     );
   }
 
@@ -406,24 +352,6 @@ class _MyCameraState extends State<MyCamera> with WidgetsBindingObserver{
   }
 
   ///
-  Widget _indicatorBy(Widget child) {
-
-    return RotatedBox(
-      quarterTurns: 0,
-      child: Container(
-        decoration: BoxDecoration(
-          color: _globals.colorGreen,
-          borderRadius: BorderRadius.circular(10.0),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: child
-        ),
-      ),
-    );
-  }
-
-  ///
   Future<void> _takeFoto() async {
 
     int fotosCurrent = List<XFile>.from(_provG.ftsGest).length;
@@ -485,8 +413,7 @@ class _MyCameraState extends State<MyCamera> with WidgetsBindingObserver{
   }
 
   ///
-  Future<void> onNewCameraSelected() async
-  {
+  Future<void> onNewCameraSelected() async {
 
     if(!_isInit) { _isInit = true; await _prepareInit(); }
 
@@ -512,7 +439,7 @@ class _MyCameraState extends State<MyCamera> with WidgetsBindingObserver{
 
     if(cameraController.value.isInitialized) {
 
-      _maxAvailableZoom = await cameraController.getMaxZoomLevel();
+      // _maxAvailableZoom = await cameraController.getMaxZoomLevel();
       _minAvailableZoom = await cameraController.getMinZoomLevel();
       _currentZoomLevel.value = _minAvailableZoom;
       await cameraController.setZoomLevel(_minAvailableZoom);
@@ -553,18 +480,6 @@ class _MyCameraState extends State<MyCamera> with WidgetsBindingObserver{
           }
         }
       }
-    }
-
-    if(_provG.modoCot > 1) {
-      Future.microtask(() {
-        if(mounted) {
-          if(_provG.showAlertAddFotos) {
-            if(_globals.cantInv < 3) {
-              _showMsg.value = true;
-            }
-          }
-        }
-      });
     }
   }
 
@@ -617,11 +532,14 @@ class _MyCameraState extends State<MyCamera> with WidgetsBindingObserver{
       _provG.isTakeFoto = false;
     }
 
-    widget.onFinish(_provG.ftsGest);
+    if(isPressGalery) {
+      widget.fromGaleria(_provG.ftsGest);
+    }else{
+      widget.onFinish(_provG.ftsGest);
+    }
+
     _provG.ftsGest.clear();
     _provG.ftsGestDel.clear();
-    
-    widget.fromGaleria(isPressGalery);
     _provG.showAlertAddFotos = false;
   }
 
@@ -633,4 +551,82 @@ class _MyCameraState extends State<MyCamera> with WidgetsBindingObserver{
       hasActions: false
     ).then((_) => Navigator.of(context).pop());
   }
+
+
+  /// No lo quite por que mas adelante puedo necesitar colocar zoom
+  // Widget _controlesUi() {
+
+  //   return Container(
+  //     color: Colors.black,
+  //     constraints: const BoxConstraints.expand(),
+  //     child: Column(
+  //       mainAxisAlignment: MainAxisAlignment.start,
+  //       children: [
+  //         const Spacer(),
+  //         _btnCircle(icono: Icons.arrow_circle_up, fnc: () async {
+  //           if(_currentZoomLevel.value > _minAvailableZoom) {
+  //             _currentZoomLevel.value--;
+  //             await _controller!.setZoomLevel(_currentZoomLevel.value);
+  //           }
+  //         }),
+  //         const SizedBox(height: 10),
+  //         _indicatorBy(
+  //           ValueListenableBuilder<double>(
+  //             valueListenable: _currentZoomLevel,
+  //             builder: (_, txtV, __) => Text(
+  //               '${txtV.toStringAsFixed(1)}x',
+  //               textScaleFactor: 1,
+  //               style: TextStyle(color: _globals.bgMain),
+  //             ),
+  //           )
+  //         ),
+  //         const SizedBox(height: 10),
+  //         _btnCircle(icono: Icons.arrow_circle_down, fnc: () async {
+  //           if(_currentZoomLevel.value < _maxAvailableZoom) {
+  //             _currentZoomLevel.value++;
+  //             await _controller!.setZoomLevel(_currentZoomLevel.value);
+  //           }
+  //         }),
+  //       ],
+  //     ),
+  //   );
+  // }
+
+  // ///
+  // Widget _btnCircle({
+  //   required IconData icono, required Function fnc}) 
+  // {
+
+  //   return CircleAvatar(
+  //     radius: 26,
+  //     backgroundColor: _globals.secMain,
+  //     child: IconButton(
+  //       onPressed: () => fnc(),
+  //       icon: Icon(icono),
+  //       iconSize: 40,
+  //       color: _globals.txtOnsecMainDark,
+  //       padding: const EdgeInsets.all(0),
+  //       visualDensity: VisualDensity.compact,
+  //     )
+  //   );
+  // }
+
+  // ///
+  // Widget _indicatorBy(Widget child) {
+
+  //   return RotatedBox(
+  //     quarterTurns: 0,
+  //     child: Container(
+  //       decoration: BoxDecoration(
+  //         color: _globals.colorGreen,
+  //         borderRadius: BorderRadius.circular(10.0),
+  //       ),
+  //       child: Padding(
+  //         padding: const EdgeInsets.all(8.0),
+  //         child: child
+  //       ),
+  //     ),
+  //   );
+  // }
+
 }

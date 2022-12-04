@@ -10,7 +10,6 @@ import '../entity/account_entity.dart';
 import '../providers/signin_provider.dart';
 import '../repository/config_app_repository.dart';
 import '../repository/acount_user_repository.dart';
-import '../repository/no_tengo_repository.dart';
 import '../repository/inventario_repository.dart';
 import '../vars/globals.dart';
 
@@ -27,7 +26,6 @@ class _SplashPageState extends State<SplashPage> {
   final ValueNotifier<String> _msgs = ValueNotifier<String>('Inicializando...');
   final _cngEm   = ConfigAppRepository();
   final _invEm   = InventarioRepository();
-  final _ntgEm   = NoTengoRepository();
   final _userEm  = AcountUserRepository();
   final _globals = getIt<Globals>();
   final pushMsg  = getIt<PushMsg>();
@@ -98,24 +96,18 @@ class _SplashPageState extends State<SplashPage> {
   Future<void> _initWidget(_) async {
 
     final nav = GoRouter.of(context);
-
-    final cameras = await availableCameras();
-    _globals.firstCamera = cameras.first;
-    _globals.cantInv = await _invEm.getInventarioCount();
-
+    if(_globals.firstCamera == null) {
+      late List<CameraDescription> cameras;
+      try {
+        cameras = await availableCameras();
+        _globals.firstCamera = cameras.first;
+      } on CameraException catch (_) {
+        // print('${e.code}, ${e.description}');
+      }
+    }
+    
     bool isOk = await _revisandoCredenciales();
     if(!isOk) { return; }
-
-    _msgs.value = 'Recuperando filtro Inventario';
-    await Future.delayed(const Duration(milliseconds: 250));
-    _globals.invFilter = await _invEm.getAllInvToFilter();
-
-    _msgs.value = 'Limpiando almacén de Inexistentes';
-    await Future.delayed(const Duration(milliseconds: 250));
-    final ntgIds = await _ntgEm.getAllNoTengo();
-    if(ntgIds.isNotEmpty) {
-      _ntgEm.cleanAlmacenNtFromServer(ntgIds);
-    }
 
     _msgs.value = 'Inicializando Mensajería';
     await Future.delayed(const Duration(milliseconds: 250));
@@ -139,7 +131,7 @@ class _SplashPageState extends State<SplashPage> {
 
     if(user!.id == 0) {
 
-      _msgs.value = 'Autenticate por favor.';
+      _msgs.value = 'Autentícate por favor.';
       siging.isFirstIniApp = true;
       Future.delayed(const Duration(milliseconds: 1500), (){
         nav.go('/login');
@@ -148,9 +140,11 @@ class _SplashPageState extends State<SplashPage> {
 
     }else{
       
+      _globals.idUser = user!.id;
+
       /// Revisamos que halla una inicialización previa
-      DateTime? hasd = await _cngEm.hasData();
       final hoy = DateTime.now();
+      DateTime? hasd = await _cngEm.hasData();
       if(hasd != null) {
         
         _msgs.value = 'BIENVENIDO DE NUEVO';
@@ -159,9 +153,16 @@ class _SplashPageState extends State<SplashPage> {
         if(diff.inSeconds > 28000) {
           siging.goForData = true;
         }
-        final valid = await _cngEm.isValidToken();
         
+        final valid = await _cngEm.isValidToken();
         if(valid) {
+          
+          if(!siging.goForData) {
+            _msgs.value = 'Recuperando filtro Inventario';
+            await Future.delayed(const Duration(milliseconds: 250));
+            _globals.invFilter = await _invEm.getAllInvToFilter();
+          }
+
           siging.isLogin = true;
           Future.delayed(const Duration(milliseconds: 100), (){
             nav.go('/home');
@@ -180,7 +181,7 @@ class _SplashPageState extends State<SplashPage> {
         await _userEm.login({'username':user!.curc, 'password': user!.password});
         
         if(_userEm.result['abort']) {
-          _msgs.value = 'Autenticate por favor.';
+          _msgs.value = 'Autentícate por favor.';
           Future.delayed(const Duration(milliseconds: 1500), (){
             nav.go('/login');
           });

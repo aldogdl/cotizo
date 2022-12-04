@@ -1,4 +1,3 @@
-import 'package:cotizo/providers/ordenes_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -40,6 +39,8 @@ class _SendRespuestaState extends State<SendRespuesta> {
   @override
   Widget build(BuildContext context) {
 
+    final idTmpPzaCot = DateTime.now().millisecondsSinceEpoch;
+
     return Container(
       width: MediaQuery.of(context).size.width,
       height: MediaQuery.of(context).size.height * 0.37,
@@ -75,13 +76,13 @@ class _SendRespuestaState extends State<SendRespuesta> {
             )
           ),
           StreamBuilder<String>(
-            stream: _send(context),
+            stream: _send(context, idTmpPzaCot),
             builder: (_, AsyncSnapshot snap) {
 
               String txt = snap.data;
               if(snap.data.toString().startsWith('Listo')) {
                 txt = '¡COTIZACIÓN LISTA! ${DialogsOf.icon('fel')}';
-                Future.delayed(const Duration(milliseconds: 150), (){
+                Future.delayed(const Duration(milliseconds: 150), () {
                   widget.onFinish(_);
                 });
               }
@@ -123,7 +124,7 @@ class _SendRespuestaState extends State<SendRespuesta> {
   }
 
   ///
-  Stream<String> _send(BuildContext context) async* {
+  Stream<String> _send(BuildContext context, int idTmpPzaCot) async* {
 
     yield 'Preparandolo TODO';
     
@@ -132,7 +133,6 @@ class _SendRespuestaState extends State<SendRespuesta> {
     final pzaEm = PiezasRepository();
     final cnfEm = ConfigAppRepository();
     final prov  = context.read<GestDataProvider>();
-    final ordP  = context.read<OrdenesProvider>();
     final own   = await context.read<SignInProvider>().getIdUser();
 
     Map<String, dynamic> data = prov.getData();
@@ -143,11 +143,13 @@ class _SendRespuestaState extends State<SendRespuesta> {
     final pzaS  =  widget.orden.piezas.firstWhere(
       (element) => element.id == widget.idPieza, orElse: () => PiezaEntity()
     );
+    if(pzaS.id == 0) { return; }
+
     InventarioEntity inv = InventarioEntity();
 
     final piezasMap = pzaS.toJson();
+    piezasMap['id'] = idTmpPzaCot;
 
-    piezasMap['id'] = DateTime.now().millisecondsSinceEpoch;
     yield 'Registrando Pieza';
 
     int idPzaTrue = await pzaEm.setPizaInBox(PiezaEntity()..fromServer(piezasMap));
@@ -178,16 +180,8 @@ class _SendRespuestaState extends State<SendRespuesta> {
 
     yield 'Imágenes Listas!!';
     await Future.delayed(const Duration(milliseconds: 250));
-
-    // Dado que las imagenes ya estan en el servidor.
-    // Primero guardamos los datos en el dispositivo como Inventario.
-    yield 'Guardando Inventario';
-    invEm.setBoxInv(inv);
     
     Map<String, dynamic> dataSend = inv.toServer();
-    dataSend['idCamp'] = widget.globals.idCampaingCurrent;
-    dataSend['idsFromLink'] = (widget.globals.idsFromLinkCurrent.isEmpty)
-      ? 'home' : widget.globals.idsFromLinkCurrent;
     dataSend['own'] = own;
     
     yield 'Enviando Datos de Cotización';
@@ -195,17 +189,17 @@ class _SendRespuestaState extends State<SendRespuesta> {
 
     if(!result['abort']) {
       
+      // Guardamos los datos en el dispositivo como Inventario.
+      yield 'Guardando Inventario';
+      invEm.setBoxInv(inv);
+      
       if(widget.globals.invFilter.containsKey(widget.orden.id)) {
-        widget.globals.invFilter[widget.orden.id]!.add(widget.idPieza);
+        if(!widget.globals.invFilter[widget.orden.id]!.contains(widget.idPieza)) {
+          widget.globals.invFilter[widget.orden.id]!.add(widget.idPieza);
+        }
       }else{
         widget.globals.invFilter.putIfAbsent(widget.orden.id, () => [widget.idPieza]);
       }
-      
-      // De la cache tambien tengo que borrar la pieza de la orden cotizada.
-      OrdenEntity gestOrd = widget.orden;
-      gestOrd.piezas.removeWhere((element) => element.id == widget.idPieza);
-      ordP.items().removeWhere((element) => element.id == widget.orden.id);
-      ordP.items().insert(0, gestOrd);
 
       await cnfEm.setNextModoCotiza();
       yield 'Listo, Redirigiendo...';
@@ -213,4 +207,5 @@ class _SendRespuestaState extends State<SendRespuesta> {
       yield 'ERROR!, ${result['body']}';
     }
   }
+
 }

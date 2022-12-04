@@ -1,11 +1,11 @@
+import 'package:cotizo/page/estanque.dart';
 import 'package:go_router/go_router.dart';
 
 import '../vars/globals.dart';
 import '../config/sngs_manager.dart';
 
 import '../page/splash_page.dart';
-import '../page/gest_data_page.dart';
-import '../page/lst_piezas_by_orden.dart';
+import '../page/pta_in_down_orden_by_id.dart';
 import '../page/home_page.dart';
 import '../page/sign_app_page.dart';
 
@@ -31,35 +31,21 @@ class MyRutas {
         builder: (context, state) => const SignAppPage(),
       ),
       GoRoute(
-        name: 'gestData',
-        path: '/gest-data/:idP',
-        builder: (context, state) => GestDataPage(idP: int.parse('${state.params['idP']}')),
-      ),
-      GoRoute(
-        name: 'lstPiezasByOrden',
+        name: 'downDataOrden',
         path: '/cotizo/:ids',
-        builder: (context, state) => LstPiezasByOrden(ids: '${state.params['ids']}'),
+        builder: (context, state) => PtaInDownOrdenById(ids: '${state.params['ids']}'),
       ),
       GoRoute(
-        name: 'lstPiezasByOrdenRefresh',
-        path: '/cot/:ids',
-        builder: (context, state) => LstPiezasByOrden(ids: '${state.params['ids']}'),
+        name: 'estanque',
+        path: '/estanque/:idOrden',
+        builder: (context, state) => Estanque(idOrden: '${state.params['idOrden']}'),
       ),
     ],
     initialLocation: '/',
     // refreshListenable: _prov,
     redirect: (_, state) {
 
-      if(globals.histUri.contains(state.location)){
-        globals.histUri.remove(state.location);
-      }
-      if(state.location != '/') {
-        if(state.location != '/login') {
-          if(!state.location.contains('/gest-data/')) {
-            globals.histUri.add(state.location);
-          }
-        }
-      }
+      if(state.location != '/') {  globals.setHistUri(state.location); }
       // if (!_prov.isLogin) return (state.subloc == '/login') ? null : '/login';
       // if (_prov.isLogin) return '/';
       return null;

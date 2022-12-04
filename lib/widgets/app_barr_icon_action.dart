@@ -1,6 +1,7 @@
+import 'package:cotizo/repository/apartados_repository.dart';
 import 'package:flutter/material.dart';
-import 'package:firebase_messaging/firebase_messaging.dart' show AuthorizationStatus;
 import 'package:provider/provider.dart';
+import 'package:firebase_messaging/firebase_messaging.dart' show AuthorizationStatus;
 
 import '../api/push_msg.dart';
 import '../config/sngs_manager.dart';
@@ -28,6 +29,7 @@ class _AppBarIconActionState extends State<AppBarIconAction> {
   final _ntgEm   = NoTengoRepository();
   final _cngEm   = ConfigAppRepository();
   final _userEm  = AcountUserRepository();
+  final _apEm    = ApartadosRepository();
   final icono = ValueNotifier<Map<String, dynamic>>({});
   final colorPas = const Color.fromARGB(255, 107, 107, 107);
   
@@ -58,6 +60,7 @@ class _AppBarIconActionState extends State<AppBarIconAction> {
   /// 'Actualizando Credenciales'
   Future<void> _checkGoData(_) async {
     
+    final prov = context.read<OrdenesProvider>();
     final sign = context.read<SignInProvider>();
     final push = getIt<PushMsg>();
     if(sign.yaCheckApp){
@@ -65,31 +68,30 @@ class _AppBarIconActionState extends State<AppBarIconAction> {
       return; 
     }
 
+    
+    // Modo de cotizacion
     icono.value = {'ico':Icons.notifications_active, 'color': const Color.fromARGB(255, 53, 82, 245)};
     context.read<GestDataProvider>().modoCot = await _cngEm.getModoCotiza();
     sign.desablePushInt = await _cngEm.getStatusNotiff();
-    await push.init();
-    if(sign.isFirstIniApp) {
-      Future.delayed(const Duration(milliseconds: 5000), () async {
-        final prov = context.read<OrdenesProvider>();
-        final orden = await prov.getParaNotificFromRange();
-        push.makePushInt(orden);
+    
+    // Revisar si hay apartados
+    var hasAp = await _apEm.getAllApartado();
+    if(hasAp.isNotEmpty) {
+      prov.cantApartados = await prov.solEm.getCantApartados();
+      Future.delayed(const Duration(milliseconds: 1000), (){
+        // Al colocar esto en true, la app, ya no vuelve a irse a Apartados
+        // cada ves que refresca home.
+        prov.initApp = true;
       });
     }
 
-    sign.isFirstIniApp = false;
+    hasAp = [];
+
     if(sign.goForData) {
       
       icono.value = {'ico':Icons.filter_alt, 'color': const Color.fromARGB(255, 237, 238, 241)};
       await Future.delayed(const Duration(milliseconds: 250));
       _globals.invFilter = await _invEm.getAllInvToFilter();
-
-      icono.value = {'ico':Icons.point_of_sale_sharp, 'color': const Color.fromARGB(255, 8, 223, 26)};
-      await Future.delayed(const Duration(milliseconds: 250));
-      final ntgIds = await _ntgEm.getAllNoTengo();
-      if(ntgIds.isNotEmpty) {
-        _ntgEm.cleanAlmacenNtFromServer(ntgIds);
-      }
 
       icono.value = {'ico':Icons.point_of_sale_sharp, 'color': const Color.fromARGB(255, 8, 223, 26)};
       await Future.delayed(const Duration(milliseconds: 250));
@@ -111,10 +113,37 @@ class _AppBarIconActionState extends State<AppBarIconAction> {
           await _userEm.setTokenServer(_userEm.result['body']);
         }
       }
+      _userEm.cleanResult();
     }
 
+    icono.value = {'ico':Icons.point_of_sale_sharp, 'color': const Color.fromARGB(255, 8, 223, 26)};
+    await Future.delayed(const Duration(milliseconds: 250));
+    await cleanAlmacenNtFromServer();
+
+    await push.init();
+    if(sign.isFirstIniApp) {
+      int time = (prov.items().isNotEmpty) ? 150 : 5000;
+      Future.delayed(Duration(milliseconds: time), () async {
+        final orden = await prov.getParaNotificFromRange();
+        if(orden != null && orden.id != 0) {
+          push.makePushInt(orden);
+        }
+      });
+    }
+
+    sign.isFirstIniApp = false;
     sign.yaCheckApp = true;
     _setIconStatic(push.authPush);
+  }
+
+  ///
+  Future<void> cleanAlmacenNtFromServer() async {
+
+    // Tomar la fecha de la ultima ves que se reviso el no tengo.
+    if(await _cngEm.isTimeUpdateNtg()) {
+      await _ntgEm.recoveryAllNtFromServer('${_globals.idUser}');
+      await _cngEm.setDateTimeNtg();
+    }
   }
 
   ///

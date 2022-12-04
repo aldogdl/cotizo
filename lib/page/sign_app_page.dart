@@ -1,3 +1,5 @@
+import 'package:cotizo/repository/config_app_repository.dart';
+import 'package:cotizo/repository/no_tengo_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
@@ -19,6 +21,8 @@ class SignAppPage extends StatefulWidget {
 
 class _SignAppPageState extends State<SignAppPage> {
 
+  final _ntgEm = NoTengoRepository();
+  final _cnfEm = ConfigAppRepository();
   final ValueNotifier<String> _isLoading = ValueNotifier<String>('¡Autenticarme Ahora!');
   final Globals _globals = getIt<Globals>();
   final _frmKey = GlobalKey<FormState>();
@@ -74,12 +78,12 @@ class _SignAppPageState extends State<SignAppPage> {
                   height: MediaQuery.of(context).size.width * 0.4,
                   child: SvgPicture.asset(
                     'assets/svgs/avatar_male.svg',
-                    semanticsLabel: 'Autenticate'
+                    semanticsLabel: 'AutentÍcate'
                   ),
                 ),
                 const SizedBox(height: 20),
                 const Text(
-                  'AUTENTICATE POR FAVOR',
+                  'AUTENTÍCATE POR FAVOR',
                   textScaleFactor: 1,
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
@@ -305,8 +309,18 @@ class _SignAppPageState extends State<SignAppPage> {
       account.roles = List<String>.from(_signIn.userEm.result['body']['u_roles']);
       await _signIn.userEm.setDataUserInLocal(account);
       _signIn.isLogin = true;
+
+      // Necesitamos hacer una revision para ver si hay filtros de No tengo para
+      // este usuario, ya que es la primera ves que abre la app, o se desinstalo
+      await _checkFiltrosNoTengo(account.id);
       nav.go('/');
     }
   }
 
+  ///
+  Future<void> _checkFiltrosNoTengo(int idCot) async {
+
+    await _ntgEm.recoveryAllNtFromServer('$idCot');
+    await _cnfEm.setDateTimeNtg();
+  }
 }

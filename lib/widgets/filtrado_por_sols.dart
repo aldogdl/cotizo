@@ -61,12 +61,9 @@ class _FiltradoPorSolsState extends State<FiltradoPorSols> {
             );
           }
         }
-
+        
         return const Center(
-          child: SizedBox(
-            width: 40, height: 40,
-            child: CircularProgressIndicator(),
-          ),
+          child: Icon(Icons.discount, size: 150, color: Color.fromARGB(255, 58, 58, 58)),
         );
       },
     );
@@ -77,7 +74,17 @@ class _FiltradoPorSolsState extends State<FiltradoPorSols> {
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 14),
-      child: TileOrdenSoli(item: orden, box: SharedDataOrden())
+      child: TileOrdenSoli(
+        item: orden,
+        box: SharedDataOrden(),
+        onTap: (_){
+          _ords.filterBySols['ords'] = [orden.id];
+          _ords.typeFilter['current'] = 'ordenes';
+          _ords.typeFilter['select']  = 'ordenes';
+          widget.onPress(null);
+          Navigator.of(context).pop();
+        },
+      )
     );
   }
 
@@ -90,9 +97,8 @@ class _FiltradoPorSolsState extends State<FiltradoPorSols> {
       _isInit = true;
       _ords = context.read<OrdenesProvider>();
     }
-
-    final res = await _ords.getRange();
-    return res;
+    
+    return _ords.items();
   }
 
 }

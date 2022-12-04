@@ -9,7 +9,7 @@ enum ChatKey {
 }
 enum HiveBoxs {
   account, autos, chat, contact, inventario, marca, modelo, pieza, noTengo,
-  configapp
+  configapp, pushIn, apartados
 }
 
 const configappHT = 1;
@@ -21,3 +21,5 @@ const modeloHT = 6;
 const piezaHT = 7;
 const accountHT = 8;
 const noTengoHT = 9;
+const pushIn = 10;
+const apartadosHT = 11;

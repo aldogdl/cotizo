@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import 'menu_main.dart';
 import '../config/sngs_manager.dart';
-import '../services/my_get.dart';
+import '../services/pop_app.dart';
 import '../vars/globals.dart';
 import '../widgets/app_barr_icon_action.dart';
-import '../widgets/show_dialogs.dart';
 
 class AscaffoldMain extends StatelessWidget {
 
@@ -27,17 +26,28 @@ class AscaffoldMain extends StatelessWidget {
   Widget build(BuildContext context) {
 
     final size = MediaQuery.of(context).size;
+    final onWill = PopApp();
 
     return SafeArea(
       child: WillPopScope(
-        onWillPop: () => _onWill(context),
+        onWillPop: () async {
+          onWill.onWill(context);
+          return Future.value(false);
+        },
         child: Scaffold(
           backgroundColor: _globals.bgMain,
           appBar: AppBar(
-            backgroundColor: _globals.secMain,
+            backgroundColor: _globals.bgAppBar,
             elevation: 0,
-            title: _tituloApp(),
+            title: _tituloApp(context),
             bottom: bottom,
+            actions: [
+              IconButton(
+                onPressed: () => _showMwnu(context),
+                visualDensity: VisualDensity.compact,
+                icon: const Icon(Icons.menu, size: 20)
+              )
+            ],
           ),
           body: SizedBox(
             width: size.width, height: size.height,
@@ -50,7 +60,7 @@ class AscaffoldMain extends StatelessWidget {
   }
 
   ///
-  Widget _tituloApp() {
+  Widget _tituloApp(BuildContext context) {
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.end,
@@ -86,55 +96,22 @@ class AscaffoldMain extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 8),
-        const AppBarIconAction()
+        const AppBarIconAction(),
       ],
     );
   }
   
   ///
-  Future<bool> _onWill(BuildContext context) async {
+  void _showMwnu(BuildContext context) {
 
-    late final GoRouter nav;
-
-    if(Mget.ctx != null) {
-      try {
-        nav = GoRouter.of(Mget.ctx!);
-      } catch (e) {
-        nav = GoRouter.of(context);
-      }
-    }else{
-      nav = GoRouter.of(context);
-    }
-
-    if(_globals.histUri.isEmpty) {
-      if(nav.canPop()) {
-        return Future.value(true);
-      }
-      if(_globals.isFromWhatsapp) {
-        return Future.value(true);
-      }
-      bool? acc = await _showAlertExit(context);
-      acc = (acc == null) ? false : acc;
-      if(acc) {
-        return Future.value(true);
-      }
-      nav.go('/home');
-      return Future.value(false);
-    }else{
-      final goBack = _globals.getBack();
-      nav.go(goBack);
-      return Future.value(false);
-    }
-  }
-
-  ///
-  Future<bool?> _showAlertExit(BuildContext context) async {
-
-    return await ShowDialogs.alert(
-      context, 'exitApp', hasActions: true,
-      labelNot: 'SEGUIR AQUÍ',
-      labelOk: 'SÍ, SALIR'
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: _globals.bgMain,
+      enableDrag: false, isDismissible: false, isScrollControlled: true,
+      builder: (_) => MediaQuery(
+        data: MediaQueryData.fromWindow(WidgetsBinding.instance.window),
+        child: MenuMain()
+      )
     );
   }
-
 }

@@ -64,10 +64,7 @@ class _FiltradoPorMdsState extends State<FiltradoPorMds> {
         }
 
         return const Center(
-          child: SizedBox(
-            width: 40, height: 40,
-            child: CircularProgressIndicator(),
-          ),
+          child: Icon(Icons.minor_crash, size: 150, color: Color.fromARGB(255, 58, 58, 58)),
         );
       },
     );
@@ -83,7 +80,8 @@ class _FiltradoPorMdsState extends State<FiltradoPorMds> {
         tipo: 'mdl',
         onPress: (item) {
           _ords.filterBySols = item;
-          _ords.typeFilter = 'modelos';
+          _ords.typeFilter['current'] = 'modelos';
+          _ords.typeFilter['select']  = 'modelos';
           widget.onPress(null);
           Navigator.of(context).pop();
         },
@@ -100,9 +98,8 @@ class _FiltradoPorMdsState extends State<FiltradoPorMds> {
       _isInit = true;
       _ords = context.read<OrdenesProvider>();
     }
-
-    final ordenes = await _ords.getRange();
-    final res = await _solEm.sortPerMoelos(ordenes);
+    
+    final res = await _solEm.sortPerModelos(_ords.items());
     return res;
   }
 

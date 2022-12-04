@@ -1,5 +1,7 @@
-import 'package:cotizo/entity/no_tengo_entity.dart';
+import 'package:cotizo/repository/apartados_repository.dart';
 
+import '../entity/apartados_entity.dart';
+import '../entity/no_tengo_entity.dart';
 import 'acount_user_repository.dart';
 import 'autos_repository.dart';
 import 'inventario_repository.dart';
@@ -24,6 +26,7 @@ class SoliEm {
   final _iem = InventarioRepository();
   final _usEm= AcountUserRepository();
   final _ntEm= NoTengoRepository();
+  final _apEm= ApartadosRepository();
 
   // Usado para determinar si una orden fue hidratada y no estaba
   // incluida en la lista de cache. si es true, hay que agregarla.
@@ -41,22 +44,17 @@ class SoliEm {
   Future<List<OrdenEntity>> setOrdenFromServer(
     List<Map<String, dynamic>> data, List<OrdenEntity> currents) async 
   {
-    await _pem.openBox();
     List<OrdenEntity> ords = [];
     for (var i = 0; i < data.length; i++) {
       final ord = await hidratarOrdenFull(data[i], currents);
-      if(ord != null) {
-        if(addToList) {
-          ords.add(ord);
-        }
-      }
+      if(addToList) { ords.add(ord); }
     }
 
     return ords;
   }
 
   ///
-  Future<OrdenEntity?> hidratarOrdenFull(Map<String, dynamic> orden, List<OrdenEntity> currents) async {
+  Future<OrdenEntity> hidratarOrdenFull(Map<String, dynamic> orden, List<OrdenEntity> currents) async {
 
     var ord = OrdenEntity();
     ord.id = orden['id'];
@@ -71,7 +69,7 @@ class SoliEm {
         ord = await hidratarPiezasFS(List<Map<String, dynamic>>.from(orden['piezas']), ord);
       }
 
-      if(ord.piezas.isEmpty) { return null; }
+      if(ord.piezas.isEmpty) { addToList = false; return ord; }
 
       // Proceguimos con el auto
       if(ord.auto == 0) {
@@ -97,12 +95,14 @@ class SoliEm {
     piezas = await cleanPzasIfHasEnInventario(piezas, ord.id);
     if(piezas.isEmpty){
       ord.piezas = [];
+      ord.id = -1;
       return ord;
     }
     
     piezas = await cleanPzasIfNoTengo(piezas, ord.id);
     if(piezas.isEmpty){
       ord.piezas = [];
+      ord.id = -2;
       return ord;
     }
 
@@ -111,13 +111,6 @@ class SoliEm {
       // Necesito pasarlo por los filtro para ver si el cotizador maneja esta pieza
       // TODO
       bool isPass = true; // esta sera la que indica si paso el filtro o no
-
-      // Revisamos que la pieza no se encuentre entre el inventario
-      if(_globals.invFilter.containsKey(ord.id)) {
-        if(_globals.invFilter[ord.id]!.contains(piezas[p]['id'])) {
-          isPass = false;
-        }
-      }
 
       if(isPass) {
         
@@ -149,8 +142,8 @@ class SoliEm {
   Future<List<Map<String, dynamic>>> cleanPzasIfHasEnInventario
     (List<Map<String, dynamic>> piezas, int idOrd) async
   {
-    if(_globals.invFilter.containsKey(idOrd)) {
 
+    if(_globals.invFilter.containsKey(idOrd)) {
       // Primero revisamos las piezas nuevas que nos mandan
       for (var i = 0; i < _globals.invFilter[idOrd]!.length; i++) {
         int indx = piezas.indexWhere((p) => p['id'] == _globals.invFilter[idOrd]![i]);
@@ -178,24 +171,42 @@ class SoliEm {
   }
 
   ///
-  Future<void> setNoTengo(int idOrd, int idPza, int idUser, {String fileSee = ''}) async {
-    
-    final nt = NoTengoEntity()
-    ..idCot = idUser
-    ..idOrd = idOrd
-    ..idPza = idPza;
-    await _ntEm.setBoxNoTengo(nt, fileSee: fileSee);
-  }
+  Future<void> setNoTengo(int idO, int idPza) async =>
+    await _ntEm.setBoxNoTengo(idO, idPza);
+
+  ///
+  Future<void> setApartado(int idO, int idPza) async =>
+    await _apEm.setBox(idO, idPza);
+
+  ///
+  Future<void> resetApartado() async => await _apEm.resetTable();
+  
+  ///
+  Future<void> deleteOrdenApartadosById(int idOrd) async
+    => await _apEm.deleteOrdenApartadosById(idOrd);
+  
+  ///
+  Future<void> deletePiezaApartadosById(int idOrden, int idP) async
+    => await _apEm.deletePiezaApartadosById(idOrden, idP);
+  
+  ///
+  Future<int> getCantApartados() async
+    => await _apEm.getCantApartados();
+  
+  ///
+  Future<List<ApartadosEntity>> getAllApartado() async => await _apEm.getAllApartado();
+
+  ///
+  Future<List<NoTengoEntity>> getAllNoTengo() async => await _ntEm.getAllNoTengo();
 
   /// [COTIZADAS] Revisamos cada pieza de la orden para ver si existe en el inventario
   /// si existe la eliminamos y si la orden termina bacia retornamos null.
   /// [NO LA TENGO] Revisa que la pieza no este entre las marcadas como NO la TENGO
   Future<OrdenEntity?> cleanOrdenEmpty(OrdenEntity orden) async {
 
-    // Primero revisamos las NO LA TENGO
     if(orden.piezas.isNotEmpty) {
       for (var i = 0; i < orden.piezas.length; i++) {
-        final noT = await _ntEm.existeInBoxNoTengo(orden.id, orden.piezas[i].id);
+        final noT = await _ntEm.existeInBoxNoTengo(orden.id, orden.piezas[i].id);        
         if(noT) {
           orden.piezas.removeAt(i);
         }
@@ -206,6 +217,7 @@ class SoliEm {
       return null;
     }
 
+    // Si la orden no esta entre la lista de inventario la retorno
     if(!_globals.invFilter.containsKey(orden.id)) {
       return orden;
     }
@@ -283,10 +295,11 @@ class SoliEm {
 
           if(metidas.contains(auto.marca)) {
             
-            int indx = sort.indexWhere((element) => element['mrk'] == auto.marca);
+            int indx = sort.indexWhere((s) => s['mrk'] == auto.marca);
             if(indx != -1) {
               final tite = Map<String, dynamic>.from(sort[indx]['tile']);
-              tite['cPzas'] = tite['cPzas'] + ords[i].piezas.length;
+              final cp = ords[i].piezas.where((p) => p.piezaName != p.avAt);
+              tite['cPzas'] = tite['cPzas'] + cp.length;
               var ordenes = List<int>.from(tite['ords']);
               ordenes.add(ords[i].id);
               tite['ords'] = ordenes;
@@ -295,9 +308,10 @@ class SoliEm {
           }else{
 
             final marca = await getMarcaById(auto.marca);
+            final cp = ords[i].piezas.where((p) => p.piezaName != p.avAt);
             Map<String, dynamic> tile = {
               'logo':marca!.logo, 'marca':marca.nombre, 'idMrk': auto.marca,
-              'cPzas': ords[i].piezas.length, 'isNac': auto.isNac,
+              'cPzas': cp.length, 'isNac': auto.isNac,
               'ords': [ords[i].id], 'created': ords[i].createdAt
             };
             metidas.add(auto.marca);
@@ -308,11 +322,12 @@ class SoliEm {
       }
     }
     metidas = [];
+    sort.sort((a, b) => a['tile']['marca'].compareTo(b['tile']['marca']));
     return sort;
   }
 
   ///
-  Future<List<Map<String, dynamic>>> sortPerMoelos(List<OrdenEntity> ords) async {
+  Future<List<Map<String, dynamic>>> sortPerModelos(List<OrdenEntity> ords) async {
 
     List<Map<String, dynamic>> sort = [];
     List<int> metidas = [];
@@ -324,10 +339,13 @@ class SoliEm {
 
           if(metidas.contains(auto.modelo)) {
             
-            int indx = sort.indexWhere((element) => element['mdl'] == auto.modelo);
+            int indx = sort.indexWhere((s) => s['mdl'] == auto.modelo);
             if(indx != -1) {
+
               final tite = Map<String, dynamic>.from(sort[indx]['tile']);
-              tite['cPzas'] = tite['cPzas'] + ords[i].piezas.length;
+              final cp = ords[i].piezas.where((p) => p.piezaName != p.avAt);
+              tite['cPzas'] = tite['cPzas'] + cp.length;
+
               var ordenes = List<int>.from(tite['ords']);
               ordenes.add(ords[i].id);
               tite['ords'] = ordenes;
@@ -338,10 +356,11 @@ class SoliEm {
 
             final marca = await getMarcaById(auto.marca);
             final modelo = await getModeloById(auto.modelo);
+            final cp = ords[i].piezas.where((p) => p.piezaName != p.avAt);
             Map<String, dynamic> tile = {
               'logo':marca!.logo, 'marca':marca.nombre, 'idMrk': auto.marca,
               'modelo':modelo!.nombre, 'idMd': modelo.id,
-              'cPzas': ords[i].piezas.length, 'isNac': auto.isNac,
+              'cPzas': cp.length, 'isNac': auto.isNac,
               'ords': [ords[i].id], 'created': ords[i].createdAt
             };
             metidas.add(auto.modelo);
@@ -352,6 +371,7 @@ class SoliEm {
       }
     }
     metidas = [];
+    sort.sort((a, b) => a['tile']['modelo'].compareTo(b['tile']['modelo']));
     return sort;
   }
 
@@ -360,4 +380,8 @@ class SoliEm {
 
   ///
   Future<int> getIdUser() async => _usEm.getIdUser();
+
+  /// Recuperamos una carnada desde el servidor.
+  Future<Map<String, dynamic>> fetchCarnadaFromServer(Map<String, dynamic> ansuelo) async
+    => await oem.fetchCarnadaFromServer(ansuelo);
 }

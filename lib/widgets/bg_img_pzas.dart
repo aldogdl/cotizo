@@ -19,8 +19,8 @@ class BGImgPzas extends StatelessWidget {
       decoration: BoxDecoration(
         image: DecorationImage(
           image: const AssetImage('assets/images/bg.jpg'),
-          repeat: ImageRepeat.noRepeat,
-          fit: BoxFit.cover,
+          repeat: ImageRepeat.repeat,
+          fit: BoxFit.none,
           invertColors: true,
           colorFilter: ColorFilter.mode(bgColor, BlendMode.dst)
         )

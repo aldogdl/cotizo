@@ -146,6 +146,61 @@ class ConfigAppRepository {
   }
 
   ///
+  Future<bool> getShowDialogApartar() async {
+
+    await openBox();
+    if(box != null) {
+      if(box!.values.isNotEmpty) {
+        return box!.values.first.showAvisoAparta;
+      }
+    }
+    return false;
+  }
+
+  ///
+  Future<void> setShowDialogApartar(bool stt) async {
+
+    await openBox();
+    if(box != null) {
+      if(box!.values.isNotEmpty) {
+        box!.values.first.showAvisoAparta = stt;
+        box!.values.first.save();
+      }
+    }
+  }
+
+  ///
+  Future<void> setDateTimeNtg() async {
+
+    await openBox();
+    if(box != null) {
+      if(box!.values.isNotEmpty) {
+        box!.values.first.lastCheckNt = DateTime.now().toIso8601String();
+        box!.values.first.save();
+      }
+    }
+  }
+
+  /// Revisamos si ya es tiempo de actualizar la tabla de filtros No tengo
+  Future<bool> isTimeUpdateNtg() async {
+
+    await openBox();
+    if(box != null) {
+      if(box!.values.isNotEmpty) {
+        if(box!.values.first.lastCheckNt.isNotEmpty) {
+          final last = DateTime.parse(box!.values.first.lastCheckNt);
+          final hoy = DateTime.now();
+          final diff = hoy.difference(last);
+          return (diff.inDays > 2) ? true : false;
+        }else{
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  ///
   Future<void> updateIfNotEmpty() async {
 
     await openBox();

@@ -1,14 +1,21 @@
 class MyPath {
 
-  static const env = 'dev';
+  static const env = 'prod';
   static const baseProd = 'autoparnet.com';
   static const baseDev  = '192.168.1.72';
 
   ///
-  static String getUriFotoPieza(String foto) {
+  static String getUriFotoPieza(String foto, {bool isThubm = false}) {
 
-    final base = 'to_orden_tmp/$foto';
-    return Uri.https(baseProd, base).toString();
+    String base = 'to_orden_tmp/$foto';
+    if(isThubm) {
+      base = 'to_orden_tmp/p_$foto';
+    }
+    if(env != 'dev') {
+      return Uri.https(baseProd, base).toString();
+    }
+    base = 'autoparnet/public_html/$base';
+    return Uri.http(baseDev, base).toString();
   }
 
   ///
@@ -41,11 +48,12 @@ class MyPath {
       'api_is_token_caducado' : 'is-token-caducado',
       'get_orden_and_pieza': 'get-orden-and-pieza',
       'get_ordenes_and_piezas': 'get-ordenes-and-piezas',
-      'fetch_next_ordto_cot': 'fetch-next-ordto-cot',
+      'get_piezas_apartadas': 'get-piezas-apartadas',
+      'fetch_carnada': 'fetch-carnada',
       'upload_img_rsp': 'upload-img',
       'set_resp': 'set-resp',
-      'set_no_tengo': 'set-no-tengo',
-      'get_all_ntg_filtros': 'get-all-ntg-filtros',
+      'set_reg_of': 'set-reg-of',
+      'get_all_my_ntg': 'get-all-my-ntg',
       'get_user_by_campo': 'get-user-by-campo',
       'set_token_messaging_by_id_user': 'set-token-messaging-by-id-user',
     };

@@ -1,27 +1,17 @@
 import 'dart:io' show File;
 
 import 'package:camera/camera.dart' show XFile;
-import 'package:cotizo/entity/push_in_entity.dart';
-import 'package:flutter/foundation.dart' show compute;
-import 'package:flutter/material.dart' show BuildContext, ChangeNotifier;
+import 'package:flutter/material.dart' show BuildContext, ChangeNotifier, Navigator;
 import 'package:cron/cron.dart';
-import 'package:go_router/go_router.dart';
 
-import '../api/push_msg.dart';
-import '../repository/ordenes_repository.dart';
-import '../config/sngs_manager.dart';
 import '../entity/chat_entity.dart';
-import '../services/isolates/task_server_isolate.dart';
+import '../repository/ordenes_repository.dart';
 import '../services/my_image/my_im.dart';
-import '../vars/globals.dart';
-import '../widgets/mensajes/get_anet_msg.dart';
 import '../vars/constantes.dart';
 import '../vars/enums.dart';
+import '../widgets/mensajes/get_anet_msg.dart';
 
 class GestDataProvider with ChangeNotifier {
-
-  final _globals = getIt<Globals>();
-  final _pushs = getIt<PushMsg>();
 
   Cron cronImgProcess = Cron();
   final int espera = 3;
@@ -32,14 +22,9 @@ class GestDataProvider with ChangeNotifier {
     _msgs = [];
     _imgsListas = [];
     _imgProcessCurrent = '';
-    _globals.idOrdenCurrent = 0;
-    _globals.idsFromLinkCurrent = '';
-    _globals.idCampaingCurrent = '';
     _currentCampo = Campos.none;
     _ftsGestDel = [];
     _changeKeyboard = 'txt';
-    ansuelo = {};
-    carnada = {};
     onCheckFotos = false;
     reviciones = 0;
     imgTmps = 0;
@@ -56,6 +41,12 @@ class GestDataProvider with ChangeNotifier {
       Campos.isCheckData: false
     };
   }
+  /// Ei ID de la orden que se esta cotizando
+  int idOrdenCurrentCot = 0;
+  /// Es usada para saber si el usuario cotizó, cuando cancela la cotizacion
+  /// y sale de la seccion se va al estanque, pero no se hace nada, solo si
+  /// cotizo se muestra carnada
+  bool isMakeCot = false;
 
   /// Cambiamos el modo de cotizar.
   int _modoCot = 1;
@@ -239,10 +230,6 @@ class GestDataProvider with ChangeNotifier {
     _msgs.addAll(messages);
   }
 
-  /// La info. recuperada para atrapar al cotizador y no dejarlo salir del estanque
-  Map<String, dynamic> carnada = {};
-  // Es la info. necesaria para poder recuperar la carnada
-  Map<String, dynamic> ansuelo = {};
   String _callFrom = '';
   String get callFrom => _callFrom;
   set callFrom(String callF) {
@@ -427,7 +414,6 @@ class GestDataProvider with ChangeNotifier {
     if(msg != null) {
       msg.campo = currentCampo;
       addMsgs(msg);
-      _buildCarnadaAndSetRegSee();
     }
     changeKeyboard = 'txt';
   }
@@ -469,34 +455,8 @@ class GestDataProvider with ChangeNotifier {
             }
           }
         }else{
-
-          // Salir de cotizar al iniciar, antes de fotos.
-          if(ansuelo.isNotEmpty) {
-
-            bool withPush = true;
-            if(carnada.isNotEmpty) {
-              withPush = false;
-              launchCarnada();
-            }
-            _fetchCarnadaFiltrosAndSee(
-              launchPush: withPush, hizoCot: false, setFiltro: false
-            );
-          }
-
           clean();
-          if(res.containsKey('backUri')) {
-            context.go(res['backUri']);
-          }else{
-
-            String goBack = '/home';
-            if(_globals.histUri.isNotEmpty) {
-              goBack = _globals.getBack();
-            }
-            if(goBack == '/home') {
-
-            }
-            context.go(goBack);
-          }
+          Navigator.of(context).pop();
         }
         break;
       case ChatKey.errAwaitFotos:
@@ -663,54 +623,6 @@ class GestDataProvider with ChangeNotifier {
     }
   }
 
-  ///
-  void launchCarnada() {
-
-    if(carnada.isNotEmpty) {
-      _pushs.makePushInterno( PushInEntity()..fromServer(carnada) );
-      carnada = {};
-    }
-  }
-
-  /// [CARNADA] Recuperamos la siguiente orden para cotizar desde el servidor
-  /// [REG SEE] y/o guardamos el registro de atendido, solo si viene desde HOME
-  void _buildCarnadaAndSetRegSee() {
-
-    if(_globals.idOrdenCurrent != 0 && ansuelo.isNotEmpty) {
-      bool setFiltro = true;
-      if(ansuelo.containsKey('setF')) {
-        setFiltro = ansuelo['setF'];
-      }
-      _fetchCarnadaFiltrosAndSee(setFiltro: setFiltro);
-    }
-  }
-
-  ///
-  void _fetchCarnadaFiltrosAndSee(
-    {bool launchPush = false, bool hizoCot = true, bool setFiltro = true})
-  {
-
-    ansuelo['setF'] = setFiltro;
-    compute(fetchCarnadaFiltrosAndSee, ansuelo).then((resp) {
-      
-      if(!resp['abort']) {
-
-        if(launchPush) {
-          launchCarnada();
-          return;
-        }else{
-          final body = resp['body'];
-          if(body.isNotEmpty) {
-            if(body.runtimeType == List) {
-              carnada = Map<String, dynamic>.from(body.first);
-            }else{
-              carnada = Map<String, dynamic>.from(body);
-            }
-          }
-        }
-      }
-    });
-  }
 
   // ------------------------- FOTOS ----------------------------------
 
@@ -772,7 +684,7 @@ class GestDataProvider with ChangeNotifier {
     final nameF = MyIm.buildNewNameFile(result['fotoName']);
 
     var response = await _ordEm.uploadImgOfRespuesta(
-      {'filename': '${_globals.idOrdenCurrent}-$nameF', 'data':result['data']}
+      {'filename': '$idOrdenCurrentCot-$nameF', 'data':result['data']}
     );
 
     if(response['body'] == 'ok') {

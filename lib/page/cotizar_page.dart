@@ -1,6 +1,6 @@
+import 'package:cotizo/repository/apartados_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:go_router/go_router.dart';
 
 import '../config/sngs_manager.dart';
 import '../entity/orden_entity.dart';
@@ -19,29 +19,33 @@ import '../widgets/bg_img_pzas.dart';
 import '../widgets/escribir_long.dart';
 import '../widgets/mensajes/get_tipo_burbuja.dart';
 
-class GestDataPage extends StatefulWidget {
+class CotizarPage extends StatefulWidget {
 
   final int idP;
-  const GestDataPage({
+  final int idOrden;
+  final ValueChanged<int> onExit;
+  const CotizarPage({
     Key? key,
     required this.idP,
+    required this.idOrden,
+    required this.onExit,
   }) : super(key: key);
 
   @override
-  State<GestDataPage> createState() => _GestDataPageState();
+  State<CotizarPage> createState() => _CotizarPageState();
 }
 
-class _GestDataPageState extends State<GestDataPage> {
+class _CotizarPageState extends State<CotizarPage> {
 
   final ScrollController _scroolCtr = ScrollController();
   final Globals _globals = getIt<Globals>();
+  final _apEm = ApartadosRepository();
+
   late final GestDataProvider _prov;
   late final OrdenesProvider _ordProv;
   OrdenEntity _orden = OrdenEntity();
-
   bool _isInit = false;
   bool _showOnlyMyMsgs = false;
-  final List<int> _piezasForCot = [];
 
   @override
   void initState() {
@@ -62,8 +66,10 @@ class _GestDataPageState extends State<GestDataPage> {
       _isInit = true;
       _prov = context.read<GestDataProvider>();
       _ordProv = context.read<OrdenesProvider>();
+      _prov.isMakeCot = false;
     }
-
+    _prov.idOrdenCurrentCot = widget.idOrden;
+    
     return Scaffold(
       backgroundColor: _globals.bgMain,
       body: SafeArea(
@@ -292,9 +298,6 @@ class _GestDataPageState extends State<GestDataPage> {
   ///
   Future<void> _initWidget(_) async {
 
-    _prov.ansuelo = {};
-    _prov.carnada = {};
-
     if(_prov.msgs.isEmpty) {
 
       if(_prov.showMsgEstasListo && _prov.modoCot <= 1) {
@@ -329,72 +332,19 @@ class _GestDataPageState extends State<GestDataPage> {
   Future<void> _getOrden() async {
 
     if(_orden.id == 0) {
-
-      _orden = _ordProv.items().firstWhere(
-        (element) => element.id == _globals.idOrdenCurrent, 
-        orElse: () => OrdenEntity()
-      );
-
-      // Se recaba la información necesaria para ir por la siguiente cotizacion
-      // esta info es llamada el ANSUELO.
-      // vamos al servidor por background para mostrarla despues de que el
-      // cotizador termine de cotizar la pieza actual.
-      final auto = await _ordProv.solEm.getAutoById(_orden.auto);
-      if(auto != null) {
-
-        int user = await _ordProv.solEm.getIdUser();
-        // Tomamos los ides de las piezas, para saber al finalizar que esta
-        // orden cuneta con mas piezas, y redirigir al user al estanque
-        _orden.piezas.map((e) {
-          if(e.id != widget.idP) {
-            _piezasForCot.add(e.id);
-          }
-        }).toList();
-
-        String from = 'cth';
-        bool makeRegSee = true;
-        if(_globals.idsFromLinkCurrent.isNotEmpty) {
-          makeRegSee = false;
-          // Pagina llamada desde el link, pero que link?
-          if(!_globals.idsFromLinkCurrent.contains('pin')) {
-            // Si el link contiene el sufix pin, es desde un push interno
-            from = '';
-            // Si dejamos vacio el from, es que viene de Whatsapp
-          }
+      int indOrd = _ordProv.items().indexWhere((ord) => ord.id == widget.idOrden);
+      if(indOrd == -1) {
+        indOrd = _ordProv.apartados().indexWhere((ord) => ord.id == widget.idOrden);
+        if(indOrd != -1) {
+          _orden = _ordProv.apartados()[indOrd];
         }
-
-        // Antes de buscar en el servidor observamos si hay mas ordenes en
-        // cache, para tomar la orden que se mostrará como push al:
-        // a) Final de cotizar,
-        // b) Si cancela por algun medio la cotizacion en curso.
-        _prov.carnada = {};
-        _prov.ansuelo = _orden.buildAnsuelo(user, from, {
-          'idOrdCurrent': _orden.id, 'user': user, 'mk': auto.marca 
-        });
-        _prov.ansuelo['setF'] = makeRegSee;
-        
-        final hasMore = _ordProv.items().where((element) => element.id != _orden.id);
-
-        if(hasMore.isNotEmpty) {
-          
-          if(_piezasForCot.isEmpty) {
-            // Si en cache no es vacio, buscamos la carnada en cache
-            _prov.carnada = await _ordProv.fetchCarnada(
-              auto: {'mk':auto.marca, 'md': auto.modelo, 'a':auto.anio},
-              idOrdCurrent: _orden.id, user: user
-            );
-          }else {
-            // Si la orden cuenta con mas de una pieza, tomamos la misma
-            //orden siguiente pieza
-            _prov.carnada = await _ordProv.fetchCarnadaSameOrden(
-              idPCurrent: widget.idP, idOrdCurrent: _orden.id, user: user
-            );
-          }
-        }else{
-          _prov.ansuelo['at']['ido'] = _orden.id;
-        }
+      }else{
+        _orden = _ordProv.items()[indOrd];
       }
     }
+
+    // Removemos los avisos de atencion de la orden en caso de tenerlos.
+    _orden.piezas.removeWhere((p) => p.piezaName == p.avAt);
   }
 
   ///
@@ -412,6 +362,7 @@ class _GestDataPageState extends State<GestDataPage> {
   ///
   Future<void> _terminarAndSend() async {
 
+    final nav = Navigator.of(context);
     bool isOk =  await _prov.isValidData();
     if(!isOk){ return; }
 
@@ -425,8 +376,14 @@ class _GestDataPageState extends State<GestDataPage> {
         child: SendRespuesta(
           tiempo: DateTime.now(),
           globals: _globals,
-          orden: _orden, idPieza: widget.idP,
-          onFinish: (_) async => await _salirCot(isFinish: true)
+          orden: _orden,
+          idPieza: widget.idP,
+          onFinish: (_) async {
+
+            _prov.isMakeCot = true;
+            if(nav.canPop()) { nav.pop(); }
+            await _salirCot(isFinish: true);
+          }
         ),
       )
     );
@@ -434,8 +391,10 @@ class _GestDataPageState extends State<GestDataPage> {
 
   ///
   Future<void> _salirCot({bool isFinish = false}) async {
-    
+
     bool alertar = false;
+    // Si no es final, revisamos los campos para ver si hay datos, en caso de SI
+    // mostramos un alert al usuario.
     if(!isFinish) {
       _prov.campos.forEach((key, value) {
         if(value.runtimeType != bool) {
@@ -444,10 +403,7 @@ class _GestDataPageState extends State<GestDataPage> {
       });
     }
 
-    if(!alertar) {
-      _okExit(isFinish);
-      return;
-    }
+    if(!alertar) { _okExit(); return; }
 
     ShowDialogs.alert(
       context, 'exitCot',
@@ -456,39 +412,44 @@ class _GestDataPageState extends State<GestDataPage> {
       labelOk: 'SÍ, SALIR'
     ).then((res) {
       res = (res == null) ? false : res;
-      if(res) {
-        _okExit(isFinish);
-      }
+      if(res) { _okExit(); }
     });
   }
 
   ///
-  void _okExit(bool isFinish) {
+  void _okExit() async {
 
-    if(_prov.currentCampo == Campos.none){ return; }
+    int exitCode = 0;
 
-    String goBack = '/';
-    if(isFinish) {
-      if(_prov.carnada.isNotEmpty) {
-        goBack = '/cotizo/${_prov.carnada['link']}';
-        _ordProv.showAviso = true;
-        if(_prov.carnada.containsKey('findedIn')) {
-          _ordProv.avisoFrom = _prov.carnada['findedIn'];
+    if(_prov.isMakeCot) {
+
+      // Necesitamos borrar la pieza cotizada
+      String modo = 'normal';
+      int has = _ordProv.items().indexWhere((o) => o.id == widget.idOrden);
+      if(has == -1) {
+        modo = 'apartados';
+        has = _ordProv.apartados().indexWhere((o) => o.id == widget.idOrden);
+      }
+
+      if(has != -1) {
+        
+        if(modo == 'normal') {
+          _ordProv.items()[has].piezas.removeWhere((p) => p.id == widget.idP);
+          _ordProv.items()[has].piezas.removeWhere(
+            (p) => p.id == widget.idP && p.piezaName == p.avAt
+          );
+        }else{
+          _ordProv.apartados()[has].piezas.removeWhere((p) => p.id == widget.idP);
+          await _apEm.deletePiezaApartadosById(widget.idOrden, widget.idP);
+          _ordProv.cantApartados = await _ordProv.solEm.getCantApartados();
         }
-      }
-    }
 
-    if(goBack == '/') {
-      if(_globals.histUri.isNotEmpty) {
-        goBack = _globals.getBack();
+        final res = await _ordProv.deleteOrdenIfEmpty(widget.idOrden);
+        exitCode = (res) ? 2 : 1;
       }
     }
-    if(!goBack.contains('/cotizo/')) {
-      _prov.launchCarnada();
-    }
-    _piezasForCot.clear();
     _prov.clean();
-    context.go(goBack);
+    widget.onExit(exitCode);
   }
 
   ///

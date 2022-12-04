@@ -28,7 +28,7 @@ class EmptyListIndicator extends StatelessWidget {
           SizedBox(
             height: MediaQuery.of(context).size.height * 0.3,
             child: Opacity(
-              opacity: 0.3,
+              opacity: 0.6,
               child: SvgPicture.asset(
                 'assets/svgs/no_data.svg',
                 fit: BoxFit.contain,
@@ -47,9 +47,9 @@ class EmptyListIndicator extends StatelessWidget {
   ///
   Widget _sinDatos() {
 
-    String msgTit = 'SIN SOLICITUDES POR EL MOMENTO';
-    String msgSubTit = 'ESTAMOS TRABAJANDO PARA TI...';
-    String msgTip = 'Estate al pendiente, cientos de clientes esperan tus Autopartes, nosotros los estamos buscando.';
+    String msgTit = 'ESTAMOS TRABAJANDO PARA TI...';
+    String msgSubTit = 'Cientos de clientes necesitan tus Autopartes, nosotros los estamos buscando.';
+    String msgTip = 'SIN SOLICITUDES POR EL MOMENTO';
     
     if(from == 'filter') {
       msgTit = 'LISTA SIN ELEMENTOS';
@@ -87,7 +87,7 @@ class EmptyListIndicator extends StatelessWidget {
           textScaleFactor: 1,
           textAlign: TextAlign.center,
           style: const TextStyle(
-            fontSize: 15,
+            fontSize: 19,
             fontWeight: FontWeight.w300,
             color: Colors.grey
           )

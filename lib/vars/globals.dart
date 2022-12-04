@@ -3,24 +3,29 @@ import 'package:flutter/material.dart' show Color;
 
 class Globals {
 
-  String version = '1.4.1';
+  String version = '2.0.0';
+  int idUser = 0;
+
+  /// Usado para generar un push In, generado desde el estanque
+  Map<String, dynamic> pushIn = {};
   
-  int idOrdenCurrent = 0;
-  String idsFromLinkCurrent = '';
-  String idCampaingCurrent = '';
-  bool isFromWhatsapp = false;
-  
-  // Si es mayor a 3, mostrar la accion de cotizar mas rapido, sin mensajes.
-  int cantInv = 0;
+  /// Rutas que no deben guardarce en historial
+  final noSave = ['/login', '/gest-data/', '/cotizo/'];
+  ///
   List<String> histUri = [];
   void setHistUri(String uri) {
-    if(!histUri.contains(uri)) {
-      final inx = histUri.indexWhere((e) => e.contains('cotizo/'));
-      if(inx != -1) {
-        histUri[inx] = uri;
-      }else{
-        histUri.add(uri);
+
+    bool save = true;
+    noSave.map((e) {
+      if(uri.contains(e)) {
+        save = false;
       }
+    }).toList();
+
+    if(save) {
+      if(histUri.contains(uri)){  histUri.remove(uri); }
+      histUri.add(uri);
+      _putHome();
     }
   }
 
@@ -30,16 +35,28 @@ class Globals {
     String uri = '';
     if(histUri.length > 2) {
       histUri.removeLast();
-      if(histUri.isEmpty) {
-        uri = '/home';
-      }else{
+      if(histUri.isNotEmpty) {
         uri = histUri.removeLast();
       }
     }else{
       uri = histUri.first;
       histUri = [];
     }
-    return uri;
+    _putHome();
+    return (uri.isEmpty) ? histUri.first : uri;
+  }
+
+  ///
+  void _putHome() {
+    final inx = histUri.indexWhere((e) => e.contains('/home'));
+    if(inx != -1) {
+      if(inx > 0) {
+        histUri.removeAt(inx);
+        histUri.insert(0, '/home');
+      }
+    }else{
+      histUri.insert(0, '/home');
+    }
   }
 
   /// Usado para tener en memoria las piezas que ya respondieron, es decir...
@@ -48,6 +65,7 @@ class Globals {
   Map<int, List<int>> invFilter = {};
 
   Color bgMain = const Color.fromARGB(255, 13, 21, 26);
+  Color bgAppBar = const Color.fromARGB(255, 25, 34, 39);
   Color secMain = const Color(0xFF202c33);
   Color txtOnsecMainDark = const Color(0xFF83929c);
   Color txtAlerts = const Color(0xFFf5d278);

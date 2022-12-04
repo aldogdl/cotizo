@@ -59,7 +59,6 @@ class InventarioRepository {
         }
       }).toList();
     }
-
     return lst;
   }
 
