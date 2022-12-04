@@ -15,7 +15,6 @@ class OrdenesRepository {
   Future<List<Map<String, dynamic>>> getAllOrdenesAndPiezas
     (int page, String userWhere, int cantPerPege, {String call = 'otro'}) async
   {
-    print('/$call/$page/$userWhere/$cantPerPege/');
     await http.get('get_ordenes_and_piezas', params: '/$call/$page/$userWhere/$cantPerPege/');
     result = Map<String, dynamic>.from(http.result);
     http.cleanResult();

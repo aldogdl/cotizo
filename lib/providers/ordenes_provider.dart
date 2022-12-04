@@ -206,6 +206,9 @@ class OrdenesProvider with ChangeNotifier {
         newsOrd.add(ord);
       }
     }
+    
+    if(newsOrd.isEmpty) { return null; }
+
     final ran = Random();
     final ind = ran.nextInt(newsOrd.length);
     OrdenEntity? ord;

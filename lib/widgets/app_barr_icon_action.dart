@@ -67,7 +67,6 @@ class _AppBarIconActionState extends State<AppBarIconAction> {
       _setIconStatic(push.authPush);
       return; 
     }
-
     
     // Modo de cotizacion
     icono.value = {'ico':Icons.notifications_active, 'color': const Color.fromARGB(255, 53, 82, 245)};

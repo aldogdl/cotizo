@@ -57,15 +57,14 @@ void _showNotiff(RemoteMessage message) {
     descripcion = message.notification!.body;        
   }
   
-  print('-----------------------------');
-  print(message.from);
-  print(message.data);
-  print(message.notification!.toMap());
-  print('-----------------------------');
+  // print('-----------------------------');
+  // print(message.from);
+  // print(message.data);
+  // print(message.notification!.toMap());
+  // print('-----------------------------');
 
   final ctx = MyRutas.rutas.routerDelegate.navigatorKey.currentContext;
-  print(ctx.runtimeType);
-
+  
   var pay = 'from local'; 
   if(descripcion!.contains('cod:')) {
     final partes = descripcion.split('cod:');
@@ -160,9 +159,9 @@ class PushMsg {
 
   /// Manejador de mensajes.
   void _handleMessage(RemoteMessage message) {
-    print('aca en _handleMessage');
-    print(message.data);
-    print(message.notification);
+    // print('aca en _handleMessage');
+    // print(message.data);
+    // print(message.notification);
   }
 
   /// Recibiendo mensajes en foreground
