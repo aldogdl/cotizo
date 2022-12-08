@@ -83,13 +83,13 @@ class NoTengoRepository {
         filtros = Map<String, dynamic>.from(_http.result['body']);
       }
       
-      if(filtros.isNotEmpty) {
+      await openBox();
+      if(_boxNt != null) {
 
-        await openBox();
-        if(_boxNt != null) {
+        if(filtros.isNotEmpty) {
 
           if(_boxNt!.values.isNotEmpty) {
-            if(!await _resetTable()){ return; }
+            if(!await resetTable()){ return; }
           }
 
           List<int> listasOrd = [];
@@ -117,14 +117,19 @@ class NoTengoRepository {
               }
             }
           });
+        }else{
+          await resetTable();
         }
       }
     }
   }
 
   /// eliminamos por completo la tabla y la volvemos a crear
-  Future<bool> _resetTable() async {
+  Future<bool> resetTable() async {
 
+    if(_boxNt == null || !_boxNt!.isOpen) {
+      await openBox();
+    }
     await _boxNt!.clear();
     await _boxNt!.deleteFromDisk();
     await openBox();

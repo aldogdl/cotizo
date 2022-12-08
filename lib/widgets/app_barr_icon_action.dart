@@ -1,17 +1,17 @@
-import 'package:cotizo/repository/apartados_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_messaging/firebase_messaging.dart' show AuthorizationStatus;
 
 import '../api/push_msg.dart';
 import '../config/sngs_manager.dart';
-import '../providers/gest_data_provider.dart';
-import '../providers/ordenes_provider.dart';
 import '../providers/signin_provider.dart';
-import '../repository/acount_user_repository.dart';
+import '../providers/ordenes_provider.dart';
+import '../providers/gest_data_provider.dart';
+import '../repository/no_tengo_repository.dart';
+import '../repository/apartados_repository.dart';
 import '../repository/config_app_repository.dart';
 import '../repository/inventario_repository.dart';
-import '../repository/no_tengo_repository.dart';
+import '../repository/acount_user_repository.dart';
 import '../vars/globals.dart';
 
 class AppBarIconAction extends StatefulWidget {
@@ -139,6 +139,7 @@ class _AppBarIconActionState extends State<AppBarIconAction> {
   Future<void> cleanAlmacenNtFromServer() async {
 
     // Tomar la fecha de la ultima ves que se reviso el no tengo.
+    // await _ntgEm.resetTable();
     if(await _cngEm.isTimeUpdateNtg()) {
       await _ntgEm.recoveryAllNtFromServer('${_globals.idUser}');
       await _cngEm.setDateTimeNtg();
@@ -175,4 +176,5 @@ class _AppBarIconActionState extends State<AppBarIconAction> {
         };
     }
   }
+
 }

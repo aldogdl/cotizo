@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:cotizo/vars/constantes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
@@ -29,10 +30,11 @@ class TileOrdenPieza extends StatelessWidget {
   final DateTime created;
   final List<String> fotos;
   final String requerimientos;
+  final String callFrom;
   final SharedDataOrden box;
   final int isInv;
   final ValueChanged<int>? onDelete;
-  final ValueChanged<int> onNtg;
+  final ValueChanged<Map<String, dynamic>> onNtg;
   final ValueChanged<int> onCot;
   final ValueChanged<int>? onApartar;
   const TileOrdenPieza({
@@ -46,6 +48,7 @@ class TileOrdenPieza extends StatelessWidget {
     required this.box,
     required this.onNtg,
     required this.onCot,
+    required this.callFrom,
     this.onApartar,
     this.isInv = 0,
     this.onDelete,
@@ -436,7 +439,7 @@ class TileOrdenPieza extends StatelessWidget {
               if(acc) {
                 final isGo = await _isAuthorized(context);
                 if(isGo) {
-                  onNtg(pieza.id);
+                  onNtg({'idPza': pieza.id, 'from': Constantes.convertTo(callFrom)});
                 }
               }
             });

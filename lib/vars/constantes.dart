@@ -25,6 +25,19 @@ class Constantes {
 
     return res;
   }
+
+  ///
+  static String convertTo(String from) {
+
+    switch (from) {
+      case 'home': return WhereReg.nth.name;
+      case 'inv': return WhereReg.nth.name;
+      case 'link': return WhereReg.ntl.name;
+      case 'carnada': return WhereReg.ntca.name;
+    }
+
+    return 'unknow';
+  }
 }
 
 /// aph Apertura de app desde Home,

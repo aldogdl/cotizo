@@ -11,7 +11,6 @@ import '../entity/share_data_orden.dart';
 import '../providers/ordenes_provider.dart';
 import '../repository/apartados_repository.dart';
 import '../vars/globals.dart';
-import '../vars/constantes.dart' show WhereReg;
 import '../widgets/aviso_atencion.dart';
 import '../widgets/empty_list_indicator.dart';
 import '../widgets/tile_orden_pieza.dart';
@@ -180,6 +179,7 @@ class _ApartadosPageState extends State<ApartadosPage> {
             pieza: pza,
             idAuto: orden.auto,
             idOrden: orden.id,
+            callFrom: 'home',
             created: orden.createdAt,
             fotos: (orden.fotos.containsKey(pza.id))
               ? List<String>.from(orden.fotos[pza.id]!) : <String>[],
@@ -189,7 +189,7 @@ class _ApartadosPageState extends State<ApartadosPage> {
               _ords.isFromApartados = true;
               context.go('/estanque/${orden.id}-$idP');
             },
-            onNtg: (int idP) async => await _setNoTengo(orden.id, idP),
+            onNtg: (Map<String, dynamic> data) async => await _setNoTengo(orden.id, data),
             onApartar: null,
           )
         );
@@ -204,10 +204,10 @@ class _ApartadosPageState extends State<ApartadosPage> {
   }
 
   ///
-  Future<void> _setNoTengo(int idO, int idPza) async {
+  Future<void> _setNoTengo(int idO, Map<String, dynamic> data) async {
 
     final res = await _ords.setNoTengo(
-      idO, _globals.idUser, idPza, WhereReg.apr.name
+      idO, _globals.idUser, data['idPza'], data['from']
     );
 
     if(res > 0) {

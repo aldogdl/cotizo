@@ -223,10 +223,20 @@ class _EstanqueState extends State<Estanque> {
 
     final idPza = _orden!.piezas[indexPza].id;
     
+    String from = '';
+    if(_from == WhereReg.seh.name) {
+      from = 'home';
+    }else if(_from == WhereReg.sel.name) {
+      from = 'link';
+    }else{
+      from = 'carnada';
+    }
+
     if(_orden != null) {
       return TileOrdenPieza(
         idOrden: _orden!.id,
         idAuto: _orden!.auto,
+        callFrom: from,
         pieza: _orden!.piezas[indexPza],
         created: _orden!.createdAt,
         fotos: (_orden!.fotos.containsKey(idPza))
@@ -234,7 +244,7 @@ class _EstanqueState extends State<Estanque> {
         requerimientos: _orden!.obs[idPza]!,
         box: _ds,
         onCot: (int idP) async => _showPageCotizar(idP),
-        onNtg: (int idP) async => await _setNoTengo(idP),
+        onNtg: (Map<String, dynamic> data) async => await _setNoTengo(data),
         onApartar: (_ordProv!.isFromApartados || _isFromApartadosCarnada)
           ? null
           : (idP) => _apartarPza(_orden!.id, idPza),
@@ -576,15 +586,15 @@ class _EstanqueState extends State<Estanque> {
   }
 
   ///
-  Future<void> _setNoTengo(int idP) async {
+  Future<void> _setNoTengo(Map<String, dynamic> data) async {
 
     _isFromApartadosCarnada = false;
     // Borramos la pieza indicada y su avisos.
     final res = await _ordProv!.setNoTengo(
-      _orden!.id, _globals.idUser, idP, Constantes.parseFrom(_from, 'nt')
+      _orden!.id, _globals.idUser, data['idPza'], data['from']
     );
     if(res > 0) {
-      await _deletePiezaOrdenCurrent(idP, deleteAllPzas: (res == 2) ? true : false);
+      await _deletePiezaOrdenCurrent(data['idPza'], deleteAllPzas: (res == 2) ? true : false);
     }
   }
 

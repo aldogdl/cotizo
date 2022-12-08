@@ -228,6 +228,7 @@ class _InventarioPageState extends State<InventarioPage> {
           created: DateTime.parse(_lstPzas[index].created),
           fotos: fts.map((e) => '${e['path']}').toList(),
           requerimientos: _lstPzas[index].deta,
+          callFrom: 'inv',
           box: SharedDataOrden(),
           isInv: _lstPzas[index].id,
           onCot: (_){},

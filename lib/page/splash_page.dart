@@ -158,7 +158,7 @@ class _SplashPageState extends State<SplashPage> {
         if(valid) {
           
           if(!siging.goForData) {
-            _msgs.value = 'Recuperando filtro Inventario';
+            _msgs.value = 'Preparando todo para ti';
             await Future.delayed(const Duration(milliseconds: 250));
             _globals.invFilter = await _invEm.getAllInvToFilter();
           }

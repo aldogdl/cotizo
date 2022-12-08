@@ -206,12 +206,13 @@ class _HomePzasPageState extends State<HomePzasPage> {
             idAuto: orden.auto,
             idOrden: orden.id,
             created: orden.createdAt,
+            callFrom: 'home',
             fotos: (orden.fotos.containsKey(pza.id))
               ? List<String>.from(orden.fotos[pza.id]!) : <String>[],
             requerimientos: orden.obs[pza.id]!,
             box: SharedDataOrden(),
             onCot: (int idP) => context.go('/estanque/${orden.id}-$idP'),
-            onNtg: (int idP) async => await _setNoTengo(orden.id, idP),
+            onNtg: (Map<String, dynamic> data) async => await _setNoTengo(orden.id, data),
             onApartar: (idP) async => await _apartarPza(orden.id, idP),
           )
         );
@@ -322,19 +323,19 @@ class _HomePzasPageState extends State<HomePzasPage> {
   }
 
   ///
-  Future<void> _setNoTengo(int idO, int idPza) async {
+  Future<void> _setNoTengo(int idO, Map<String, dynamic> data) async {
 
     final res = await _ords.setNoTengo(
-      idO, _globals.idUser, idPza, WhereReg.nth.name
+      idO, _globals.idUser, data['idPza'], data['from']
     );
 
     if(res > 0) {
       if(_pagingController.itemList != null && _pagingController.itemList!.isNotEmpty) {
         final ind = _pagingController.itemList!.indexWhere((o) => o.id == idO);
         if(ind != -1) {
-          _pagingController.itemList![ind].piezas.removeWhere((p) => p.id == idPza);
+          _pagingController.itemList![ind].piezas.removeWhere((p) => p.id == data['idPza']);
           _pagingController.itemList![ind].piezas.removeWhere(
-            (p) => p.id == idPza && p.piezaName == p.avAt
+            (p) => p.id == data['idPza'] && p.piezaName == p.avAt
           );
           if(_pagingController.itemList![ind].piezas.isEmpty) {
             _pagingController.itemList!.removeAt(ind);
@@ -343,7 +344,7 @@ class _HomePzasPageState extends State<HomePzasPage> {
         }
       }
       
-      _isOnFilterRefresh(idO, idPza);
+      _isOnFilterRefresh(idO, data['idPza']);
     }
   }
 
