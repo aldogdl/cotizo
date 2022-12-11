@@ -55,4 +55,36 @@ class AccountEntity extends HiveObject {
     };
   }
 
+  ///
+  Map<String, dynamic> canSolicitar() {
+
+    final miRole = _roles(roles.first);
+    if(miRole.isNotEmpty) {
+      if(roles.first == 'ROLE_COTZ') {
+        return {'role': roles.first, 'isCot': 0};
+      }
+      // final isC = roles.where((r) => r.contains('ROLE_COTZ'));
+    }else{
+      if(roles.first == 'ROLE_SOLZ') {
+        return {'role': roles.first, 'isCot': 0};
+      }
+    }
+    return {};
+  }
+
+  ///
+  List<String> _roles(String rol) {
+
+    final rs = <String, List<String>>{
+      'ROLE_SOLZ' : [],
+      'ROLE_COTZ' : ['ROLE_SOLZ'],
+      'ROLE_AVO'  : ['ROLE_COTZ', 'ROLE_SOLZ'],
+      'ROLE_EVAL' : ['ROLE_AVO'],
+      'ROLE_ADMIN': ['ROLE_EVAL'],
+      'ROLE_SUPER_ADMIN': ['ROLE_ADMIN']
+    };
+
+    return (rs.containsKey(rol)) ? rs[rol]! : [];
+  }
+
 }

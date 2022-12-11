@@ -5,6 +5,10 @@ class Globals {
 
   String version = '2.0.0';
   int idUser = 0;
+  // Si puede realizar cotizaciones
+  bool canCotizar = false;
+  // El tipo de interface presentada en la app o = cotizo, a = cotiza
+  String appType = 'a';
 
   /// Usado para generar un push In, generado desde el estanque
   Map<String, dynamic> pushIn = {};

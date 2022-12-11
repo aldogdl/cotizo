@@ -1,14 +1,37 @@
+import 'package:hive_flutter/hive_flutter.dart';
+
+import '../entity/orden_entity.dart';
 import '../services/my_http.dart';
 import '../services/my_paths.dart';
+import '../vars/enums.dart';
 
 class OrdenesRepository {
 
   final http = MyHttp();
+  final _boxName = HiveBoxs.orden.name;
+  Box<OrdenEntity>? _box;
+  Box<OrdenEntity> get box => _box!;
 
   ///
   Map<String, dynamic> result = {'abort':false, 'msg':'ok', 'body':[]};
   void cleanResult() {
     result = {'abort':false, 'msg':'ok', 'body':[]};
+  }
+
+  ///
+  Future<void> openBox() async {
+
+    if(!Hive.isAdapterRegistered(ordenHT)) {
+      Hive.registerAdapter<OrdenEntity>(OrdenEntityAdapter());
+    }
+
+    if(!Hive.isBoxOpen(_boxName)) {
+      _box = await Hive.openBox<OrdenEntity>(_boxName, compactionStrategy: (entries, deletedEntries) {
+        return deletedEntries > 50;
+      });
+    }else{
+      _box = Hive.box<OrdenEntity>(_boxName);
+    }
   }
 
   /// Recuperamos todas las ordenes y sus piezas paginadas

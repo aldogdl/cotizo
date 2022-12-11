@@ -1,18 +1,43 @@
-import 'pieza_entity.dart';
+import 'package:hive/hive.dart';
 
-class OrdenEntity {
+import '../vars/enums.dart';
+import 'pieza_entity.dart';
+part 'orden_entity.g.dart';
+
+@HiveType(typeId: ordenHT)
+class OrdenEntity extends HiveObject {
 
   final String itemFecha = 'indicador';
 
+  @HiveField(0)
   int id = 0;
+
+  @HiveField(1)
   DateTime createdAt = DateTime.now();
+
+  @HiveField(2)
   String est = '0';
+
+  @HiveField(3)
   String stt = '0';
+
+  @HiveField(4)
   int auto = 0;
+
+  @HiveField(5)
   int avo = 0;
+
+  @HiveField(6)
   List<PiezaEntity> piezas = [];
+
+  @HiveField(7)
   Map<int, String> obs = {};
+
+  @HiveField(8)
   Map<int, List<String>> fotos = {};
+
+  @HiveField(9)
+  String type = 'cot';
 
   /// El campo autos y piezas debieron de ser hidratados desde antes.
   void of(Map<String, dynamic> json) {
@@ -58,14 +83,15 @@ class OrdenEntity {
 
     return {
       'id':id,
-      'createdAt':createdAt,
       'est':est,
       'stt':stt,
-      'auto': auto,
       'avo': avo,
+      'type': type,
+      'auto': auto,
       'piezas': piezas,
       'obs': obs,
-      'fotos': fotos
+      'fotos': fotos,
+      'createdAt':createdAt
     };
   }
 

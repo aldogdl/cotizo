@@ -136,11 +136,13 @@ class _SplashPageState extends State<SplashPage> {
       Future.delayed(const Duration(milliseconds: 1500), (){
         nav.go('/login');
       });
+      
       return false;
 
     }else{
       
       _globals.idUser = user!.id;
+      // _globals.isCot = user!.canSolicitar();
 
       /// Revisamos que halla una inicialización previa
       final hoy = DateTime.now();
